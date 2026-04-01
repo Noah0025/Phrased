@@ -5,7 +5,6 @@ import AppKit
 class SentencePairView: NSView {
     private let enLabel = NSTextField(wrappingLabelWithString: "")
     private let zhLabel = NSTextField(wrappingLabelWithString: "")
-    private let statusDot = NSView()
     private var trackingArea: NSTrackingArea?
 
     var onBlockClicked: ((String, String) -> Void)?
@@ -13,6 +12,12 @@ class SentencePairView: NSView {
 
     private(set) var isFinalized = false
     private(set) var enText: String = ""
+
+    // Status colors
+    private static let colorActive      = NSColor.systemRed.withAlphaComponent(0.18).cgColor
+    private static let colorTranslating = NSColor.systemYellow.withAlphaComponent(0.20).cgColor
+    private static let colorDone        = NSColor.systemGreen.withAlphaComponent(0.16).cgColor
+    private static let colorDoneHover   = NSColor.systemGreen.withAlphaComponent(0.28).cgColor
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -23,13 +28,7 @@ class SentencePairView: NSView {
     private func setup() {
         wantsLayer = true
         layer?.cornerRadius = 6
-        layer?.backgroundColor = NSColor.white.withAlphaComponent(0.04).cgColor
-
-        // Status dot (top-right corner)
-        statusDot.wantsLayer = true
-        statusDot.layer?.cornerRadius = 4
-        statusDot.layer?.backgroundColor = NSColor.systemRed.cgColor
-        statusDot.translatesAutoresizingMaskIntoConstraints = false
+        layer?.backgroundColor = SentencePairView.colorActive
 
         enLabel.font = NSFont.systemFont(ofSize: 12)
         enLabel.textColor = .secondaryLabelColor
@@ -51,19 +50,13 @@ class SentencePairView: NSView {
         zhLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         zhLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        addSubview(statusDot)
         addSubview(enLabel)
         addSubview(zhLabel)
 
         NSLayoutConstraint.activate([
-            statusDot.widthAnchor.constraint(equalToConstant: 8),
-            statusDot.heightAnchor.constraint(equalToConstant: 8),
-            statusDot.topAnchor.constraint(equalTo: topAnchor, constant: 6),
-            statusDot.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -6),
-
             enLabel.topAnchor.constraint(equalTo: topAnchor, constant: 4),
             enLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 6),
-            enLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -18),
+            enLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -6),
 
             zhLabel.topAnchor.constraint(equalTo: enLabel.bottomAnchor, constant: 2),
             zhLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 6),
@@ -72,17 +65,17 @@ class SentencePairView: NSView {
         ])
     }
 
-    // MARK: - Status dot
+    // MARK: - Status colors
 
     func setStatusTranslating() {
         DispatchQueue.main.async {
-            self.statusDot.layer?.backgroundColor = NSColor.systemYellow.cgColor
+            self.layer?.backgroundColor = SentencePairView.colorTranslating
         }
     }
 
     func setStatusDone() {
         DispatchQueue.main.async {
-            self.statusDot.layer?.backgroundColor = NSColor.systemGreen.cgColor
+            self.layer?.backgroundColor = SentencePairView.colorDone
         }
     }
 
@@ -101,11 +94,12 @@ class SentencePairView: NSView {
 
     override func mouseEntered(with event: NSEvent) {
         guard isFinalized else { return }
-        layer?.backgroundColor = NSColor.white.withAlphaComponent(0.12).cgColor
+        layer?.backgroundColor = SentencePairView.colorDoneHover
     }
 
     override func mouseExited(with event: NSEvent) {
-        layer?.backgroundColor = NSColor.white.withAlphaComponent(0.04).cgColor
+        guard isFinalized else { return }
+        layer?.backgroundColor = SentencePairView.colorDone
     }
 
     override func resetCursorRects() {
