@@ -16,7 +16,7 @@ package: build
 	@mkdir -p $(APP_BUNDLE)/Contents/Resources
 	@cp $(BUILD_DIR)/Murmur $(APP_BUNDLE)/Contents/MacOS/$(APP_NAME)
 	@cp Resources/Info.plist $(APP_BUNDLE)/Contents/Info.plist
-	@cp Resources/interview_context.txt $(APP_BUNDLE)/Contents/Resources/ 2>/dev/null || true
+	@cp Sources/InterviewCopilot/Resources/interview_context.txt $(APP_BUNDLE)/Contents/Resources/
 	@codesign --force --deep --sign "Murmur Dev" --entitlements Murmur.entitlements $(APP_BUNDLE)
 	@echo "==> Done: $(APP_BUNDLE)"
 
