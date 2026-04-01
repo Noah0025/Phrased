@@ -136,6 +136,7 @@ class SentencePairView: NSView {
 
     func markFinalized() {
         isFinalized = true
+        window?.invalidateCursorRects(for: self)
         enLabel.textColor = .tertiaryLabelColor
         zhLabel.textColor = .secondaryLabelColor
         zhLabel.font = NSFont.systemFont(ofSize: 13)
