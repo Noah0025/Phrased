@@ -27,7 +27,7 @@ class SentencePairView: NSView {
         enLabel.font = NSFont.systemFont(ofSize: 12)
         enLabel.textColor = .secondaryLabelColor
         enLabel.isEditable = false
-        enLabel.isSelectable = true
+        enLabel.isSelectable = false
         enLabel.isBordered = false
         enLabel.backgroundColor = .clear
         enLabel.lineBreakMode = .byWordWrapping
@@ -37,7 +37,7 @@ class SentencePairView: NSView {
         zhLabel.font = NSFont.systemFont(ofSize: 15, weight: .medium)
         zhLabel.textColor = .labelColor
         zhLabel.isEditable = false
-        zhLabel.isSelectable = true
+        zhLabel.isSelectable = false
         zhLabel.isBordered = false
         zhLabel.backgroundColor = .clear
         zhLabel.lineBreakMode = .byWordWrapping
