@@ -126,6 +126,17 @@ class FloatingPanel: NSPanel {
     private var bottomBar: NSView!
     private var testInputHeight: CGFloat = 0
 
+    // MARK: - Knowledge panel
+    private let collapsedPanelWidth: CGFloat = 440
+    private let expandedPanelWidth: CGFloat = 900
+    private var isKnowledgeExpanded = false
+
+    private let knowledgeContainer = NSView()
+    private let knowledgeTitleLabel = NSTextField(labelWithString: "")
+    private let knowledgeCloseButton = NSButton(title: "✕", target: nil, action: nil)
+    private let knowledgeScrollView = NSScrollView()
+    private let knowledgeTextView = NSTextView()
+
     init() {
         let screenFrame = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
         let panelHeight: CGFloat = 320
@@ -227,6 +238,44 @@ class FloatingPanel: NSPanel {
         visualEffect.addSubview(scrollView)
         visualEffect.addSubview(bottomBar)
 
+        // --- Knowledge panel (right side, hidden until first click) ---
+        knowledgeContainer.isHidden = true
+        knowledgeContainer.translatesAutoresizingMaskIntoConstraints = true
+        knowledgeContainer.wantsLayer = true
+        knowledgeContainer.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.04).cgColor
+        knowledgeContainer.layer?.cornerRadius = 8
+
+        knowledgeTitleLabel.font = NSFont.systemFont(ofSize: 13, weight: .semibold)
+        knowledgeTitleLabel.textColor = .labelColor
+        knowledgeTitleLabel.translatesAutoresizingMaskIntoConstraints = true
+
+        knowledgeCloseButton.bezelStyle = .rounded
+        knowledgeCloseButton.font = NSFont.systemFont(ofSize: 11)
+        knowledgeCloseButton.target = self
+        knowledgeCloseButton.action = #selector(knowledgeCloseTapped)
+        knowledgeCloseButton.translatesAutoresizingMaskIntoConstraints = true
+
+        knowledgeTextView.isEditable = false
+        knowledgeTextView.isSelectable = true
+        knowledgeTextView.font = NSFont.systemFont(ofSize: 13)
+        knowledgeTextView.textColor = .labelColor
+        knowledgeTextView.backgroundColor = .clear
+        knowledgeTextView.textContainerInset = NSSize(width: 4, height: 4)
+        knowledgeTextView.isVerticallyResizable = true
+        knowledgeTextView.isHorizontallyResizable = false
+
+        knowledgeScrollView.documentView = knowledgeTextView
+        knowledgeScrollView.hasVerticalScroller = true
+        knowledgeScrollView.autohidesScrollers = true
+        knowledgeScrollView.borderType = .noBorder
+        knowledgeScrollView.backgroundColor = .clear
+        knowledgeScrollView.drawsBackground = false
+        knowledgeScrollView.translatesAutoresizingMaskIntoConstraints = true
+
+        [knowledgeTitleLabel, knowledgeCloseButton, knowledgeScrollView]
+            .forEach { knowledgeContainer.addSubview($0) }
+        visualEffect.addSubview(knowledgeContainer)
+
         // Initial frame layout
         layoutBottomBar()
         layoutScrollView()
@@ -283,6 +332,53 @@ class FloatingPanel: NSPanel {
         )
     }
 
+    /// Lay out left subtitle panel (1/3) and right knowledge panel (2/3) when expanded.
+    private func layoutKnowledgePanel() {
+        guard let cv = contentView else { return }
+        let cvBounds = cv.bounds
+        let totalWidth = cvBounds.width - pad * 2
+        let divider: CGFloat = 8
+        let leftWidth = (totalWidth - divider) / 3
+        let rightWidth = totalWidth - leftWidth - divider
+        let scrollBottom = bottomBar.frame.maxY + 6
+        let contentHeight = max(cvBounds.height - 28 - scrollBottom, 0)
+
+        // Subtitle scroll: left 1/3
+        scrollView.frame = NSRect(x: pad, y: scrollBottom, width: leftWidth, height: contentHeight)
+
+        // Knowledge container: right 2/3
+        knowledgeContainer.frame = NSRect(
+            x: pad + leftWidth + divider,
+            y: scrollBottom,
+            width: rightWidth,
+            height: contentHeight
+        )
+
+        // Subviews inside knowledgeContainer (container-relative coords)
+        let closeSize: CGFloat = 22
+        let headerH: CGFloat = 26
+        knowledgeCloseButton.frame = NSRect(
+            x: rightWidth - closeSize - 2,
+            y: contentHeight - headerH,
+            width: closeSize, height: closeSize
+        )
+        knowledgeTitleLabel.frame = NSRect(
+            x: 6,
+            y: contentHeight - headerH,
+            width: rightWidth - closeSize - 12, height: 20
+        )
+        knowledgeScrollView.frame = NSRect(
+            x: 0, y: 0,
+            width: rightWidth,
+            height: contentHeight - headerH - 4
+        )
+        knowledgeTextView.frame = NSRect(
+            x: 0, y: 0,
+            width: rightWidth - 20,
+            height: max(contentHeight - headerH - 4, 100)
+        )
+    }
+
     @objc private func startButtonTapped() {
         isRunning.toggle()
         if isRunning {
@@ -319,7 +415,11 @@ class FloatingPanel: NSPanel {
 
     private func relayoutFrameBasedViews() {
         layoutBottomBar()
-        layoutScrollView()
+        if isKnowledgeExpanded {
+            layoutKnowledgePanel()
+        } else {
+            layoutScrollView()
+        }
         let availableWidth = scrollView.frame.width
         guard availableWidth > 0 else { return }
         stackWidthConstraint?.constant = availableWidth
@@ -514,6 +614,50 @@ class FloatingPanel: NSPanel {
             self.listeningIndicator.stringValue = listening ? "● Listening..." : "● Not listening"
             self.listeningIndicator.textColor = listening ? .systemGreen : .systemRed
         }
+    }
+
+    // MARK: - Knowledge panel
+
+    func showKnowledge(title: String, body: String) {
+        DispatchQueue.main.async {
+            self.knowledgeTitleLabel.stringValue = title
+            self.knowledgeTextView.string = body
+            self.knowledgeTextView.scrollToBeginningOfDocument(nil)
+
+            if !self.isKnowledgeExpanded {
+                self.isKnowledgeExpanded = true
+                self.knowledgeContainer.isHidden = false
+                var f = self.frame
+                let diff = self.expandedPanelWidth - self.collapsedPanelWidth
+                f.size.width = self.expandedPanelWidth
+                f.origin.x -= diff
+                NSAnimationContext.runAnimationGroup { ctx in
+                    ctx.duration = 0.2
+                    self.animator().setFrame(f, display: true)
+                }
+            }
+        }
+    }
+
+    func hideKnowledge() {
+        DispatchQueue.main.async {
+            guard self.isKnowledgeExpanded else { return }
+            self.isKnowledgeExpanded = false
+            var f = self.frame
+            let diff = self.expandedPanelWidth - self.collapsedPanelWidth
+            f.size.width = self.collapsedPanelWidth
+            f.origin.x += diff
+            NSAnimationContext.runAnimationGroup({ ctx in
+                ctx.duration = 0.2
+                self.animator().setFrame(f, display: true)
+            }, completionHandler: {
+                self.knowledgeContainer.isHidden = true
+            })
+        }
+    }
+
+    @objc private func knowledgeCloseTapped() {
+        hideKnowledge()
     }
 
     // MARK: - Answer area (reserved for future separate window)
