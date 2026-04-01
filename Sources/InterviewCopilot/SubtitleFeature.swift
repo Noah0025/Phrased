@@ -97,17 +97,15 @@ class SubtitleFeature {
 
         let segmentText = extractSegmentText(lastRawPartial)
         if let detached = panel.detachActivePair() {
-            // Mark finalized immediately so the block is clickable right away;
-            // then override to yellow so the user sees translation is still running.
-            DispatchQueue.main.async {
-                detached.markFinalized()        // isFinalized = true, green
-                detached.setStatusTranslating() // override to yellow
-            }
             let enText = segmentText.isEmpty ? (detached.enText) : segmentText
             if !enText.isEmpty {
+                detached.markFinalized()        // isFinalized = true, immediately clickable
+                detached.setStatusTranslating() // override to yellow while translating
                 segmentHistory.append(enText)
                 if segmentHistory.count > 4 { segmentHistory.removeFirst() }
                 refineDetachedPair(pair: detached, enText: enText)
+            } else {
+                detached.markFinalized()
             }
         }
         translatedUpToCount = 0

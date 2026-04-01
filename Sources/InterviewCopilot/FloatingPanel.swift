@@ -85,6 +85,10 @@ class SentencePairView: NSView {
         return bounds.contains(point) ? self : nil
     }
 
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
+        return isFinalized
+    }
+
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
         if let ta = trackingArea { removeTrackingArea(ta) }
