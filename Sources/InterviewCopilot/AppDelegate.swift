@@ -10,6 +10,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var subtitleFeature: SubtitleFeature?
     var answerFeature: AnswerFeature?
     var hotkeyManager: HotkeyManager?
+    var knowledgeBase: KnowledgeBase?
 
     private var isListening = false
 
@@ -31,6 +32,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupComponents() {
         ollamaClient = OllamaClient()
         ollamaClient?.warmup() // Pre-load model into GPU memory
+        knowledgeBase = KnowledgeBase(ollama: ollamaClient!)
         floatingPanel = FloatingPanel()
         speechTranscriber = SpeechTranscriber()
         audioCapture = AudioCapture()
@@ -67,10 +69,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self.subtitleFeature?.startSegment()
         }
 
-        // Block click → copy to clipboard
-        floatingPanel?.onBlockClicked = { en, zh, metadata in
+        // Block click → copy to clipboard + retrieve knowledge
+        floatingPanel?.onBlockClicked = { [weak self] en, zh, metadata in
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString("\(en)\n\(zh)", forType: .string)
+
+            guard let self, let kb = self.knowledgeBase, !kb.sections.isEmpty else { return }
+            Task {
+                if let section = await kb.retrieve(query: en) {
+                    DispatchQueue.main.async {
+                        self.floatingPanel?.showKnowledge(title: section.title, body: section.body)
+                    }
+                }
+            }
         }
 
         // Test mode
