@@ -1,0 +1,29 @@
+APP_NAME = Murmur
+BUILD_DIR = .build/release
+APP_BUNDLE = $(APP_NAME).app
+
+.PHONY: build run package clean
+
+build:
+	swift build -c release 2>&1
+
+run:
+	swift run 2>&1
+
+package: build
+	@echo "==> Packaging $(APP_BUNDLE)..."
+	@rm -rf $(APP_BUNDLE)
+	@mkdir -p $(APP_BUNDLE)/Contents/MacOS
+	@mkdir -p $(APP_BUNDLE)/Contents/Resources
+	@cp $(BUILD_DIR)/Murmur $(APP_BUNDLE)/Contents/MacOS/$(APP_NAME)
+	@cp Resources/Info.plist $(APP_BUNDLE)/Contents/Info.plist
+	@cp Resources/interview_context.txt $(APP_BUNDLE)/Contents/Resources/ 2>/dev/null || true
+	@codesign --force --deep --sign - $(APP_BUNDLE)
+	@echo "==> Done: $(APP_BUNDLE)"
+
+open: package
+	open $(APP_BUNDLE)
+
+clean:
+	swift package clean
+	rm -rf $(APP_BUNDLE)
