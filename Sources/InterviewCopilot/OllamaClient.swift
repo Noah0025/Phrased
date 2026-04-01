@@ -71,7 +71,13 @@ class OllamaClient {
         }
     }
 
-    // MARK: - Feature 3: Streaming chat with system prompt (for subtitle correction + translation)
+    // MARK: - Feature 3: Non-streaming completion (for retrieval)
+    /// Returns the full response as a single String. Returns "" on failure.
+    func complete(prompt: String) async -> String {
+        return await chat(model: fastModel, systemPrompt: nil, userPrompt: prompt, stream: false) ?? ""
+    }
+
+    // MARK: - Feature 4: Streaming chat with system prompt (for subtitle correction + translation)
     func streamChat(
         systemPrompt: String,
         userPrompt: String,
