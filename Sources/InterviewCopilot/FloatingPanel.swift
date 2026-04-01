@@ -77,12 +77,6 @@ class SentencePairView: NSView {
             : NSColor.white.withAlphaComponent(0.04).cgColor
     }
 
-    override func hitTest(_ point: NSPoint) -> NSView? {
-        // Intercept all clicks on finalized blocks so NSTextField doesn't consume them
-        if isFinalized && bounds.contains(point) { return self }
-        return super.hitTest(point)
-    }
-
     override func resetCursorRects() {
         if isFinalized {
             addCursorRect(bounds, cursor: .pointingHand)
