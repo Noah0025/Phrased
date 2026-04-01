@@ -82,11 +82,12 @@ class SentencePairView: NSView {
     // MARK: - Event handling
 
     override func hitTest(_ point: NSPoint) -> NSView? {
-        return bounds.contains(point) ? self : nil
+        // point is in superview's coords; frame is too — use frame, not bounds
+        return frame.contains(point) ? self : nil
     }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
-        return isFinalized
+        return true  // nonactivatingPanel: every click is first-mouse; always pass through
     }
 
     override func updateTrackingAreas() {
