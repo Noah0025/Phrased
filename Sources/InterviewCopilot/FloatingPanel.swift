@@ -124,7 +124,7 @@ class FloatingPanel: NSPanel {
     private var isRunning = false
     private var stackWidthConstraint: NSLayoutConstraint?
     private var bottomBar: NSView!
-    private var scrollBottomConstraint: NSLayoutConstraint!
+    private var testInputHeight: CGFloat = 0
 
     init() {
         let screenFrame = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
@@ -160,6 +160,10 @@ class FloatingPanel: NSPanel {
         orderOut(nil)
     }
 
+    // Height of the bottom bar region (separator + padding + button row + bottom margin)
+    private let bottomBarHeight: CGFloat = 38
+    private let pad: CGFloat = 12
+
     private func setupUI() {
         let visualEffect = NSVisualEffectView()
         visualEffect.material = .hudWindow
@@ -169,54 +173,39 @@ class FloatingPanel: NSPanel {
         visualEffect.layer?.cornerRadius = 12
         contentView = visualEffect
 
-        let pad: CGFloat = 12
-
-        // --- Bottom control bar (in its own container, always on top) ---
+        // --- Bottom control bar: frame-based layout (immune to auto-layout desync) ---
         bottomBar = NSView()
-        bottomBar.translatesAutoresizingMaskIntoConstraints = false
+        bottomBar.translatesAutoresizingMaskIntoConstraints = true
+        // Stick to the bottom of the contentView, stretch horizontally
+        bottomBar.autoresizingMask = [.width, .maxYMargin]
 
         listeningIndicator.textColor = .systemRed
         listeningIndicator.font = NSFont.monospacedSystemFont(ofSize: 10, weight: .regular)
-        listeningIndicator.translatesAutoresizingMaskIntoConstraints = false
+        listeningIndicator.translatesAutoresizingMaskIntoConstraints = true
 
         startButton.bezelStyle = .rounded
         startButton.font = NSFont.systemFont(ofSize: 13, weight: .medium)
         startButton.target = self
         startButton.action = #selector(startButtonTapped)
-        startButton.translatesAutoresizingMaskIntoConstraints = false
+        startButton.translatesAutoresizingMaskIntoConstraints = true
 
         cutButton.bezelStyle = .rounded
         cutButton.font = NSFont.systemFont(ofSize: 13, weight: .medium)
         cutButton.target = self
         cutButton.action = #selector(cutButtonTapped)
         cutButton.isEnabled = false
-        cutButton.translatesAutoresizingMaskIntoConstraints = false
+        cutButton.translatesAutoresizingMaskIntoConstraints = true
 
         let separator = NSBox()
         separator.boxType = .separator
-        separator.translatesAutoresizingMaskIntoConstraints = false
+        separator.translatesAutoresizingMaskIntoConstraints = true
+        separator.autoresizingMask = [.width]
 
         [separator, listeningIndicator, startButton, cutButton].forEach {
             bottomBar.addSubview($0)
         }
 
-        NSLayoutConstraint.activate([
-            separator.topAnchor.constraint(equalTo: bottomBar.topAnchor),
-            separator.leadingAnchor.constraint(equalTo: bottomBar.leadingAnchor),
-            separator.trailingAnchor.constraint(equalTo: bottomBar.trailingAnchor),
-
-            listeningIndicator.topAnchor.constraint(equalTo: separator.bottomAnchor, constant: 8),
-            listeningIndicator.leadingAnchor.constraint(equalTo: bottomBar.leadingAnchor),
-            listeningIndicator.bottomAnchor.constraint(equalTo: bottomBar.bottomAnchor),
-
-            cutButton.centerYAnchor.constraint(equalTo: listeningIndicator.centerYAnchor),
-            cutButton.trailingAnchor.constraint(equalTo: bottomBar.trailingAnchor),
-
-            startButton.centerYAnchor.constraint(equalTo: listeningIndicator.centerYAnchor),
-            startButton.trailingAnchor.constraint(equalTo: cutButton.leadingAnchor, constant: -6),
-        ])
-
-        // --- Sentence scroll area ---
+        // --- Sentence scroll area (still auto-layout, pinned to top and bottom bar) ---
         sentenceStack.orientation = .vertical
         sentenceStack.alignment = .left
         sentenceStack.spacing = 6
@@ -230,27 +219,68 @@ class FloatingPanel: NSPanel {
         scrollView.autohidesScrollers = true
         scrollView.borderType = .noBorder
         scrollView.backgroundColor = .clear
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.translatesAutoresizingMaskIntoConstraints = true
         scrollView.drawsBackground = false
+        scrollView.autoresizingMask = [.width, .height]
 
         // Add scrollView first, then bottomBar on top
         visualEffect.addSubview(scrollView)
         visualEffect.addSubview(bottomBar)
 
-        scrollBottomConstraint = scrollView.bottomAnchor.constraint(equalTo: bottomBar.topAnchor, constant: -6)
+        // Initial frame layout
+        layoutBottomBar()
+        layoutScrollView()
+    }
 
-        NSLayoutConstraint.activate([
-            // Bottom bar pinned to bottom
-            bottomBar.leadingAnchor.constraint(equalTo: visualEffect.leadingAnchor, constant: pad),
-            bottomBar.trailingAnchor.constraint(equalTo: visualEffect.trailingAnchor, constant: -pad),
-            bottomBar.bottomAnchor.constraint(equalTo: visualEffect.bottomAnchor, constant: -10),
+    /// Lay out the bottom bar using explicit frames — no auto-layout involved.
+    private func layoutBottomBar() {
+        guard let cv = contentView else { return }
+        let cvBounds = cv.bounds
 
-            // Scroll area fills from top to bottom bar
-            scrollView.topAnchor.constraint(equalTo: visualEffect.topAnchor, constant: 28),
-            scrollView.leadingAnchor.constraint(equalTo: visualEffect.leadingAnchor, constant: pad),
-            scrollView.trailingAnchor.constraint(equalTo: visualEffect.trailingAnchor, constant: -pad),
-            scrollBottomConstraint,
-        ])
+        // Bottom bar frame: full width minus padding, pinned to bottom
+        let barX = pad
+        let barW = cvBounds.width - pad * 2
+        bottomBar.frame = NSRect(x: barX, y: 10, width: barW, height: bottomBarHeight)
+
+        // Separator at top of bottom bar
+        let sep = bottomBar.subviews.first { $0 is NSBox }
+        sep?.frame = NSRect(x: 0, y: bottomBarHeight - 1, width: barW, height: 1)
+
+        // Listening indicator: bottom-left
+        listeningIndicator.sizeToFit()
+        listeningIndicator.frame.origin = NSPoint(x: 0, y: 0)
+
+        // Cut button: bottom-right
+        cutButton.sizeToFit()
+        let cutW = max(cutButton.frame.width, 60)
+        cutButton.frame = NSRect(x: barW - cutW, y: 0, width: cutW, height: cutButton.frame.height)
+
+        // Start button: left of cut button
+        startButton.sizeToFit()
+        let startW = max(startButton.frame.width, 60)
+        startButton.frame = NSRect(x: cutButton.frame.minX - startW - 6, y: 0, width: startW, height: startButton.frame.height)
+    }
+
+    /// Lay out the scroll view to fill the space between titlebar area and bottom bar.
+    private func layoutScrollView() {
+        guard let cv = contentView else { return }
+        let cvBounds = cv.bounds
+        let scrollTop = cvBounds.height - 28  // below titlebar
+
+        // If test input exists, place it between scroll and bottom bar
+        var scrollBottom = bottomBar.frame.maxY + 6
+        if let tv = testInputView {
+            let tvY = bottomBar.frame.maxY + 6
+            tv.frame = NSRect(x: pad, y: tvY, width: cvBounds.width - pad * 2, height: testInputHeight)
+            scrollBottom = tv.frame.maxY + 6
+        }
+
+        scrollView.frame = NSRect(
+            x: pad,
+            y: scrollBottom,
+            width: cvBounds.width - pad * 2,
+            height: max(scrollTop - scrollBottom, 0)
+        )
     }
 
     @objc private func startButtonTapped() {
@@ -292,16 +322,18 @@ class FloatingPanel: NSPanel {
 
     override func setFrame(_ frameRect: NSRect, display flag: Bool) {
         super.setFrame(frameRect, display: flag)
-        updateStackWidth()
+        relayoutFrameBasedViews()
     }
 
     override func setFrame(_ frameRect: NSRect, display displayFlag: Bool, animate animateFlag: Bool) {
         super.setFrame(frameRect, display: displayFlag, animate: animateFlag)
-        updateStackWidth()
+        relayoutFrameBasedViews()
     }
 
-    private func updateStackWidth() {
-        let availableWidth = scrollView.contentView.bounds.width
+    private func relayoutFrameBasedViews() {
+        layoutBottomBar()
+        layoutScrollView()
+        let availableWidth = scrollView.frame.width
         guard availableWidth > 0 else { return }
         stackWidthConstraint?.constant = availableWidth
     }
@@ -507,20 +539,14 @@ class FloatingPanel: NSPanel {
 
     func addTestInput() -> TestInputView {
         let tv = TestInputView()
-        tv.translatesAutoresizingMaskIntoConstraints = false
+        tv.translatesAutoresizingMaskIntoConstraints = true
+        tv.autoresizingMask = [.width, .maxYMargin]
         contentView!.addSubview(tv)
-        NSLayoutConstraint.activate([
-            tv.leadingAnchor.constraint(equalTo: contentView!.leadingAnchor, constant: 12),
-            tv.trailingAnchor.constraint(equalTo: contentView!.trailingAnchor, constant: -12),
-            tv.bottomAnchor.constraint(equalTo: bottomBar.topAnchor, constant: -6),
-            tv.heightAnchor.constraint(equalToConstant: 72),
-        ])
-        // Reconnect scrollView bottom to test input instead of bottomBar
-        scrollBottomConstraint.isActive = false
-        scrollView.bottomAnchor.constraint(equalTo: tv.topAnchor, constant: -6).isActive = true
+        testInputHeight = 72
+        // Expand window to make room
         var f = frame
         f.size.height += 90
-        setFrame(f, display: true)
+        setFrame(f, display: true)  // triggers relayoutFrameBasedViews
         testInputView = tv
         return tv
     }
