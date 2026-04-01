@@ -7,14 +7,14 @@ class SpeechTranscriber: NSObject {
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
 
-    // Called every partial update (for live EN display)
     var onPartial: ((String) -> Void)?
-    // Called only on finalized segments (for translation)
     var onFinal: ((String) -> Void)?
 
     private(set) var transcriptHistory: [String] = []
     private var segmentTimer: Timer?
-    private let segmentDuration: TimeInterval = 50
+    private let segmentDuration: TimeInterval = 55
+    private var isStopped = true
+    private var isRestarting = false
 
     override init() {
         super.init()
@@ -30,7 +30,6 @@ class SpeechTranscriber: NSObject {
     func startSession() {
         logDebug("[Speech] startSession, recognizer available=\(recognizer.isAvailable)")
         isStopped = false
-        consecutiveErrors = 0
         beginRecognitionTask()
         scheduleSegmentReset()
     }
@@ -45,12 +44,7 @@ class SpeechTranscriber: NSObject {
         recognitionTask = nil
     }
 
-    private var bufferCount = 0
     func appendBuffer(_ buffer: AVAudioPCMBuffer) {
-        bufferCount += 1
-        if bufferCount % 100 == 1 {
-            logDebug("[Speech] appendBuffer #\(bufferCount), frames=\(buffer.frameLength), request nil=\(recognitionRequest == nil)")
-        }
         recognitionRequest?.append(buffer)
     }
 
@@ -58,36 +52,47 @@ class SpeechTranscriber: NSObject {
         transcriptHistory.suffix(lastSegments).joined(separator: " ")
     }
 
-    private var isStopped = false
-    private var consecutiveErrors = 0
-
     private func beginRecognitionTask() {
-        guard !isStopped else { return }
+        guard !isStopped, !isRestarting else { return }
+        isRestarting = true
 
+        // Cancel previous task — will trigger error callback which we ignore via isRestarting
         recognitionRequest?.endAudio()
         recognitionTask?.cancel()
+        recognitionRequest = nil
+        recognitionTask = nil
 
         guard recognizer.isAvailable else {
-            logDebug("[Speech] recognizer not available, retry in 2s")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
-                self?.beginRecognitionTask()
+            logDebug("[Speech] recognizer not available, retry in 5s")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+                guard let self, !self.isStopped else { return }
+                self.isRestarting = false
+                self.beginRecognitionTask()
             }
             return
         }
+
+        // Small delay to let the old task fully clean up
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            self?.createNewTask()
+        }
+    }
+
+    private func createNewTask() {
+        guard !isStopped else { isRestarting = false; return }
 
         let request = SFSpeechAudioBufferRecognitionRequest()
         request.shouldReportPartialResults = true
         request.addsPunctuation = true
         recognitionRequest = request
+        isRestarting = false
 
-        logDebug("[Speech] beginRecognitionTask starting")
+        logDebug("[Speech] new recognition task starting")
         recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
-            guard let self else { return }
+            guard let self, !self.isRestarting else { return }
 
             if let result = result {
-                self.consecutiveErrors = 0
                 let text = result.bestTranscription.formattedString
-                logDebug("[Speech] partial: \(text.prefix(60))...")
                 DispatchQueue.main.async {
                     self.onPartial?(text)
                 }
@@ -97,15 +102,18 @@ class SpeechTranscriber: NSObject {
                     }
                     self.transcriptHistory.append(text)
                     if self.transcriptHistory.count > 20 { self.transcriptHistory.removeFirst() }
+                    // Final result = task ended, restart for continuous recognition
+                    logDebug("[Speech] isFinal, restarting")
+                    self.beginRecognitionTask()
                 }
             }
-            if let error = error {
-                self.consecutiveErrors += 1
-                logDebug("[Speech] error: \(error.localizedDescription), consecutive=\(self.consecutiveErrors)")
-                guard !self.isStopped, self.consecutiveErrors < 5 else { return }
-                let delay = min(Double(self.consecutiveErrors), 3.0)
-                DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                    self?.beginRecognitionTask()
+            if let error = error as NSError? {
+                guard !self.isStopped, !self.isRestarting else { return }
+                logDebug("[Speech] error: \(error.localizedDescription) code=\(error.code)")
+                // Restart after delay — let audio accumulate
+                DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+                    guard let self, !self.isStopped else { return }
+                    self.beginRecognitionTask()
                 }
             }
         }
@@ -114,7 +122,8 @@ class SpeechTranscriber: NSObject {
     private func scheduleSegmentReset() {
         segmentTimer?.invalidate()
         segmentTimer = Timer.scheduledTimer(withTimeInterval: segmentDuration, repeats: true) { [weak self] _ in
-            guard let self, self.recognitionTask != nil else { return }
+            guard let self, !self.isStopped, self.recognitionTask != nil else { return }
+            logDebug("[Speech] segment timer: restarting recognition")
             self.beginRecognitionTask()
         }
     }
