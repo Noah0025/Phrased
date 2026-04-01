@@ -1,19 +1,5 @@
 import Foundation
 
-func logDebug(_ msg: String) {
-    let line = "[\(Date())] \(msg)\n"
-    if let data = line.data(using: .utf8) {
-        let url = URL(fileURLWithPath: "/tmp/murmur_debug.log")
-        if let handle = try? FileHandle(forWritingTo: url) {
-            handle.seekToEndOfFile()
-            handle.write(data)
-            handle.closeFile()
-        } else {
-            try? data.write(to: url)
-        }
-    }
-}
-
 /// Translation pipeline:
 /// 1. Real-time: rough translation of current segment (fast, no context)
 /// 2. On cut: context-aware re-translation of previous segment
@@ -76,11 +62,7 @@ class SubtitleFeature {
     // MARK: - Segment control
 
     func startSegment() {
-        logDebug("[Seg] startSegment called, isSegmentActive=\(isSegmentActive)")
-        guard !isSegmentActive else {
-            logDebug("[Seg] startSegment BLOCKED — already active")
-            return
-        }
+        guard !isSegmentActive else { return }
 
         activeTask?.cancel()
         activeTask = nil
@@ -104,11 +86,7 @@ class SubtitleFeature {
     }
 
     func stopSegment() {
-        logDebug("[Seg] stopSegment called, isSegmentActive=\(isSegmentActive)")
-        guard isSegmentActive else {
-            logDebug("[Seg] stopSegment BLOCKED — not active")
-            return
-        }
+        guard isSegmentActive else { return }
         isSegmentActive = false
 
         activeTask?.cancel()
@@ -175,7 +153,6 @@ class SubtitleFeature {
 
         // Fragment (<5 words): skip model entirely, merge into previous block
         if originalWordCount < 5 {
-            logDebug("[AutoMerge] fragment \(originalWordCount) words: '\(enText)'")
             let historyIdx = segmentHistory.count - 1
             // Re-translate the merged block (prev EN + this fragment)
             let views = panel.sentenceStackViews()
@@ -249,7 +226,6 @@ class SubtitleFeature {
 
                     if !zhHasChinese || (!prefixMatch && correctedEN.count > enText.count + 20) {
                         // Model confused — fallback to simple translate
-                        logDebug("[Refine] bad output, fallback: EN='\(correctedEN.prefix(40))' ZH='\(zh.prefix(30))'")
                         self.simpleTranslate(pair: pair, text: enText)
                         return
                     }
@@ -266,7 +242,6 @@ class SubtitleFeature {
                     if historyIdx < self.segmentHistory.count {
                         self.segmentHistory[historyIdx] = finalEN
                     }
-                    logDebug("[Refine] '\(enText.prefix(40))' → '\(finalEN.prefix(40))' | \(zh.prefix(30))")
                 } else if lines.count == 1 {
                     // Check if single line is Chinese (ZH only) or English
                     let hasChinese = lines[0].unicodeScalars.contains { $0.value >= 0x4E00 && $0.value <= 0x9FFF }
@@ -275,11 +250,9 @@ class SubtitleFeature {
                         pair.markFinalized()
                     } else {
                         // Model only returned EN, do simple translate for ZH
-                        logDebug("[Refine] only EN returned, fallback translate")
                         self.simpleTranslate(pair: pair, text: enText)
                     }
                 } else {
-                    logDebug("[Refine] empty result, fallback translate")
                     self.simpleTranslate(pair: pair, text: enText)
                 }
             }

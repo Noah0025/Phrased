@@ -285,42 +285,27 @@ class FloatingPanel: NSPanel {
 
     @objc private func startButtonTapped() {
         isRunning.toggle()
-        logDebug("[UI] startButton tapped, isRunning=\(isRunning)")
         if isRunning {
             startButton.title = "⏸ 暂停"
             cutButton.isEnabled = true
             listeningIndicator.stringValue = "● Listening..."
             listeningIndicator.textColor = .systemGreen
-            logDebug("[UI] calling onStartStop, nil=\(onStartStop == nil)")
             onStartStop?(true)
         } else {
             startButton.title = "▶ 开始"
             cutButton.isEnabled = false
             listeningIndicator.stringValue = "● Not listening"
             listeningIndicator.textColor = .systemRed
-            logDebug("[UI] calling onStartStop, nil=\(onStartStop == nil)")
             onStartStop?(false)
         }
     }
 
     @objc private func cutButtonTapped() {
-        logDebug("[UI] cutButton tapped, isRunning=\(isRunning)")
         guard isRunning else { return }
         onCut?()
     }
 
     func show() { orderFront(nil) }
-
-    override func sendEvent(_ event: NSEvent) {
-        if event.type == .leftMouseDown {
-            let loc = event.locationInWindow
-            // Log in startButton's superview (bottomBar) coordinate space
-            let startInWindow = startButton.superview?.convert(startButton.frame, to: nil) ?? .zero
-            let cutInWindow = cutButton.superview?.convert(cutButton.frame, to: nil) ?? .zero
-            logDebug("[Event] click at \(loc) startBtn(window)=\(startInWindow) cutBtn(window)=\(cutInWindow)")
-        }
-        super.sendEvent(event)
-    }
 
     override func setFrame(_ frameRect: NSRect, display flag: Bool) {
         super.setFrame(frameRect, display: flag)

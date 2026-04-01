@@ -22,13 +22,10 @@ class SpeechTranscriber: NSObject {
     }
 
     private func requestAuthorization() {
-        SFSpeechRecognizer.requestAuthorization { status in
-            logDebug("[Speech] Auth status: \(status.rawValue) (2=authorized)")
-        }
+        SFSpeechRecognizer.requestAuthorization { _ in }
     }
 
     func startSession() {
-        logDebug("[Speech] startSession, recognizer available=\(recognizer.isAvailable)")
         isStopped = false
         beginRecognitionTask()
         scheduleSegmentReset()
@@ -63,7 +60,6 @@ class SpeechTranscriber: NSObject {
         recognitionTask = nil
 
         guard recognizer.isAvailable else {
-            logDebug("[Speech] recognizer not available, retry in 5s")
             DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
                 guard let self, !self.isStopped else { return }
                 self.isRestarting = false
@@ -87,7 +83,6 @@ class SpeechTranscriber: NSObject {
         recognitionRequest = request
         isRestarting = false
 
-        logDebug("[Speech] new recognition task starting")
         recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
             guard let self, !self.isRestarting else { return }
 
@@ -103,13 +98,11 @@ class SpeechTranscriber: NSObject {
                     self.transcriptHistory.append(text)
                     if self.transcriptHistory.count > 20 { self.transcriptHistory.removeFirst() }
                     // Final result = task ended, restart for continuous recognition
-                    logDebug("[Speech] isFinal, restarting")
                     self.beginRecognitionTask()
                 }
             }
             if let error = error as NSError? {
                 guard !self.isStopped, !self.isRestarting else { return }
-                logDebug("[Speech] error: \(error.localizedDescription) code=\(error.code)")
                 // Restart after delay — let audio accumulate
                 DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
                     guard let self, !self.isStopped else { return }
@@ -123,7 +116,6 @@ class SpeechTranscriber: NSObject {
         segmentTimer?.invalidate()
         segmentTimer = Timer.scheduledTimer(withTimeInterval: segmentDuration, repeats: true) { [weak self] _ in
             guard let self, !self.isStopped, self.recognitionTask != nil else { return }
-            logDebug("[Speech] segment timer: restarting recognition")
             self.beginRecognitionTask()
         }
     }

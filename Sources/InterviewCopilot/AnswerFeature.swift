@@ -45,7 +45,6 @@ class AnswerFeature {
         if let url = Bundle.main.url(forResource: "interview_context", withExtension: "txt"),
            let content = try? String(contentsOf: url, encoding: .utf8) {
             interviewContext = content
-            print("[AnswerFeature] Loaded interview context (\(content.count) chars)")
             return
         }
         // Fallback: look next to the executable
@@ -53,10 +52,8 @@ class AnswerFeature {
         let fallback = execDir.appendingPathComponent("interview_context.txt")
         if let content = try? String(contentsOf: fallback, encoding: .utf8) {
             interviewContext = content
-            print("[AnswerFeature] Loaded interview context from fallback (\(content.count) chars)")
             return
         }
-        print("[AnswerFeature] Warning: interview_context.txt not found")
         interviewContext = "No interview context loaded."
     }
 }

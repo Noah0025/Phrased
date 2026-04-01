@@ -30,10 +30,7 @@ class AudioCapture: NSObject {
     private func startCapture() async {
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
-            guard let display = content.displays.first else {
-                logDebug("[AudioCapture] No display found")
-                return
-            }
+            guard let display = content.displays.first else { return }
 
             let filter = SCContentFilter(display: display, excludingApplications: [], exceptingWindows: [])
 
@@ -52,9 +49,7 @@ class AudioCapture: NSObject {
             try await newStream.startCapture()
             self.stream = newStream
             lock.withLock { self._isRunning = true }
-            logDebug("[AudioCapture] Started system audio capture")
         } catch {
-            logDebug("[AudioCapture] Failed to start: \(error)")
         }
     }
 }

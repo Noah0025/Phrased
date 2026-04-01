@@ -167,7 +167,6 @@ class OllamaClient {
                 if let done = json["done"] as? Bool, done { break }
             }
         } catch {
-            print("[Ollama] Stream error: \(error)")
         }
         DispatchQueue.main.async { onComplete() }
     }

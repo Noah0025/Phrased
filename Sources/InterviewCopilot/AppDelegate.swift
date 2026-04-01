@@ -51,10 +51,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // ▶/⏸ Start/Stop: controls listening + segment
         floatingPanel?.onStartStop = { [weak self] start in
-            logDebug("[App] onStartStop callback, start=\(start), self=\(self != nil)")
             guard let self else { return }
             if start {
-                logDebug("[App] isListening=\(self.isListening)")
                 if !self.isListening { self.startListening() }
                 self.subtitleFeature?.startSegment()
             } else {
@@ -73,7 +71,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         floatingPanel?.onBlockClicked = { en, zh, metadata in
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString("\(en)\n\(zh)", forType: .string)
-            print("[Block] Copied to clipboard")
         }
 
         // Test mode
@@ -86,7 +83,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             testView.onFinal = { text in
                 transcriber.onFinal?(text)
             }
-            print("[TestMode] Active — type text or press ▶ Auto")
         }
     }
 
@@ -113,7 +109,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func startListening() {
         guard !isListening else { return }
         isListening = true
-        logDebug("[App] startListening called")
         speechTranscriber?.startSession()
         audioCapture?.start { [weak self] buffer in
             self?.speechTranscriber?.appendBuffer(buffer)
