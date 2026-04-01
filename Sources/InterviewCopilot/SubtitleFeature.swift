@@ -70,9 +70,10 @@ class SubtitleFeature {
 
         let segmentText = extractSegmentText(lastRawPartial)
         if let detached = panel.detachActivePair() {
-            detached.setStatusTranslating()
             let enText = segmentText.isEmpty ? (detached.enText) : segmentText
             if !enText.isEmpty {
+                detached.markFinalized()        // isFinalized = true, immediately clickable
+                detached.setStatusTranslating() // override to yellow while translating
                 segmentHistory.append(enText)
                 if segmentHistory.count > 4 { segmentHistory.removeFirst() }
                 refineDetachedPair(pair: detached, enText: enText)
