@@ -105,102 +105,6 @@ class SentencePairView: NSView {
     }
 }
 
-// MARK: - Copilot Panel
-
-class CopilotPanel: NSView {
-    var onClose: (() -> Void)?
-
-    private let titleLabel = NSTextField(labelWithString: "")
-    private let closeButton = NSButton(title: "✕", target: nil, action: nil)
-    private let scrollView = NSScrollView()
-    private let textView = NSTextView()
-
-    override init(frame: NSRect) {
-        super.init(frame: frame)
-        setup()
-    }
-    required init?(coder: NSCoder) { fatalError() }
-
-    private func setup() {
-        wantsLayer = true
-        layer?.backgroundColor = NSColor.white.withAlphaComponent(0.05).cgColor
-        layer?.cornerRadius = 8
-
-        let separator = NSBox()
-        separator.boxType = .separator
-        separator.translatesAutoresizingMaskIntoConstraints = false
-
-        titleLabel.font = NSFont.systemFont(ofSize: 11, weight: .medium)
-        titleLabel.textColor = .tertiaryLabelColor
-        titleLabel.lineBreakMode = .byTruncatingTail
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        closeButton.bezelStyle = .rounded
-        closeButton.font = NSFont.systemFont(ofSize: 11)
-        closeButton.target = self
-        closeButton.action = #selector(closeTapped)
-        closeButton.translatesAutoresizingMaskIntoConstraints = false
-
-        textView.isEditable = false
-        textView.isSelectable = true
-        textView.backgroundColor = .clear
-        textView.textContainerInset = NSSize(width: 8, height: 8)
-        textView.font = NSFont.systemFont(ofSize: 13)
-        textView.textColor = .labelColor
-
-        scrollView.documentView = textView
-        scrollView.hasVerticalScroller = true
-        scrollView.autohidesScrollers = true
-        scrollView.borderType = .noBorder
-        scrollView.backgroundColor = .clear
-        scrollView.drawsBackground = false
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-
-        [separator, titleLabel, closeButton, scrollView].forEach { addSubview($0) }
-
-        NSLayoutConstraint.activate([
-            separator.topAnchor.constraint(equalTo: topAnchor, constant: 8),
-            separator.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8),
-            separator.leadingAnchor.constraint(equalTo: leadingAnchor),
-            separator.widthAnchor.constraint(equalToConstant: 1),
-
-            closeButton.topAnchor.constraint(equalTo: topAnchor, constant: 6),
-            closeButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -6),
-            closeButton.widthAnchor.constraint(equalToConstant: 24),
-            closeButton.heightAnchor.constraint(equalToConstant: 20),
-
-            titleLabel.centerYAnchor.constraint(equalTo: closeButton.centerYAnchor),
-            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
-            titleLabel.trailingAnchor.constraint(equalTo: closeButton.leadingAnchor, constant: -6),
-
-            scrollView.topAnchor.constraint(equalTo: closeButton.bottomAnchor, constant: 4),
-            scrollView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 2),
-            scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: bottomAnchor),
-        ])
-    }
-
-    @objc private func closeTapped() { onClose?() }
-
-    func setQuery(_ text: String) {
-        titleLabel.stringValue = text
-        textView.string = ""
-    }
-
-    func appendChunk(_ chunk: String) {
-        DispatchQueue.main.async {
-            self.textView.string += chunk
-            let range = NSRange(location: self.textView.string.count, length: 0)
-            self.textView.scrollRangeToVisible(range)
-        }
-    }
-
-    func clear() {
-        textView.string = ""
-        titleLabel.stringValue = ""
-    }
-}
-
 // MARK: - Floating Panel
 
 class FloatingPanel: NSPanel {
@@ -221,10 +125,6 @@ class FloatingPanel: NSPanel {
     private var stackWidthConstraint: NSLayoutConstraint?
     private var bottomBar: NSView!
     private var testInputHeight: CGFloat = 0
-
-    private var copilotPanelView: CopilotPanel?
-    private let copilotWidth: CGFloat = 880
-    private var isCopilotVisible = false
 
     // MARK: - Knowledge panel
     private let collapsedPanelWidth: CGFloat = 440
@@ -766,56 +666,6 @@ class FloatingPanel: NSPanel {
     func appendAnswerChunk(_ chunk: String) {}
     func clearAnswer() {}
     func setAnswerLoading(_ loading: Bool) {}
-
-    // MARK: - Copilot
-
-    func showCopilot(query: String) {
-        DispatchQueue.main.async {
-            if self.isCopilotVisible {
-                self.copilotPanelView?.setQuery(query)
-                return
-            }
-            self.isCopilotVisible = true
-
-            if self.copilotPanelView == nil {
-                let cp = CopilotPanel()
-                cp.translatesAutoresizingMaskIntoConstraints = false
-                cp.onClose = { [weak self] in self?.hideCopilot() }
-                self.contentView?.addSubview(cp)
-                self.copilotPanelView = cp
-                NSLayoutConstraint.activate([
-                    cp.topAnchor.constraint(equalTo: self.contentView!.topAnchor),
-                    cp.bottomAnchor.constraint(equalTo: self.contentView!.bottomAnchor),
-                    cp.leadingAnchor.constraint(equalTo: self.contentView!.leadingAnchor,
-                                                 constant: self.panelWidth),
-                    cp.trailingAnchor.constraint(equalTo: self.contentView!.trailingAnchor),
-                ])
-            }
-            self.copilotPanelView?.setQuery(query)
-
-            var f = self.frame
-            f.size.width = self.panelWidth + self.copilotWidth
-            self.setFrame(f, display: true, animate: true)
-        }
-    }
-
-    func hideCopilot() {
-        DispatchQueue.main.async {
-            guard self.isCopilotVisible else { return }
-            self.isCopilotVisible = false
-            var f = self.frame
-            f.size.width = self.panelWidth
-            self.setFrame(f, display: true, animate: true)
-        }
-    }
-
-    func streamCopilotChunk(_ chunk: String) {
-        copilotPanelView?.appendChunk(chunk)
-    }
-
-    func clearCopilot() {
-        DispatchQueue.main.async { self.copilotPanelView?.clear() }
-    }
 
     // MARK: - Test mode
 

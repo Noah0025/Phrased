@@ -77,28 +77,7 @@ class OllamaClient {
         return await chat(model: fastModel, systemPrompt: nil, userPrompt: prompt, stream: false) ?? ""
     }
 
-    // MARK: - Feature 4: Knowledge base retrieval (streaming, async for cancellation)
-    func searchKnowledgeBase(
-        query: String,
-        context: String,
-        onChunk: @escaping (String) -> Void,
-        onComplete: @escaping () -> Void
-    ) async {
-        let systemPrompt = """
-        You are a knowledge retrieval assistant for an interview.
-        Given a sentence the interviewer said, find the most relevant sections
-        from the candidate's preparation notes below.
-        Return 3-5 concise bullet points in English only.
-        Be specific — quote exact facts, numbers, or concepts from the notes.
-
-        === CANDIDATE NOTES ===
-        \(context)
-        """
-        let userPrompt = "Interviewer said: \"\(query)\"\n\nWhat relevant points should the candidate mention?"
-        await chatStream(model: fastModel, systemPrompt: systemPrompt, userPrompt: userPrompt, onChunk: onChunk, onComplete: onComplete)
-    }
-
-    // MARK: - Feature 5: Streaming chat with system prompt (for subtitle correction + translation)
+    // MARK: - Feature 4: Streaming chat with system prompt (for subtitle correction + translation)
     func streamChat(
         systemPrompt: String,
         userPrompt: String,
