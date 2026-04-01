@@ -70,6 +70,7 @@ class SubtitleFeature {
 
         let segmentText = extractSegmentText(lastRawPartial)
         if let detached = panel.detachActivePair() {
+            detached.setStatusTranslating()
             let enText = segmentText.isEmpty ? (detached.enText) : segmentText
             if !enText.isEmpty {
                 segmentHistory.append(enText)

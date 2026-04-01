@@ -5,6 +5,7 @@ import AppKit
 class SentencePairView: NSView {
     private let enLabel = NSTextField(wrappingLabelWithString: "")
     private let zhLabel = NSTextField(wrappingLabelWithString: "")
+    private let statusDot = NSView()
     private var trackingArea: NSTrackingArea?
 
     var onBlockClicked: ((String, String) -> Void)?
@@ -23,6 +24,12 @@ class SentencePairView: NSView {
         wantsLayer = true
         layer?.cornerRadius = 6
         layer?.backgroundColor = NSColor.white.withAlphaComponent(0.04).cgColor
+
+        // Status dot (top-right corner)
+        statusDot.wantsLayer = true
+        statusDot.layer?.cornerRadius = 4
+        statusDot.layer?.backgroundColor = NSColor.systemRed.cgColor
+        statusDot.translatesAutoresizingMaskIntoConstraints = false
 
         enLabel.font = NSFont.systemFont(ofSize: 12)
         enLabel.textColor = .secondaryLabelColor
@@ -44,19 +51,45 @@ class SentencePairView: NSView {
         zhLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         zhLabel.translatesAutoresizingMaskIntoConstraints = false
 
+        addSubview(statusDot)
         addSubview(enLabel)
         addSubview(zhLabel)
 
         NSLayoutConstraint.activate([
+            statusDot.widthAnchor.constraint(equalToConstant: 8),
+            statusDot.heightAnchor.constraint(equalToConstant: 8),
+            statusDot.topAnchor.constraint(equalTo: topAnchor, constant: 6),
+            statusDot.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -6),
+
             enLabel.topAnchor.constraint(equalTo: topAnchor, constant: 4),
             enLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 6),
-            enLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -6),
+            enLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -18),
 
             zhLabel.topAnchor.constraint(equalTo: enLabel.bottomAnchor, constant: 2),
             zhLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 6),
             zhLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -6),
             zhLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -4),
         ])
+    }
+
+    // MARK: - Status dot
+
+    func setStatusTranslating() {
+        DispatchQueue.main.async {
+            self.statusDot.layer?.backgroundColor = NSColor.systemYellow.cgColor
+        }
+    }
+
+    func setStatusDone() {
+        DispatchQueue.main.async {
+            self.statusDot.layer?.backgroundColor = NSColor.systemGreen.cgColor
+        }
+    }
+
+    // MARK: - Event handling
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        return bounds.contains(point) ? self : nil
     }
 
     override func updateTrackingAreas() {
@@ -72,9 +105,7 @@ class SentencePairView: NSView {
     }
 
     override func mouseExited(with event: NSEvent) {
-        layer?.backgroundColor = isFinalized
-            ? NSColor.white.withAlphaComponent(0.04).cgColor
-            : NSColor.white.withAlphaComponent(0.04).cgColor
+        layer?.backgroundColor = NSColor.white.withAlphaComponent(0.04).cgColor
     }
 
     override func resetCursorRects() {
@@ -110,6 +141,7 @@ class SentencePairView: NSView {
         enLabel.textColor = .tertiaryLabelColor
         zhLabel.textColor = .secondaryLabelColor
         zhLabel.font = NSFont.systemFont(ofSize: 13)
+        setStatusDone()
     }
 }
 
