@@ -83,6 +83,14 @@ class SentencePairView: NSView {
         return super.hitTest(point)
     }
 
+    override func resetCursorRects() {
+        if isFinalized {
+            addCursorRect(bounds, cursor: .pointingHand)
+        } else {
+            super.resetCursorRects()
+        }
+    }
+
     override func mouseDown(with event: NSEvent) {
         guard isFinalized else { return }
         onBlockClicked?(enText, zhLabel.stringValue)
