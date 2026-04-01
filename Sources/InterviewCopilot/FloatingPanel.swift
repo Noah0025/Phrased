@@ -291,12 +291,14 @@ class FloatingPanel: NSPanel {
             cutButton.isEnabled = true
             listeningIndicator.stringValue = "● Listening..."
             listeningIndicator.textColor = .systemGreen
+            logDebug("[UI] calling onStartStop, nil=\(onStartStop == nil)")
             onStartStop?(true)
         } else {
             startButton.title = "▶ 开始"
             cutButton.isEnabled = false
             listeningIndicator.stringValue = "● Not listening"
             listeningIndicator.textColor = .systemRed
+            logDebug("[UI] calling onStartStop, nil=\(onStartStop == nil)")
             onStartStop?(false)
         }
     }

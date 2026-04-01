@@ -31,7 +31,7 @@ class AudioCapture: NSObject {
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
             guard let display = content.displays.first else {
-                print("[AudioCapture] No display found")
+                logDebug("[AudioCapture] No display found")
                 return
             }
 
@@ -52,9 +52,9 @@ class AudioCapture: NSObject {
             try await newStream.startCapture()
             self.stream = newStream
             lock.withLock { self._isRunning = true }
-            print("[AudioCapture] Started system audio capture")
+            logDebug("[AudioCapture] Started system audio capture")
         } catch {
-            print("[AudioCapture] Failed to start: \(error)")
+            logDebug("[AudioCapture] Failed to start: \(error)")
         }
     }
 }

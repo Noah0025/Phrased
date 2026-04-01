@@ -51,13 +51,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // ▶/⏸ Start/Stop: controls listening + segment
         floatingPanel?.onStartStop = { [weak self] start in
+            logDebug("[App] onStartStop callback, start=\(start), self=\(self != nil)")
             guard let self else { return }
             if start {
+                logDebug("[App] isListening=\(self.isListening)")
                 if !self.isListening { self.startListening() }
                 self.subtitleFeature?.startSegment()
             } else {
                 self.subtitleFeature?.stopSegment()
-                // Keep audio running, just pause segmentation
             }
         }
 
@@ -112,6 +113,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func startListening() {
         guard !isListening else { return }
         isListening = true
+        logDebug("[App] startListening called")
         speechTranscriber?.startSession()
         audioCapture?.start { [weak self] buffer in
             self?.speechTranscriber?.appendBuffer(buffer)
