@@ -129,7 +129,7 @@ class InputWindowController: NSWindowController {
         )
         window.title = "Murmur"
         window.contentViewController = hosting
-        (window as? NSPanel)?.isFloatingPanel = true
+        window.isFloatingPanel = true
         window.level = .floating
         window.center()
         super.init(window: window)
