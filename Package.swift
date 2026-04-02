@@ -11,7 +11,7 @@ let package = Package(
         ),
         .testTarget(
             name: "MurmurTests",
-            dependencies: [],
+            dependencies: ["Murmur"],
             path: "Tests/MurmurTests"
         )
     ]
