@@ -7,10 +7,12 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "Murmur",
-            path: "Sources/InterviewCopilot",
-            resources: [
-                .copy("Resources/interview_context.txt")
-            ]
+            path: "Sources/Murmur"
+        ),
+        .testTarget(
+            name: "MurmurTests",
+            dependencies: [],
+            path: "Tests/MurmurTests"
         )
     ]
 )
