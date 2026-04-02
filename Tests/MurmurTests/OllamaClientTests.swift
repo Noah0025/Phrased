@@ -1,5 +1,5 @@
 import XCTest
-import Murmur
+@testable import Murmur
 
 final class OllamaClientTests: XCTestCase {
     func test_buildRequest_hasCorrectMethod() {

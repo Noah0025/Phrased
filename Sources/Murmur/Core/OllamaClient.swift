@@ -1,25 +1,25 @@
 import Foundation
 
-public struct OllamaMessage {
-    public let role: String
-    public let content: String
+struct OllamaMessage {
+    let role: String
+    let content: String
 
-    public init(role: String, content: String) {
+    init(role: String, content: String) {
         self.role = role
         self.content = content
     }
 }
 
-public class OllamaClient {
+class OllamaClient {
     private let baseURL = URL(string: "http://localhost:11434/api/chat")!
-    public let model: String
+    let model: String
 
-    public init(model: String = "qwen2.5:7b") {
+    init(model: String = "qwen2.5:7b") {
         self.model = model
     }
 
     /// Build a URLRequest for the given messages. Exposed for testing.
-    public func buildRequest(messages: [OllamaMessage]) -> URLRequest {
+    func buildRequest(messages: [OllamaMessage]) -> URLRequest {
         let body: [String: Any] = [
             "model": model,
             "messages": messages.map { ["role": $0.role, "content": $0.content] },
@@ -33,7 +33,7 @@ public class OllamaClient {
     }
 
     /// Stream a chat completion, calling onChunk for each token, onDone when finished.
-    public func streamChat(
+    func streamChat(
         messages: [OllamaMessage],
         onChunk: @escaping @MainActor (String) -> Void,
         onDone: @escaping @MainActor () -> Void
