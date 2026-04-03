@@ -4,39 +4,57 @@ import AppKit
 @MainActor
 class InputViewModel: ObservableObject {
     @Published var inputText: String = ""
+    @Published var editorHeight: CGFloat = 22
     @Published var isRecording: Bool = false
+    @Published var isTranscribing: Bool = false
     @Published var partialTranscript: String = ""
+    @Published var selectedStyle: WritingStyle = .auto
 
-    var onSubmit: ((String) -> Void)?
+    var onSubmit: ((String, WritingStyle) -> Void)?
 
     private let audioCapture = AudioCapture()
-    private let transcriber = SpeechTranscriber()
+    private let transcriber = WhisperTranscriber()
+    private var pendingSubmit = false
 
     init() {
-        transcriber.onPartial = { [weak self] text in
-            DispatchQueue.main.async {
-                self?.partialTranscript = text
-            }
-        }
         transcriber.onFinal = { [weak self] text in
             DispatchQueue.main.async {
                 guard let self else { return }
+                self.isTranscribing = false
                 self.inputText = text
-                self.partialTranscript = ""
-                self.stopRecording()
+                if self.pendingSubmit {
+                    self.pendingSubmit = false
+                    if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        self.onSubmit?(text, self.selectedStyle)
+                        self.inputText = ""
+                    }
+                }
             }
         }
     }
 
     func submit() {
-        let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return }
-        onSubmit?(text)
+        if isRecording {
+            pendingSubmit = true
+            stopRecording()
+            return
+        }
+        if isTranscribing {
+            pendingSubmit = true
+            return
+        }
+        let finalText = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !finalText.isEmpty else { return }
+        onSubmit?(finalText, selectedStyle)
         inputText = ""
     }
 
+    func warmUpTranscriber() {
+        transcriber.warmUp()
+    }
+
     func toggleRecording() {
-        isRecording ? stopRecording() : startRecording()
+        isRecording ? stopRecordingManually() : startRecording()
     }
 
     private func startRecording() {
@@ -49,97 +67,116 @@ class InputViewModel: ObservableObject {
         }
     }
 
+    private func stopRecordingManually() {
+        stopRecording()
+    }
+
     private func stopRecording() {
         isRecording = false
+        isTranscribing = true
         audioCapture.stop()
         transcriber.stopSession()
     }
 }
 
-struct InputView: View {
-    @ObservedObject var vm: InputViewModel
-    @FocusState private var isFocused: Bool
+// MARK: - WrappingTextView
 
-    var body: some View {
-        VStack(spacing: 10) {
-            // Display area: shows partial transcript while recording, editable text otherwise
-            if vm.isRecording {
-                Text(vm.partialTranscript.isEmpty ? "正在聆听..." : vm.partialTranscript)
-                    .foregroundColor(vm.partialTranscript.isEmpty ? .secondary : .primary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(8)
-                    .background(Color(NSColor.textBackgroundColor).opacity(0.5))
-                    .cornerRadius(6)
-                    .frame(height: 60)
-            } else {
-                TextEditor(text: $vm.inputText)
-                    .font(.body)
-                    .padding(4)
-                    .background(Color(NSColor.textBackgroundColor))
-                    .cornerRadius(6)
-                    .frame(height: 60)
-                    .focused($isFocused)
-            }
+/// NSTextView subclass that keeps textContainer width in sync with the view frame.
+private class WrappingTextView: NSTextView {
+    var onWidthChange: ((NSTextView) -> Void)?
 
-            HStack {
-                // Mic button
-                Button {
-                    vm.toggleRecording()
-                } label: {
-                    Image(systemName: vm.isRecording ? "stop.circle.fill" : "mic.circle")
-                        .font(.title2)
-                        .foregroundColor(vm.isRecording ? .red : .secondary)
-                }
-                .buttonStyle(.plain)
-                .help(vm.isRecording ? "停止录音" : "开始录音")
-
-                Spacer()
-
-                Button("取消") {
-                    NSApp.keyWindow?.orderOut(nil)
-                }
-                .keyboardShortcut(.escape)
-
-                Button("改写 →") {
-                    vm.submit()
-                }
-                .keyboardShortcut(.return, modifiers: .command)
-                .disabled(vm.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !vm.isRecording)
-                .buttonStyle(.borderedProminent)
-            }
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        guard newSize.width > 0 else { return }
+        let oldWidth = textContainer?.containerSize.width ?? 0
+        guard abs(oldWidth - newSize.width) > 0.5 else { return }
+        textContainer?.containerSize = NSSize(width: newSize.width, height: CGFloat.greatestFiniteMagnitude)
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.onWidthChange?(self)
         }
-        .padding(12)
-        .frame(width: 400)
-        .onAppear { isFocused = true }
     }
 }
 
-class InputWindowController: NSWindowController {
-    private let vm: InputViewModel
+// MARK: - AutoGrowingTextEditor
 
-    init(vm: InputViewModel) {
-        self.vm = vm
-        let view = InputView(vm: vm)
-        let hosting = NSHostingController(rootView: view)
-        let window = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 120),
-            styleMask: [.titled, .closable, .nonactivatingPanel],
-            backing: .buffered,
-            defer: false
-        )
-        window.title = "Murmur"
-        window.contentViewController = hosting
-        window.isFloatingPanel = true
-        window.level = .floating
-        window.center()
-        super.init(window: window)
+struct AutoGrowingTextEditor: NSViewRepresentable {
+    @Binding var text: String
+    @Binding var height: CGFloat
+    var maxHeight: CGFloat = 160
+    var font: NSFont = .systemFont(ofSize: 15)
+    var onFocus: (() -> Void)?
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let tv = WrappingTextView()
+        tv.delegate = context.coordinator
+        tv.isRichText = false
+        tv.font = font
+        tv.backgroundColor = .clear
+        tv.drawsBackground = false
+        tv.isAutomaticQuoteSubstitutionEnabled = false
+        tv.isAutomaticDashSubstitutionEnabled = false
+        tv.textContainerInset = NSSize(width: 0, height: 1)
+        tv.textContainer?.lineFragmentPadding = 0
+        tv.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude,
+                                                  height: CGFloat.greatestFiniteMagnitude)
+        tv.isVerticallyResizable = true
+        tv.isHorizontallyResizable = false
+        tv.autoresizingMask = [.width]
+        tv.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        tv.minSize = NSSize(width: 0, height: 0)
+        let coordinator = context.coordinator
+        tv.onWidthChange = { [weak coordinator] textView in
+            coordinator?.recalcHeight(textView)
+        }
+
+        let scrollView = NSScrollView()
+        scrollView.hasVerticalScroller = true
+        scrollView.autohidesScrollers = true
+        scrollView.drawsBackground = false
+        scrollView.documentView = tv
+        return scrollView
     }
 
-    required init?(coder: NSCoder) { fatalError() }
+    func updateNSView(_ scrollView: NSScrollView, context: Context) {
+        guard let tv = scrollView.documentView as? NSTextView else { return }
+        if tv.string != text {
+            let sel = tv.selectedRange()
+            tv.string = text
+            tv.setSelectedRange(sel)
+        }
+        DispatchQueue.main.async { self.recalcHeight(tv) }
+    }
 
-    func show() {
-        showWindow(nil)
-        window?.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+    func recalcHeight(_ tv: NSTextView) {
+        guard let lm = tv.layoutManager, let tc = tv.textContainer else { return }
+        lm.ensureLayout(for: tc)
+        let contentH = lm.usedRect(for: tc).height + tv.textContainerInset.height * 2
+        let clampedH = min(max(contentH, font.pointSize + 6), maxHeight)
+        // editorHeight drives the NSScrollView's SwiftUI frame (clamped to maxHeight)
+        if abs(clampedH - height) > 0.5 { height = clampedH }
+        // tv frame must be full content height so NSScrollView can scroll when content > maxHeight
+        if abs(tv.frame.height - contentH) > 0.5 {
+            tv.setFrameSize(NSSize(width: tv.frame.width, height: contentH))
+        }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    class Coordinator: NSObject, NSTextViewDelegate {
+        var parent: AutoGrowingTextEditor
+        init(_ p: AutoGrowingTextEditor) { parent = p }
+
+        func recalcHeight(_ tv: NSTextView) { parent.recalcHeight(tv) }
+
+        func textDidChange(_ notification: Notification) {
+            guard let tv = notification.object as? NSTextView else { return }
+            parent.text = tv.string
+            parent.recalcHeight(tv)
+        }
+
+        func textDidBeginEditing(_ notification: Notification) {
+            parent.onFocus?()
+        }
     }
 }

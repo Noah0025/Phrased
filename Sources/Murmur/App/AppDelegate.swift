@@ -4,8 +4,7 @@ import AppKit
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusBarController: StatusBarController?
     private var hotkeyManager: HotkeyManager?
-    private var inputWindowController: InputWindowController?
-    private var confirmWindowController: ConfirmWindowController?
+    private var murmurWindowController: MurmurWindowController?
 
     private lazy var ollama = OllamaClient(model: "qwen2.5:7b")
     private lazy var processor = IntentProcessor()
@@ -15,32 +14,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
-        inputWindowController = InputWindowController(vm: inputVM)
-        confirmWindowController = ConfirmWindowController(vm: confirmVM)
+        murmurWindowController = MurmurWindowController(inputVM: inputVM, confirmVM: confirmVM)
 
-        inputVM.onSubmit = { [weak self] text in
-            self?.inputWindowController?.window?.orderOut(nil)
-            self?.confirmWindowController?.present(input: text)
+        inputVM.onSubmit = { [weak self] text, style in
+            guard let self else { return }
+            self.confirmVM.start(input: text, style: style)
         }
 
         statusBarController = StatusBarController { [weak self] in
-            self?.showInputWindow()
+            self?.showWindow()
         }
 
         hotkeyManager = HotkeyManager { [weak self] in
-            self?.showInputWindow()
+            self?.showWindow()
         }
 
-        // Pre-warm Ollama
+        // Pre-warm
         Task {
-            _ = try? await URLSession.shared.data(for: self.ollama.buildRequest(
+            _ = try? await URLSession.shared.data(for: ollama.buildRequest(
                 messages: [OllamaMessage(role: "user", content: "hi")]
             ))
         }
+        inputVM.warmUpTranscriber()
     }
 
-    private func showInputWindow() {
-        inputWindowController?.show()
+    private func showWindow() {
+        murmurWindowController?.show()
     }
 
     func applicationWillTerminate(_ notification: Notification) {}
