@@ -81,6 +81,9 @@ struct MurmurView: View {
             stylePicker
                 .padding(.bottom, 7)
 
+            audioSourceButton
+                .padding(.bottom, 7)
+
             Spacer().frame(width: 12)
 
             submitButton
@@ -153,6 +156,20 @@ struct MurmurView: View {
         .pickerStyle(.menu)
         .frame(width: 72)
         .labelsHidden()
+    }
+
+    // MARK: Audio source button
+
+    private var audioSourceButton: some View {
+        Button {
+            inputVM.settings.audioSource = inputVM.settings.audioSource == "microphone" ? "systemAudio" : "microphone"
+        } label: {
+            Text(inputVM.settings.audioSource == "microphone" ? "🎙" : "🖥")
+                .font(.system(size: 14))
+                .frame(width: 28, height: 28)
+        }
+        .buttonStyle(.plain)
+        .help(inputVM.settings.audioSource == "microphone" ? "当前：麦克风" : "当前：系统音频")
     }
 
     // MARK: Submit button
