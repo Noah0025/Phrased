@@ -15,13 +15,15 @@ class ConfirmViewModel: ObservableObject {
 
     private var llm: LLMProvider
     private let processor: IntentProcessor
+    private let historyStore: HistoryStore
     private var streamTask: Task<Void, Never>?
 
     var onDismiss: (() -> Void)?
 
-    init(llm: LLMProvider, processor: IntentProcessor) {
+    init(llm: LLMProvider, processor: IntentProcessor, historyStore: HistoryStore = HistoryStore()) {
         self.llm = llm
         self.processor = processor
+        self.historyStore = historyStore
     }
 
     func updateProvider(_ newLLM: LLMProvider) {
@@ -50,6 +52,15 @@ class ConfirmViewModel: ObservableObject {
     func accept(outputMode: String = "copy") {
         let text = streamedResult
         let targetApp = currentContext.frontmostApp
+
+        // Persist to history
+        let entry = HistoryEntry(
+            id: UUID(), createdAt: Date(),
+            input: originalInput, output: text,
+            templateName: currentTemplate.name,
+            appName: currentContext.frontmostAppName
+        )
+        try? historyStore.append(entry)
 
         if outputMode == "inject" {
             Task { @MainActor in
