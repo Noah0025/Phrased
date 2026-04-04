@@ -46,7 +46,9 @@ class InputViewModel: ObservableObject {
 
     /// Sets the active audio source and persists the preference.
     /// Falls back to "systemAudio" if the chosen device is no longer available.
+    /// No-op during an active recording — takes effect on the next session.
     func selectAudioSource(_ id: String) {
+        guard !isRecording else { return }
         let resolvedID = deviceManager.contains(id: id) ? id : "systemAudio"
         settings.audioSource = resolvedID
         do { try settings.save() } catch { print("[InputViewModel] Failed to save settings: \(error)") }
@@ -77,7 +79,7 @@ class InputViewModel: ObservableObject {
     }
 
     func toggleRecording() {
-        isRecording ? stopRecordingManually() : startRecording()
+        isRecording ? stopRecording() : startRecording()
     }
 
     private func startRecording() {
@@ -90,21 +92,32 @@ class InputViewModel: ObservableObject {
             }
         } else {
             let uid = settings.audioSource
-            micCapture.start(deviceUID: uid) { [weak self] buffer in
-                self?.transcriber.appendBuffer(buffer)
+            micCapture.onDeviceLost = { [weak self] in
+                guard let self else { return }
+                // Device disconnected mid-recording — stop cleanly.
+                self.stopRecording()
+            }
+            do {
+                try micCapture.start(deviceUID: uid) { [weak self] buffer in
+                    self?.transcriber.appendBuffer(buffer)
+                }
+            } catch {
+                print("[InputViewModel] Failed to start mic capture: \(error)")
+                isRecording = false
+                isTranscribing = false
+                transcriber.stopSession()
             }
         }
-    }
-
-    private func stopRecordingManually() {
-        stopRecording()
     }
 
     private func stopRecording() {
         isRecording = false
         isTranscribing = true
-        audioCapture.stop()
-        micCapture.stop()
+        if settings.audioSource == "systemAudio" {
+            audioCapture.stop()
+        } else {
+            micCapture.stop()
+        }
         transcriber.stopSession()
     }
 }

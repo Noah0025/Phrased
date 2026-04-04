@@ -4,9 +4,17 @@ import CoreAudio
 
 /// Captures a specific microphone input via AVAudioEngine.
 /// Outputs 16 kHz mono Float32 PCM buffers — same format as AudioCapture.
+///
+/// `start()`, `stop()`, and all mutable state must be accessed from the main actor.
+/// The tap callback fires on AVAudioEngine's internal thread and accesses only
+/// immutable captures — no actor-isolated state is touched from background threads.
 class MicrophoneCapture {
-    private var engine: AVAudioEngine?
-    private(set) var isRunning = false
+    @MainActor private var engine: AVAudioEngine?
+    @MainActor private(set) var isRunning = false
+
+    /// Called on the main thread when the underlying audio engine loses its device
+    /// configuration (e.g. Bluetooth headset disconnects mid-recording).
+    @MainActor var onDeviceLost: (() -> Void)?
 
     // Known-valid compile-time constants — force-unwrap is intentional.
     private let targetFormat = AVAudioFormat(
@@ -18,7 +26,9 @@ class MicrophoneCapture {
 
     /// - Parameter deviceUID: `AVCaptureDevice.uniqueID` for the desired
     ///   microphone.  Pass `nil` to use the system default input device.
-    func start(deviceUID: String? = nil, onBuffer: @escaping (AVAudioPCMBuffer) -> Void) {
+    /// - Throws: If the AVAudioEngine fails to start.
+    @MainActor
+    func start(deviceUID: String? = nil, onBuffer: @escaping (AVAudioPCMBuffer) -> Void) throws {
         // Tear down any existing session before starting a new one.
         if isRunning { stop() }
 
@@ -33,34 +43,68 @@ class MicrophoneCapture {
         let input = engine.inputNode
         let inputFormat = input.outputFormat(forBus: 0)
 
-        // Capture onBuffer by value so the tap callback does not race with stop().
-        input.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) { [weak self] buffer, _ in
-            guard let self, let converted = self.convert(buffer, to: self.targetFormat) else { return }
+        // Build the converter once for this session and capture it by value in the
+        // tap closure — this avoids accessing any actor-isolated property from the
+        // background thread on which AVAudioEngine fires the tap.
+        guard let converter = AVAudioConverter(from: inputFormat, to: targetFormat) else {
+            throw MicCaptureError.converterUnavailable
+        }
+        let targetFormat = self.targetFormat  // capture by value
+
+        input.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) { buffer, _ in
+            guard let converted = Self.convert(buffer, using: converter, to: targetFormat) else { return }
             onBuffer(converted)
         }
+
+        // Observe device configuration changes (e.g. Bluetooth disconnect).
+        // AVFoundation posts AVAudioEngineConfigurationChange on the main thread.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(engineConfigurationChanged),
+            name: .AVAudioEngineConfigurationChange,
+            object: engine
+        )
 
         do {
             try engine.start()
             isRunning = true
         } catch {
-            // Clean up the installed tap so the engine can be safely deallocated.
+            // Clean up before propagating so the engine can be safely deallocated.
+            NotificationCenter.default.removeObserver(self, name: .AVAudioEngineConfigurationChange, object: engine)
             engine.inputNode.removeTap(onBus: 0)
             self.engine = nil
             isRunning = false
+            throw error
         }
     }
 
+    @MainActor
     func stop() {
-        engine?.inputNode.removeTap(onBus: 0)
-        engine?.stop()
-        engine = nil
+        guard let engine else { return }
+        NotificationCenter.default.removeObserver(self, name: .AVAudioEngineConfigurationChange, object: engine)
+        engine.inputNode.removeTap(onBus: 0)
+        engine.stop()
+        self.engine = nil
         isRunning = false
     }
 
     // MARK: - Private helpers
 
-    private func convert(_ buffer: AVAudioPCMBuffer, to format: AVAudioFormat) -> AVAudioPCMBuffer? {
-        guard let converter = AVAudioConverter(from: buffer.format, to: format) else { return nil }
+    @objc private func engineConfigurationChanged(_ notification: Notification) {
+        // AVFoundation documents that AVAudioEngineConfigurationChange fires on the main thread.
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            self.stop()
+            self.onDeviceLost?()
+        }
+    }
+
+    /// Pure conversion helper — no instance state accessed, safe to call from any thread.
+    private static func convert(
+        _ buffer: AVAudioPCMBuffer,
+        using converter: AVAudioConverter,
+        to format: AVAudioFormat
+    ) -> AVAudioPCMBuffer? {
         let frameCapacity = AVAudioFrameCount(
             Double(buffer.frameLength) * format.sampleRate / buffer.format.sampleRate
         )
@@ -124,4 +168,8 @@ class MicrophoneCapture {
         }
         return deviceID != kAudioObjectUnknown ? deviceID : nil
     }
+}
+
+enum MicCaptureError: Error {
+    case converterUnavailable
 }
