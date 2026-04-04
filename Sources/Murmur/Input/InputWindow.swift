@@ -9,6 +9,7 @@ class InputViewModel: ObservableObject {
     @Published var isTranscribing: Bool = false
     @Published var selectedTemplate: PromptTemplate = PromptTemplate.builtins[0]
     @Published var allTemplates: [PromptTemplate] = PromptTemplate.builtins
+    @Published var contextAppName: String? = nil
 
     var onSubmit: ((String, PromptTemplate) -> Void)?
 

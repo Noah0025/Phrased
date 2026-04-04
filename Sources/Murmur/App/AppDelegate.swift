@@ -21,7 +21,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         inputVM.allTemplates = settings.allTemplates
         inputVM.onSubmit = { [weak self] text, template in
             guard let self else { return }
-            self.confirmVM.start(input: text, template: template)
+            let context = self.murmurWindowController?.pendingContext ?? .empty
+            self.confirmVM.start(input: text, template: template, context: context)
         }
 
         statusBarController = StatusBarController(
@@ -42,6 +43,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             onChunk: { _ in }, onDone: {}
         )
         inputVM.warmUpTranscriber()
+
+        // Request Accessibility permission (needed for selected text capture)
+        if !AXIsProcessTrusted() {
+            let options = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true] as CFDictionary
+            AXIsProcessTrustedWithOptions(options)
+        }
     }
 
     private func makeLLMProvider() -> LLMProvider {
@@ -57,7 +64,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func showWindow() { murmurWindowController?.show() }
+    private func showWindow() {
+        let context = ContextCapture.capture()  // must be called before NSApp.activate
+        murmurWindowController?.show(context: context)
+    }
 
     private func showSettings() {
         settingsWindowController = SettingsWindowController(

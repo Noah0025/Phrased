@@ -32,6 +32,17 @@ struct MurmurView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            if let appName = inputVM.contextAppName {
+                HStack(spacing: 4) {
+                    Image(systemName: "app.badge")
+                        .font(.caption2).foregroundColor(.secondary.opacity(0.5))
+                    Text(appName)
+                        .font(.caption2).foregroundColor(.secondary.opacity(0.6))
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.top, 6)
+            }
             inputBar
 
             if showResult {
@@ -296,6 +307,7 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
     private let hosting: NSHostingController<MurmurView>
     private var cancellables = Set<AnyCancellable>()
     private var isBeingShown = false
+    private(set) var pendingContext: InputContext = .empty
 
     init(inputVM: InputViewModel, confirmVM: ConfirmViewModel) {
         self.inputVM = inputVM
@@ -389,7 +401,14 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
         }
     }
 
-    func show() {
+    func show(context: InputContext = .empty) {
+        pendingContext = context
+        inputVM.contextAppName = context.frontmostAppName
+        // Auto-apply suggested template based on frontmost app
+        if let suggestedID = context.suggestedTemplateID,
+           let template = inputVM.allTemplates.first(where: { $0.id == suggestedID }) {
+            inputVM.selectedTemplate = template
+        }
         isBeingShown = true
         inputVM.inputText = ""
         inputVM.editorHeight = 22
