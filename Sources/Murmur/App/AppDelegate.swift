@@ -6,11 +6,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var hotkeyManager: HotkeyManager?
     private var murmurWindowController: MurmurWindowController?
     private var settingsWindowController: SettingsWindowController?
+    private var historyWindowController: HistoryWindowController?
 
     private var settings = MurmurSettings.loadOrDefault()
+    private lazy var historyStore = HistoryStore()
     private lazy var processor = IntentProcessor()
     private lazy var inputVM = InputViewModel()
-    private lazy var confirmVM = ConfirmViewModel(llm: makeLLMProvider(), processor: processor)
+    private lazy var confirmVM = ConfirmViewModel(llm: makeLLMProvider(), processor: processor, historyStore: historyStore)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -28,7 +30,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusBarController = StatusBarController(
             onOpen:     { [weak self] in self?.showWindow() },
             onSettings: { [weak self] in self?.showSettings() },
-            onHistory:  { } // wired in Phase 6
+            onHistory:  { [weak self] in self?.showHistory() }
         )
 
         hotkeyManager = HotkeyManager(
@@ -87,6 +89,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
         settingsWindowController?.showWindow(nil)
         settingsWindowController?.window?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func showHistory() {
+        if historyWindowController == nil {
+            historyWindowController = HistoryWindowController(store: historyStore)
+        }
+        historyWindowController?.showWindow(nil)
+        historyWindowController?.window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
 
