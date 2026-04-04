@@ -312,6 +312,7 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
     private var cancellables = Set<AnyCancellable>()
     private var isBeingShown = false
     private(set) var pendingContext: InputContext = .empty
+    private var mouseMonitor: Any?
 
     init(inputVM: InputViewModel, confirmVM: ConfirmViewModel) {
         self.inputVM = inputVM
@@ -363,10 +364,7 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
             .receive(on: DispatchQueue.main).sink { _ in resize() }.store(in: &cancellables)
 
         confirmVM.onDismiss = { [weak self] in
-            self?.window?.orderOut(nil)
-            confirmVM.streamedResult = ""
-            confirmVM.showFeedbackField = false
-            confirmVM.isLocked = false
+            self?.dismissPanel()
         }
     }
 
@@ -413,6 +411,14 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
            let template = inputVM.allTemplates.first(where: { $0.id == suggestedID }) {
             inputVM.selectedTemplate = template
         }
+        // Register global mouse monitor: dismiss on click outside the panel
+        if let m = mouseMonitor { NSEvent.removeMonitor(m); mouseMonitor = nil }
+        mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            guard let self, !self.confirmVM.isLocked else { return }
+            guard let win = self.window, !win.frame.contains(NSEvent.mouseLocation) else { return }
+            DispatchQueue.main.async { self.dismissPanel() }
+        }
+
         isBeingShown = true
         inputVM.inputText = ""
         inputVM.editorHeight = 22
@@ -442,17 +448,19 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
     }
 
     func windowDidResignKey(_ notification: Notification) {
+        // Only dismiss when the whole app loses focus (⌘Tab, clicking another app).
+        // IME candidate windows keep NSApp.isActive = true — don't dismiss for those.
         guard !isBeingShown, !confirmVM.isLocked else { return }
-        // Delay before dismissing: if an IME candidate window caused the resign,
-        // our window will regain key once the user selects a character.
-        // Only dismiss if we're still not key after the delay.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
-            guard let self else { return }
-            guard !(self.window?.isKeyWindow ?? false) else { return }
-            self.window?.orderOut(nil)
-            self.confirmVM.streamedResult = ""
-            self.confirmVM.showFeedbackField = false
-            self.confirmVM.isLocked = false
-        }
+        guard !NSApp.isActive else { return }
+        dismissPanel()
+    }
+
+    private func dismissPanel() {
+        window?.orderOut(nil)
+        inputVM.contextAppName = nil
+        confirmVM.streamedResult = ""
+        confirmVM.showFeedbackField = false
+        confirmVM.isLocked = false
+        if let m = mouseMonitor { NSEvent.removeMonitor(m); mouseMonitor = nil }
     }
 }
