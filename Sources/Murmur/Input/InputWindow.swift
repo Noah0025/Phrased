@@ -7,7 +7,6 @@ class InputViewModel: ObservableObject {
     @Published var editorHeight: CGFloat = 22
     @Published var isRecording: Bool = false
     @Published var isTranscribing: Bool = false
-    @Published var partialTranscript: String = ""
     @Published var selectedStyle: WritingStyle = .auto
 
     var onSubmit: ((String, WritingStyle) -> Void)?
@@ -60,7 +59,6 @@ class InputViewModel: ObservableObject {
     private func startRecording() {
         isRecording = true
         inputText = ""
-        partialTranscript = ""
         transcriber.startSession()
         audioCapture.start { [weak self] buffer in
             self?.transcriber.appendBuffer(buffer)
