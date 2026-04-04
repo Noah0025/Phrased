@@ -56,7 +56,9 @@ class WhisperTranscriber {
             process.standardOutput = Pipe()
             process.standardError = Pipe()
             try? process.run()
-            process.waitUntilExit()
+            await withCheckedContinuation { (c: CheckedContinuation<Void, Never>) in
+                process.terminationHandler = { _ in c.resume() }
+            }
             try? FileManager.default.removeItem(at: url)
             let txtURL = url.deletingPathExtension().appendingPathExtension("txt")
             try? FileManager.default.removeItem(at: txtURL)
@@ -122,10 +124,13 @@ class WhisperTranscriber {
 
         do {
             try process.run()
-            process.waitUntilExit()
         } catch {
             DispatchQueue.main.async { self.onFinal?("") }
             return
+        }
+
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            process.terminationHandler = { _ in continuation.resume() }
         }
 
         let text = (try? String(contentsOf: txtURL, encoding: .utf8))?
