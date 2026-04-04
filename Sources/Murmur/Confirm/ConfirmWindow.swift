@@ -443,9 +443,16 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
 
     func windowDidResignKey(_ notification: Notification) {
         guard !isBeingShown, !confirmVM.isLocked else { return }
-        window?.orderOut(nil)
-        confirmVM.streamedResult = ""
-        confirmVM.showFeedbackField = false
-        confirmVM.isLocked = false
+        // Delay before dismissing: if an IME candidate window caused the resign,
+        // our window will regain key once the user selects a character.
+        // Only dismiss if we're still not key after the delay.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+            guard let self else { return }
+            guard !(self.window?.isKeyWindow ?? false) else { return }
+            self.window?.orderOut(nil)
+            self.confirmVM.streamedResult = ""
+            self.confirmVM.showFeedbackField = false
+            self.confirmVM.isLocked = false
+        }
     }
 }
