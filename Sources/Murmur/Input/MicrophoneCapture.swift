@@ -6,9 +6,9 @@ import CoreAudio
 /// Outputs 16 kHz mono Float32 PCM buffers — same format as AudioCapture.
 class MicrophoneCapture {
     private var engine: AVAudioEngine?
-    private var onBuffer: ((AVAudioPCMBuffer) -> Void)?
     private(set) var isRunning = false
 
+    // Known-valid compile-time constants — force-unwrap is intentional.
     private let targetFormat = AVAudioFormat(
         commonFormat: .pcmFormatFloat32,
         sampleRate: 16000,
@@ -19,7 +19,9 @@ class MicrophoneCapture {
     /// - Parameter deviceUID: `AVCaptureDevice.uniqueID` for the desired
     ///   microphone.  Pass `nil` to use the system default input device.
     func start(deviceUID: String? = nil, onBuffer: @escaping (AVAudioPCMBuffer) -> Void) {
-        self.onBuffer = onBuffer
+        // Tear down any existing session before starting a new one.
+        if isRunning { stop() }
+
         let engine = AVAudioEngine()
         self.engine = engine
 
@@ -31,15 +33,19 @@ class MicrophoneCapture {
         let input = engine.inputNode
         let inputFormat = input.outputFormat(forBus: 0)
 
+        // Capture onBuffer by value so the tap callback does not race with stop().
         input.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) { [weak self] buffer, _ in
             guard let self, let converted = self.convert(buffer, to: self.targetFormat) else { return }
-            self.onBuffer?(converted)
+            onBuffer(converted)
         }
 
         do {
             try engine.start()
             isRunning = true
         } catch {
+            // Clean up the installed tap so the engine can be safely deallocated.
+            engine.inputNode.removeTap(onBus: 0)
+            self.engine = nil
             isRunning = false
         }
     }
@@ -58,7 +64,8 @@ class MicrophoneCapture {
         let frameCapacity = AVAudioFrameCount(
             Double(buffer.frameLength) * format.sampleRate / buffer.format.sampleRate
         )
-        guard let out = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCapacity) else { return nil }
+        guard frameCapacity > 0,
+              let out = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCapacity) else { return nil }
         var error: NSError?
         var consumed = false
         converter.convert(to: out, error: &error) { _, outStatus in
@@ -76,7 +83,7 @@ class MicrophoneCapture {
         guard let deviceID = audioDeviceID(for: uid),
               let au = engine.inputNode.audioUnit else { return }
         var id = deviceID
-        AudioUnitSetProperty(
+        let status = AudioUnitSetProperty(
             au,
             kAudioOutputUnitProperty_CurrentDevice,
             kAudioUnitScope_Global,
@@ -84,6 +91,10 @@ class MicrophoneCapture {
             &id,
             UInt32(MemoryLayout<AudioDeviceID>.size)
         )
+        if status != noErr {
+            // Device set failed (e.g. output-only device); engine will use system default.
+            print("[MicrophoneCapture] AudioUnitSetProperty failed for uid \(uid), OSStatus \(status)")
+        }
     }
 
     /// Returns the `AudioDeviceID` for the given UID, or `nil` if not found.
@@ -95,13 +106,14 @@ class MicrophoneCapture {
             mScope: kAudioObjectPropertyScopeGlobal,
             mElement: kAudioObjectPropertyElementMain
         )
+        // mInputData must point to a CFStringRef (an opaque 8-byte pointer), not the
+        // string contents — MemoryLayout<CFStringRef>.size == sizeof(void*) == 8.
         var size = UInt32(MemoryLayout<AudioValueTranslation>.size)
-        // Use withUnsafeMutablePointer to guarantee pointer lifetime across the call.
         withUnsafeMutablePointer(to: &cfUID) { inputPtr in
             withUnsafeMutablePointer(to: &deviceID) { outputPtr in
                 var translation = AudioValueTranslation(
                     mInputData: inputPtr,
-                    mInputDataSize: UInt32(MemoryLayout<CFString>.size),
+                    mInputDataSize: UInt32(MemoryLayout<CFStringRef>.size),
                     mOutputData: outputPtr,
                     mOutputDataSize: UInt32(MemoryLayout<AudioObjectID>.size)
                 )
