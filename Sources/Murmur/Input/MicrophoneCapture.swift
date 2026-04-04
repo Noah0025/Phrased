@@ -90,21 +90,26 @@ class MicrophoneCapture {
     private static func audioDeviceID(for uid: String) -> AudioDeviceID? {
         var deviceID = AudioObjectID(kAudioObjectUnknown)
         var cfUID = uid as CFString
-        var translation = AudioValueTranslation(
-            mInputData: &cfUID,
-            mInputDataSize: UInt32(MemoryLayout<CFString>.size),
-            mOutputData: &deviceID,
-            mOutputDataSize: UInt32(MemoryLayout<AudioObjectID>.size)
-        )
         var addr = AudioObjectPropertyAddress(
             mSelector: kAudioHardwarePropertyTranslateUIDToDevice,
             mScope: kAudioObjectPropertyScopeGlobal,
             mElement: kAudioObjectPropertyElementMain
         )
         var size = UInt32(MemoryLayout<AudioValueTranslation>.size)
-        AudioObjectGetPropertyData(
-            AudioObjectID(kAudioObjectSystemObject), &addr, 0, nil, &size, &translation
-        )
+        // Use withUnsafeMutablePointer to guarantee pointer lifetime across the call.
+        withUnsafeMutablePointer(to: &cfUID) { inputPtr in
+            withUnsafeMutablePointer(to: &deviceID) { outputPtr in
+                var translation = AudioValueTranslation(
+                    mInputData: inputPtr,
+                    mInputDataSize: UInt32(MemoryLayout<CFString>.size),
+                    mOutputData: outputPtr,
+                    mOutputDataSize: UInt32(MemoryLayout<AudioObjectID>.size)
+                )
+                AudioObjectGetPropertyData(
+                    AudioObjectID(kAudioObjectSystemObject), &addr, 0, nil, &size, &translation
+                )
+            }
+        }
         return deviceID != kAudioObjectUnknown ? deviceID : nil
     }
 }
