@@ -69,6 +69,6 @@ class AudioDeviceManager: ObservableObject {
         // Ignore events from non-audio devices (e.g. cameras)
         if let device = notification.object as? AVCaptureDevice,
            !device.hasMediaType(.audio) { return }
-        DispatchQueue.main.async { [weak self] in self?.refresh() }
+        Task { @MainActor [weak self] in self?.refresh() }
     }
 }
