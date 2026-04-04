@@ -278,8 +278,12 @@ struct MurmurView: View {
                 .padding(.vertical, 5)
                 .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.05)))
 
+            let outputMode = inputVM.settings.defaultOutputMode
             let accepted = confirmVM.didCopy
-            Button(accepted ? "已复制 ✓" : "接受并复制") { confirmVM.accept() }
+            let acceptLabel = accepted
+                ? (outputMode == "inject" ? "已注入 ✓" : "已复制 ✓")
+                : (outputMode == "inject" ? "注入到光标" : "接受并复制")
+            Button(acceptLabel) { confirmVM.accept(outputMode: outputMode) }
                 .keyboardShortcut(.return)
                 .disabled(confirmVM.isStreaming || confirmVM.streamedResult.isEmpty)
                 .buttonStyle(.plain)

@@ -47,8 +47,18 @@ class ConfirmViewModel: ObservableObject {
         generate(feedback: feedback)
     }
 
-    func accept() {
-        ClipboardOutput.copy(streamedResult)
+    func accept(outputMode: String = "copy") {
+        let text = streamedResult
+        let targetApp = currentContext.frontmostApp
+
+        if outputMode == "inject" {
+            Task { @MainActor in
+                await TextInjector.inject(text, into: targetApp)
+            }
+        } else {
+            ClipboardOutput.copy(text)
+        }
+
         didCopy = true
         if !isLocked {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
