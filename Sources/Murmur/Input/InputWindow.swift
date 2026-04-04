@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import Combine
 
 @MainActor
 class InputViewModel: ObservableObject {
@@ -10,6 +11,8 @@ class InputViewModel: ObservableObject {
     @Published var selectedTemplate: PromptTemplate = PromptTemplate.builtins[0]
     @Published var allTemplates: [PromptTemplate] = PromptTemplate.builtins
     @Published var contextAppName: String? = nil
+    @Published var availableDevices: [AudioDevice] = []
+    @Published var settings: MurmurSettings = MurmurSettings()
 
     var onSubmit: ((String, PromptTemplate) -> Void)?
 
@@ -17,11 +20,15 @@ class InputViewModel: ObservableObject {
     private let micCapture = MicrophoneCapture()
     private var transcriber: ASRProvider
     private var pendingSubmit = false
-    var settings: MurmurSettings = MurmurSettings()
+    private let deviceManager = AudioDeviceManager()
     var vocabularyStore: VocabularyStore = VocabularyStore()
 
     init(transcriber: ASRProvider = WhisperTranscriber()) {
         self.transcriber = transcriber
+        availableDevices = deviceManager.devices
+        deviceManager.$devices
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$availableDevices)
         transcriber.onFinal = { [weak self] text in
             DispatchQueue.main.async {
                 guard let self else { return }
@@ -38,6 +45,14 @@ class InputViewModel: ObservableObject {
         }
     }
 
+    /// Sets the active audio source and persists the preference.
+    /// Falls back to "systemAudio" if the chosen device is no longer available.
+    func selectAudioSource(_ id: String) {
+        let resolvedID = deviceManager.contains(id: id) ? id : "systemAudio"
+        settings.audioSource = resolvedID
+        try? settings.save()
+    }
+
     func submit() {
         if isRecording {
             pendingSubmit = true
@@ -52,7 +67,6 @@ class InputViewModel: ObservableObject {
         let finalText = vocabularyStore.apply(to: raw)
         guard !finalText.isEmpty else { return }
         onSubmit?(finalText, selectedTemplate)
-        inputText = ""
     }
 
     func updateASRProvider(_ asr: ASRProvider) {
@@ -71,12 +85,13 @@ class InputViewModel: ObservableObject {
         isRecording = true
         inputText = ""
         transcriber.startSession()
-        if settings.audioSource == "microphone" {
-            micCapture.start { [weak self] buffer in
+        if settings.audioSource == "systemAudio" {
+            audioCapture.start { [weak self] buffer in
                 self?.transcriber.appendBuffer(buffer)
             }
         } else {
-            audioCapture.start { [weak self] buffer in
+            let uid = settings.audioSource
+            micCapture.start(deviceUID: uid) { [weak self] buffer in
                 self?.transcriber.appendBuffer(buffer)
             }
         }
@@ -110,6 +125,23 @@ private class WrappingTextView: NSTextView {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.onWidthChange?(self)
+        }
+    }
+
+    /// Explicitly handle standard text editing shortcuts.
+    /// NSHostingView (SwiftUI wrapper) can intercept performKeyEquivalent before it
+    /// reaches the first responder in some macOS/SwiftUI combinations; this override
+    /// ensures Cmd+A/C/V/X/Z are handled directly on the text view.
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        let onlyCmd = event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .command
+        guard onlyCmd else { return super.performKeyEquivalent(with: event) }
+        switch event.charactersIgnoringModifiers {
+        case "a": selectAll(nil); return true
+        case "c": copy(nil); return true
+        case "v": paste(nil); return true
+        case "x": cut(nil); return true
+        case "z": undoManager?.undo(); return true
+        default:  return super.performKeyEquivalent(with: event)
         }
     }
 }
