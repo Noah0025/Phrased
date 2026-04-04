@@ -7,12 +7,14 @@ class AudioCapture: NSObject {
     private var onBuffer: ((AVAudioPCMBuffer) -> Void)?
     private let lock = NSLock()
     private var _isRunning = false
+    private var _isStopped = false
 
     var isRunning: Bool {
         lock.withLock { _isRunning }
     }
 
     func start(onBuffer: @escaping (AVAudioPCMBuffer) -> Void) {
+        lock.withLock { _isStopped = false }
         self.onBuffer = onBuffer
         Task {
             await startCapture()
@@ -20,14 +22,18 @@ class AudioCapture: NSObject {
     }
 
     func stop() {
+        lock.withLock {
+            _isRunning = false
+            _isStopped = true
+        }
         Task {
             try? await stream?.stopCapture()
             stream = nil
         }
-        lock.withLock { _isRunning = false }
     }
 
     private func startCapture() async {
+        guard !lock.withLock({ _isStopped }) else { return }
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
             guard let display = content.displays.first else { return }
@@ -47,6 +53,10 @@ class AudioCapture: NSObject {
             let newStream = SCStream(filter: filter, configuration: config, delegate: nil)
             try newStream.addStreamOutput(self, type: .audio, sampleHandlerQueue: .global(qos: .userInteractive))
             try await newStream.startCapture()
+            guard !lock.withLock({ _isStopped }) else {
+                try? await newStream.stopCapture()
+                return
+            }
             self.stream = newStream
             lock.withLock { self._isRunning = true }
         } catch {
