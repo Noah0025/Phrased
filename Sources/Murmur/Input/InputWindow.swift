@@ -38,7 +38,6 @@ class InputViewModel: ObservableObject {
                     self.pendingSubmit = false
                     if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         self.onSubmit?(text, self.selectedTemplate)
-                        self.inputText = ""
                     }
                 }
             }
