@@ -60,9 +60,9 @@ struct MurmurView: View {
         .onReceive(Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()) { _ in
             if confirmVM.isStreaming { showCursor.toggle() } else { showCursor = false }
         }
-        .onChange(of: inputVM.selectedStyle) { newStyle in
+        .onChange(of: inputVM.selectedTemplate) { newTemplate in
             guard showResult else { return }
-            confirmVM.start(input: confirmVM.originalInput, style: newStyle)
+            confirmVM.start(input: confirmVM.originalInput, template: newTemplate)
         }
     }
 
@@ -148,13 +148,13 @@ struct MurmurView: View {
     // MARK: Style picker
 
     private var stylePicker: some View {
-        Picker("", selection: $inputVM.selectedStyle) {
-            ForEach(WritingStyle.allCases) { style in
-                Text(style.rawValue).tag(style)
+        Picker("", selection: $inputVM.selectedTemplate) {
+            ForEach(inputVM.allTemplates) { t in
+                Text(t.name).tag(t)
             }
         }
         .pickerStyle(.menu)
-        .frame(width: 72)
+        .frame(width: 88)
         .labelsHidden()
     }
 
@@ -380,6 +380,13 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
         }
         frame.size.height = clamped
         window.setFrame(frame, display: true, animate: false)
+    }
+
+    func updateTemplates(_ templates: [PromptTemplate]) {
+        inputVM.allTemplates = templates
+        if !templates.contains(inputVM.selectedTemplate) {
+            inputVM.selectedTemplate = PromptTemplate.builtins[0]
+        }
     }
 
     func show() {

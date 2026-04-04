@@ -22,6 +22,11 @@ struct MurmurSettings: Codable {
     // Output
     var defaultOutputMode: String = "copy"      // "copy" | "inject"
 
+    // Custom templates (builtins are always prepended at runtime)
+    var customTemplates: [PromptTemplate] = []
+
+    var allTemplates: [PromptTemplate] { PromptTemplate.builtins + customTemplates }
+
     static func defaultStorageURL() -> URL {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let dir = appSupport.appendingPathComponent("Murmur", isDirectory: true)

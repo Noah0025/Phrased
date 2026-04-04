@@ -18,9 +18,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         murmurWindowController = MurmurWindowController(inputVM: inputVM, confirmVM: confirmVM)
 
         inputVM.settings = settings
-        inputVM.onSubmit = { [weak self] text, style in
+        inputVM.allTemplates = settings.allTemplates
+        inputVM.onSubmit = { [weak self] text, template in
             guard let self else { return }
-            self.confirmVM.start(input: text, style: style)
+            self.confirmVM.start(input: text, template: template)
         }
 
         statusBarController = StatusBarController(
@@ -71,7 +72,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     modifiers: newSettings.hotkeyNSModifiers
                 )
                 self.confirmVM.updateProvider(self.makeLLMProvider())
-                // TODO: Phase 3 — self.murmurWindowController?.updateTemplates(newSettings.allTemplates)
+                self.murmurWindowController?.updateTemplates(newSettings.allTemplates)
             }
         )
         settingsWindowController?.showWindow(nil)

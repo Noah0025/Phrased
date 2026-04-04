@@ -7,9 +7,10 @@ class InputViewModel: ObservableObject {
     @Published var editorHeight: CGFloat = 22
     @Published var isRecording: Bool = false
     @Published var isTranscribing: Bool = false
-    @Published var selectedStyle: WritingStyle = .auto
+    @Published var selectedTemplate: PromptTemplate = PromptTemplate.builtins[0]
+    @Published var allTemplates: [PromptTemplate] = PromptTemplate.builtins
 
-    var onSubmit: ((String, WritingStyle) -> Void)?
+    var onSubmit: ((String, PromptTemplate) -> Void)?
 
     private let audioCapture = AudioCapture()
     private let micCapture = MicrophoneCapture()
@@ -27,7 +28,7 @@ class InputViewModel: ObservableObject {
                 if self.pendingSubmit {
                     self.pendingSubmit = false
                     if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        self.onSubmit?(text, self.selectedStyle)
+                        self.onSubmit?(text, self.selectedTemplate)
                         self.inputText = ""
                     }
                 }
@@ -47,7 +48,7 @@ class InputViewModel: ObservableObject {
         }
         let finalText = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !finalText.isEmpty else { return }
-        onSubmit?(finalText, selectedStyle)
+        onSubmit?(finalText, selectedTemplate)
         inputText = ""
     }
 

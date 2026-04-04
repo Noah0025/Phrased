@@ -10,7 +10,7 @@ class ConfirmViewModel: ObservableObject {
     @Published var showFeedbackField: Bool = false
     @Published var didCopy: Bool = false
     @Published var isLocked: Bool = false
-    private(set) var currentStyle: WritingStyle = .auto
+    private(set) var currentTemplate: PromptTemplate = PromptTemplate.builtins[0]
 
     private var llm: LLMProvider
     private let processor: IntentProcessor
@@ -27,9 +27,9 @@ class ConfirmViewModel: ObservableObject {
         llm = newLLM
     }
 
-    func start(input: String, style: WritingStyle = .auto) {
+    func start(input: String, template: PromptTemplate = PromptTemplate.builtins[0]) {
         originalInput = input
-        currentStyle = style
+        currentTemplate = template
         streamedResult = ""
         feedbackText = ""
         showFeedbackField = false
@@ -64,7 +64,7 @@ class ConfirmViewModel: ObservableObject {
     private func generate(feedback: String?) {
         streamTask?.cancel()
         isStreaming = true
-        let messages = processor.buildMessages(input: originalInput, feedback: feedback, style: currentStyle)
+        let messages = processor.buildMessages(input: originalInput, feedback: feedback, template: currentTemplate)
         streamTask = llm.streamChat(
             messages: messages,
             onChunk: { [weak self] chunk in

@@ -11,10 +11,11 @@ struct SettingsView: View {
 
     var body: some View {
         TabView {
-            modelTab.tabItem  { Label("模型",   systemImage: "cpu") }
-            audioTab.tabItem  { Label("音频",   systemImage: "waveform") }
-            hotkeyTab.tabItem { Label("快捷键",  systemImage: "keyboard") }
-            outputTab.tabItem { Label("输出",   systemImage: "arrow.right.doc.on.clipboard") }
+            modelTab.tabItem     { Label("模型",   systemImage: "cpu") }
+            audioTab.tabItem     { Label("音频",   systemImage: "waveform") }
+            hotkeyTab.tabItem    { Label("快捷键",  systemImage: "keyboard") }
+            outputTab.tabItem    { Label("输出",   systemImage: "arrow.right.doc.on.clipboard") }
+            templatesTab.tabItem { Label("模板",   systemImage: "text.badge.plus") }
         }
         .padding()
         .frame(width: 500, height: 440)
@@ -120,6 +121,46 @@ struct SettingsView: View {
     private var hotkeyDescription: String {
         let m: [String: String] = ["option":"⌥","command":"⌘","control":"⌃","shift":"⇧"]
         return draft.hotkeyModifiers.compactMap { m[$0] }.joined() + "Space"
+    }
+
+    // MARK: Templates Tab
+
+    private var templatesTab: some View {
+        VStack(spacing: 0) {
+            List {
+                Section("内置（只读）") {
+                    ForEach(PromptTemplate.builtins) { t in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(t.name).bold()
+                            Text(t.promptInstruction ?? "（无风格指令）")
+                                .font(.caption).foregroundColor(.secondary)
+                        }
+                    }
+                }
+                Section("自定义") {
+                    ForEach($draft.customTemplates) { $t in
+                        VStack(alignment: .leading, spacing: 4) {
+                            TextField("名称", text: $t.name)
+                            TextField("提示词指令", text: Binding(
+                                get: { t.promptInstruction ?? "" },
+                                set: { t.promptInstruction = $0.isEmpty ? nil : $0 }
+                            ), axis: .vertical)
+                            .lineLimit(3, reservesSpace: true)
+                            .font(.caption)
+                        }
+                    }
+                    .onDelete { draft.customTemplates.remove(atOffsets: $0) }
+                }
+            }
+            HStack {
+                Spacer()
+                Button("添加模板") {
+                    draft.customTemplates.append(
+                        PromptTemplate(id: UUID().uuidString, name: "新模板", promptInstruction: "")
+                    )
+                }.buttonStyle(.bordered)
+            }.padding()
+        }
     }
 
     // MARK: Output Tab
