@@ -12,7 +12,7 @@ class InputViewModel: ObservableObject {
     @Published var allTemplates: [PromptTemplate] = PromptTemplate.builtins
     @Published var contextAppName: String? = nil
     @Published var availableDevices: [AudioDevice] = []
-    @Published var settings: MurmurSettings = MurmurSettings()
+    @Published var settings: MurmurSettings = MurmurSettings.loadOrDefault()
 
     var onSubmit: ((String, PromptTemplate) -> Void)?
 
@@ -30,7 +30,7 @@ class InputViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .assign(to: &$availableDevices)
         transcriber.onFinal = { [weak self] text in
-            DispatchQueue.main.async {
+            Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.isTranscribing = false
                 self.inputText = text
@@ -49,7 +49,7 @@ class InputViewModel: ObservableObject {
     func selectAudioSource(_ id: String) {
         let resolvedID = deviceManager.contains(id: id) ? id : "systemAudio"
         settings.audioSource = resolvedID
-        try? settings.save()
+        do { try settings.save() } catch { print("[InputViewModel] Failed to save settings: \(error)") }
     }
 
     func submit() {
