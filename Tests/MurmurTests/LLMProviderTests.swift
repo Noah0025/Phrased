@@ -13,6 +13,18 @@ final class LLMProviderTests: XCTestCase {
         await task.value
         XCTAssertEqual(collected, "hello world")
     }
+
+    func test_ollamaProvider_conformsToProtocol() {
+        let provider: LLMProvider = OllamaLLMProvider(model: "qwen2.5:7b")
+        XCTAssertNotNil(provider)
+    }
+
+    func test_openAIProvider_conformsToProtocol() {
+        let provider: LLMProvider = OpenAICompatibleProvider(
+            baseURL: "https://api.openai.com", apiKey: "sk-test", model: "gpt-4o-mini"
+        )
+        XCTAssertNotNil(provider)
+    }
 }
 
 class MockLLMProvider: LLMProvider {
