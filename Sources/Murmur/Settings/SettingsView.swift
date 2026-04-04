@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @State private var draft: MurmurSettings
+    @State private var vocabWords: [VocabEntry] = VocabularyStore.loadOrDefault().words
     private let onSave: (MurmurSettings) -> Void
 
     init(settings: MurmurSettings, onSave: @escaping (MurmurSettings) -> Void) {
@@ -15,7 +16,8 @@ struct SettingsView: View {
             audioTab.tabItem     { Label("音频",   systemImage: "waveform") }
             hotkeyTab.tabItem    { Label("快捷键",  systemImage: "keyboard") }
             outputTab.tabItem    { Label("输出",   systemImage: "arrow.right.doc.on.clipboard") }
-            templatesTab.tabItem { Label("模板",   systemImage: "text.badge.plus") }
+            templatesTab.tabItem  { Label("模板",   systemImage: "text.badge.plus") }
+            vocabularyTab.tabItem { Label("热词",   systemImage: "text.word.spacing") }
         }
         .padding()
         .frame(width: 500, height: 440)
@@ -160,6 +162,38 @@ struct SettingsView: View {
                     )
                 }.buttonStyle(.bordered)
             }.padding()
+        }
+    }
+
+    // MARK: Vocabulary Tab
+
+    private var vocabularyTab: some View {
+        VStack(spacing: 0) {
+            Text("热词会在提交时自动替换（整词匹配）。例：输入 tmr → 自动展开为 tomorrow。")
+                .font(.caption).foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding([.horizontal, .top])
+
+            List {
+                ForEach($vocabWords) { $entry in
+                    HStack {
+                        TextField("触发词", text: $entry.trigger).frame(width: 100)
+                        Text("→").foregroundColor(.secondary)
+                        TextField("展开为", text: $entry.expansion)
+                    }
+                }
+                .onDelete { vocabWords.remove(atOffsets: $0) }
+            }
+
+            HStack {
+                Spacer()
+                Button("添加热词") {
+                    vocabWords.append(VocabEntry(trigger: "", expansion: ""))
+                }.buttonStyle(.bordered)
+            }.padding()
+        }
+        .onChange(of: vocabWords) { words in
+            try? VocabularyStore(words: words).save()
         }
     }
 

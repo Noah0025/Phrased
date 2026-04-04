@@ -18,6 +18,7 @@ class InputViewModel: ObservableObject {
     private var transcriber: ASRProvider
     private var pendingSubmit = false
     var settings: MurmurSettings = MurmurSettings()
+    var vocabularyStore: VocabularyStore = VocabularyStore()
 
     init(transcriber: ASRProvider = WhisperTranscriber()) {
         self.transcriber = transcriber
@@ -47,7 +48,8 @@ class InputViewModel: ObservableObject {
             pendingSubmit = true
             return
         }
-        let finalText = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let raw = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let finalText = vocabularyStore.apply(to: raw)
         guard !finalText.isEmpty else { return }
         onSubmit?(finalText, selectedTemplate)
         inputText = ""

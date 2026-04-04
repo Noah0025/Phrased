@@ -1,6 +1,6 @@
 import Foundation
 
-struct VocabEntry: Codable, Identifiable {
+struct VocabEntry: Codable, Identifiable, Equatable {
     var id: UUID = UUID()
     var trigger: String
     var expansion: String

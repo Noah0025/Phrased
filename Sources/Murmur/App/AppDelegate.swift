@@ -10,6 +10,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var settings = MurmurSettings.loadOrDefault()
     private lazy var historyStore = HistoryStore()
+    private lazy var vocabularyStore = VocabularyStore.loadOrDefault()
     private lazy var processor = IntentProcessor()
     private lazy var inputVM = InputViewModel()
     private lazy var confirmVM = ConfirmViewModel(llm: makeLLMProvider(), processor: processor, historyStore: historyStore)
@@ -21,6 +22,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         inputVM.settings = settings
         inputVM.allTemplates = settings.allTemplates
+        inputVM.vocabularyStore = vocabularyStore
         inputVM.onSubmit = { [weak self] text, template in
             guard let self else { return }
             let context = self.murmurWindowController?.pendingContext ?? .empty
