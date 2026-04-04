@@ -16,17 +16,20 @@ final class IntentProcessorTests: XCTestCase {
         XCTAssertTrue(userMessage?.content.contains("更正式一些") == true)
     }
 
-    func test_buildMessages_withStyle_injectsStyleInstruction() {
+    func test_buildMessages_withTemplate_injectsInstruction() {
         let processor = IntentProcessor()
-        let messages = processor.buildMessages(input: "hello", feedback: nil, style: .formal)
+        let formal = PromptTemplate.builtins.first { $0.id == "formal" }!
+        let messages = processor.buildMessages(input: "hello", feedback: nil, template: formal)
         let userMessage = messages.last { $0.role == "user" }
         XCTAssertTrue(userMessage?.content.contains("正式") == true)
     }
 
-    func test_buildMessages_autoStyle_noStyleInstruction() {
+    func test_buildMessages_autoTemplate_noStyleInstruction() {
         let processor = IntentProcessor()
-        let messages = processor.buildMessages(input: "hello", feedback: nil, style: .auto)
+        let auto = PromptTemplate.builtins[0]  // "auto" has nil promptInstruction
+        let messages = processor.buildMessages(input: "hello", feedback: nil, template: auto)
         XCTAssertEqual(messages.count, 1)
         XCTAssertEqual(messages[0].role, "user")
+        XCTAssertFalse(messages[0].content.contains("风格要求"))
     }
 }
