@@ -311,9 +311,9 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
     private let hosting: NSHostingController<MurmurView>
     private var cancellables = Set<AnyCancellable>()
     private var isBeingShown = false
-    private var isResizing = false
     private(set) var pendingContext: InputContext = .empty
     private var mouseMonitor: Any?
+    private var dismissTimer: DispatchWorkItem?
 
     init(inputVM: InputViewModel, confirmVM: ConfirmViewModel) {
         self.inputVM = inputVM
@@ -394,22 +394,32 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
             // else: origin.y unchanged — window grows upward from where it sits
         }
         frame.size.height = clamped
-        isResizing = true
         window.setFrame(frame, display: true, animate: false)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            self?.isResizing = false
-        }
     }
 
     // MARK: - NSWindowDelegate
 
     func windowDidResignKey(_ notification: Notification) {
-        guard !isBeingShown, !isResizing, !confirmVM.isLocked else { return }
-        // Suppress dismiss while IME is composing (candidate window temporarily took key focus).
-        // hasMarkedText covers normal composition; isResizing covers the line-wrap moment where
-        // setFrame() triggers IME repositioning before marked text state is updated.
+        guard !isBeingShown, !confirmVM.isLocked else { return }
+        // IME candidate windows temporarily steal key focus and give it back.
+        // hasMarkedText catches mid-composition resignation immediately (no timer needed).
         if let root = window?.contentView, let tv = findTextView(in: root), tv.hasMarkedText() { return }
-        dismissPanel()
+        // For everything else (resize-triggered IME repositioning, system overlays), debounce:
+        // if the window regains key within 200ms (windowDidBecomeKey fires), we cancel the dismiss.
+        // A real app-switch never calls windowDidBecomeKey, so the dismiss goes through.
+        let item = DispatchWorkItem { [weak self] in
+            guard let self, self.window?.isKeyWindow == false else { return }
+            self.dismissPanel()
+        }
+        dismissTimer?.cancel()
+        dismissTimer = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: item)
+    }
+
+    func windowDidBecomeKey(_ notification: Notification) {
+        // Window regained key focus (e.g. IME dismissed its candidate window) — cancel pending dismiss.
+        dismissTimer?.cancel()
+        dismissTimer = nil
     }
 
     func updateTemplates(_ templates: [PromptTemplate]) {
