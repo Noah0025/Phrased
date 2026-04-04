@@ -313,6 +313,7 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
     private var isBeingShown = false
     private(set) var pendingContext: InputContext = .empty
     private var mouseMonitor: Any?
+    private var resignActiveObserver: NSObjectProtocol?
 
     init(inputVM: InputViewModel, confirmVM: ConfirmViewModel) {
         self.inputVM = inputVM
@@ -366,9 +367,25 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
         confirmVM.onDismiss = { [weak self] in
             self?.dismissPanel()
         }
+
+        // Dismiss when the whole app loses focus (⌘Tab, clicking another app).
+        // Using didResignActiveNotification instead of windowDidResignKey so that
+        // IME candidate windows (which temporarily steal key focus) don't trigger dismiss.
+        resignActiveObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didResignActiveNotification,
+            object: nil, queue: .main
+        ) { [weak self] _ in
+            guard let self, !self.confirmVM.isLocked else { return }
+            guard self.window?.isVisible == true else { return }
+            self.dismissPanel()
+        }
     }
 
     required init?(coder: NSCoder) { fatalError() }
+
+    deinit {
+        if let obs = resignActiveObserver { NotificationCenter.default.removeObserver(obs) }
+    }
 
     private func updateWindowHeight(_ newHeight: CGFloat) {
         guard let window else { return }
@@ -447,14 +464,9 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
         return view.subviews.lazy.compactMap { self.findTextView(in: $0) }.first
     }
 
-    func windowDidResignKey(_ notification: Notification) {
-        guard !isBeingShown, !confirmVM.isLocked else { return }
-        // If the text view has uncommitted composing text (pinyin not yet converted),
-        // this resignKey is caused by an IME candidate window — do NOT dismiss.
-        if let tv = findTextView(in: window?.contentView ?? NSView()),
-           tv.hasMarkedText() { return }
-        dismissPanel()
-    }
+    // windowDidResignKey intentionally unused for dismiss.
+    // Dismiss is handled by: mouse monitor (click outside) + didResignActiveNotification (⌘Tab / app switch).
+    // This avoids false dismissals from IME candidate windows and window resize events.
 
     private func dismissPanel() {
         window?.orderOut(nil)
