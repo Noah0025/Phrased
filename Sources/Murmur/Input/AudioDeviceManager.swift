@@ -12,6 +12,7 @@ struct AudioDevice: Identifiable, Equatable {
 
 /// Enumerates available audio input devices and publishes updates when
 /// devices are connected or disconnected (Bluetooth, USB, built-in).
+@MainActor
 class AudioDeviceManager: ObservableObject {
 
     static let systemAudio = AudioDevice(
@@ -26,13 +27,13 @@ class AudioDeviceManager: ObservableObject {
         refresh()
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(deviceListChanged),
+            selector: #selector(deviceListChanged(_:)),
             name: .AVCaptureDeviceWasConnected,
             object: nil
         )
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(deviceListChanged),
+            selector: #selector(deviceListChanged(_:)),
             name: .AVCaptureDeviceWasDisconnected,
             object: nil
         )
@@ -43,7 +44,12 @@ class AudioDeviceManager: ObservableObject {
     }
 
     /// Rebuild the device list. Always puts "系统音频" first.
+    /// Skips mic enumeration if microphone permission has not been granted.
     func refresh() {
+        guard AVCaptureDevice.authorizationStatus(for: .audio) == .authorized else {
+            devices = [Self.systemAudio]
+            return
+        }
         let mics = AVCaptureDevice.DiscoverySession(
             deviceTypes: [.microphone],
             mediaType: .audio,
@@ -59,7 +65,10 @@ class AudioDeviceManager: ObservableObject {
         devices.contains { $0.id == id }
     }
 
-    @objc private func deviceListChanged() {
+    @objc private func deviceListChanged(_ notification: Notification) {
+        // Ignore events from non-audio devices (e.g. cameras)
+        if let device = notification.object as? AVCaptureDevice,
+           !device.hasMediaType(.audio) { return }
         DispatchQueue.main.async { [weak self] in self?.refresh() }
     }
 }
