@@ -313,7 +313,7 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
     private var isBeingShown = false
     private(set) var pendingContext: InputContext = .empty
     private var mouseMonitor: Any?
-    private var dismissTimer: DispatchWorkItem?
+    private var workspaceObserver: NSObjectProtocol?
 
     init(inputVM: InputViewModel, confirmVM: ConfirmViewModel) {
         self.inputVM = inputVM
@@ -367,9 +367,29 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
         confirmVM.onDismiss = { [weak self] in
             self?.dismissPanel()
         }
+
+        // Dismiss when the user switches to a real app (⌘Tab, clicking another app's window).
+        // NSWorkspace.didActivateApplicationNotification fires only for actual applications,
+        // NOT for IME candidate windows or clipboard operations — solving all false-dismiss bugs.
+        workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil, queue: .main
+        ) { [weak self] notification in
+            guard let self, !self.confirmVM.isLocked else { return }
+            guard self.window?.isVisible == true else { return }
+            guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+                  app.bundleIdentifier != Bundle.main.bundleIdentifier else { return }
+            self.dismissPanel()
+        }
     }
 
     required init?(coder: NSCoder) { fatalError() }
+
+    deinit {
+        if let obs = workspaceObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(obs)
+        }
+    }
 
     private func updateWindowHeight(_ newHeight: CGFloat) {
         guard let window else { return }
@@ -397,30 +417,9 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
         window.setFrame(frame, display: true, animate: false)
     }
 
-    // MARK: - NSWindowDelegate
-
-    func windowDidResignKey(_ notification: Notification) {
-        guard !isBeingShown, !confirmVM.isLocked else { return }
-        // IME candidate windows temporarily steal key focus and give it back.
-        // hasMarkedText catches mid-composition resignation immediately (no timer needed).
-        if let root = window?.contentView, let tv = findTextView(in: root), tv.hasMarkedText() { return }
-        // For everything else (resize-triggered IME repositioning, system overlays), debounce:
-        // if the window regains key within 200ms (windowDidBecomeKey fires), we cancel the dismiss.
-        // A real app-switch never calls windowDidBecomeKey, so the dismiss goes through.
-        let item = DispatchWorkItem { [weak self] in
-            guard let self, self.window?.isKeyWindow == false else { return }
-            self.dismissPanel()
-        }
-        dismissTimer?.cancel()
-        dismissTimer = item
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: item)
-    }
-
-    func windowDidBecomeKey(_ notification: Notification) {
-        // Window regained key focus (e.g. IME dismissed its candidate window) — cancel pending dismiss.
-        dismissTimer?.cancel()
-        dismissTimer = nil
-    }
+    // Dismiss is handled by: NSWorkspace.didActivateApplicationNotification (app switch / ⌘Tab)
+    // and the global mouse monitor (click outside). windowDidResignKey is intentionally unused
+    // because it fires spuriously during IME candidate window repositioning and window resizes.
 
     func updateTemplates(_ templates: [PromptTemplate]) {
         inputVM.allTemplates = templates
