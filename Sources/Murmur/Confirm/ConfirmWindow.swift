@@ -92,9 +92,6 @@ struct MurmurView: View {
             stylePicker
                 .padding(.bottom, 7)
 
-            audioSourceButton
-                .padding(.bottom, 7)
-
             Spacer().frame(width: 12)
 
             submitButton
@@ -115,8 +112,21 @@ struct MurmurView: View {
                 .frame(width: 28, height: 28)
         }
         .buttonStyle(.plain)
-        .help(inputVM.isRecording ? "停止录音" : "开始录音")
+        .help(inputVM.isRecording ? "停止录音" : "开始录音（右键选择来源）")
         .onChange(of: inputVM.isRecording) { pulsing = $0 }
+        .contextMenu {
+            Picker("音频来源", selection: Binding(
+                get: { inputVM.settings.audioSource },
+                set: { inputVM.selectAudioSource($0) }
+            )) {
+                ForEach(inputVM.availableDevices) { device in
+                    Label(device.name,
+                          systemImage: device.isSystemAudio ? "desktopcomputer" : "mic")
+                        .tag(device.id)
+                }
+            }
+            .pickerStyle(.inline)
+        }
     }
 
     // MARK: Input area
@@ -167,20 +177,6 @@ struct MurmurView: View {
         .pickerStyle(.menu)
         .frame(width: 88)
         .labelsHidden()
-    }
-
-    // MARK: Audio source button
-
-    private var audioSourceButton: some View {
-        Button {
-            inputVM.settings.audioSource = inputVM.settings.audioSource == "microphone" ? "systemAudio" : "microphone"
-        } label: {
-            Text(inputVM.settings.audioSource == "microphone" ? "🎙" : "🖥")
-                .font(.system(size: 14))
-                .frame(width: 28, height: 28)
-        }
-        .buttonStyle(.plain)
-        .help(inputVM.settings.audioSource == "microphone" ? "当前：麦克风" : "当前：系统音频")
     }
 
     // MARK: Submit button
@@ -420,6 +416,16 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
     // Dismiss is handled by: NSWorkspace.didActivateApplicationNotification (app switch / ⌘Tab)
     // and the global mouse monitor (click outside). windowDidResignKey is intentionally unused
     // because it fires spuriously during IME candidate window repositioning and window resizes.
+
+    func windowDidBecomeKey(_ notification: Notification) {
+        // Re-focus the input text view whenever the panel gains key status.
+        // This covers cases where SwiftUI's layout or activation ordering left the
+        // text view without first-responder status.
+        guard let root = window?.contentView,
+              let tv = findTextView(in: root),
+              window?.firstResponder !== tv else { return }
+        window?.makeFirstResponder(tv)
+    }
 
     func updateTemplates(_ templates: [PromptTemplate]) {
         inputVM.allTemplates = templates
