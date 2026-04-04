@@ -1,7 +1,9 @@
 import AVFoundation
+import AudioToolbox
+import CoreAudio
 
-/// Captures microphone input via AVAudioEngine.
-/// Outputs 16kHz mono Float32 PCM buffers — same format as AudioCapture (system audio).
+/// Captures a specific microphone input via AVAudioEngine.
+/// Outputs 16 kHz mono Float32 PCM buffers — same format as AudioCapture.
 class MicrophoneCapture {
     private var engine: AVAudioEngine?
     private var onBuffer: ((AVAudioPCMBuffer) -> Void)?
@@ -14,14 +16,21 @@ class MicrophoneCapture {
         interleaved: false
     )!
 
-    func start(onBuffer: @escaping (AVAudioPCMBuffer) -> Void) {
+    /// - Parameter deviceUID: `AVCaptureDevice.uniqueID` for the desired
+    ///   microphone.  Pass `nil` to use the system default input device.
+    func start(deviceUID: String? = nil, onBuffer: @escaping (AVAudioPCMBuffer) -> Void) {
         self.onBuffer = onBuffer
         let engine = AVAudioEngine()
         self.engine = engine
+
+        // Must set device before querying outputFormat — format depends on the device.
+        if let uid = deviceUID {
+            Self.setInputDevice(uid: uid, on: engine)
+        }
+
         let input = engine.inputNode
         let inputFormat = input.outputFormat(forBus: 0)
 
-        // Install tap at native format, then convert to 16kHz mono
         input.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) { [weak self] buffer, _ in
             guard let self, let converted = self.convert(buffer, to: self.targetFormat) else { return }
             self.onBuffer?(converted)
@@ -42,6 +51,8 @@ class MicrophoneCapture {
         isRunning = false
     }
 
+    // MARK: - Private helpers
+
     private func convert(_ buffer: AVAudioPCMBuffer, to format: AVAudioFormat) -> AVAudioPCMBuffer? {
         guard let converter = AVAudioConverter(from: buffer.format, to: format) else { return nil }
         let frameCapacity = AVAudioFrameCount(
@@ -51,14 +62,49 @@ class MicrophoneCapture {
         var error: NSError?
         var consumed = false
         converter.convert(to: out, error: &error) { _, outStatus in
-            if consumed {
-                outStatus.pointee = .noDataNow
-                return nil
-            }
+            if consumed { outStatus.pointee = .noDataNow; return nil }
             outStatus.pointee = .haveData
             consumed = true
             return buffer
         }
         return error == nil ? out : nil
+    }
+
+    /// Translates an AVCaptureDevice UID to the Core Audio device ID, then
+    /// pushes it onto the input node's AudioUnit before the engine starts.
+    private static func setInputDevice(uid: String, on engine: AVAudioEngine) {
+        guard let deviceID = audioDeviceID(for: uid),
+              let au = engine.inputNode.audioUnit else { return }
+        var id = deviceID
+        AudioUnitSetProperty(
+            au,
+            kAudioOutputUnitProperty_CurrentDevice,
+            kAudioUnitScope_Global,
+            0,
+            &id,
+            UInt32(MemoryLayout<AudioDeviceID>.size)
+        )
+    }
+
+    /// Returns the `AudioDeviceID` for the given UID, or `nil` if not found.
+    private static func audioDeviceID(for uid: String) -> AudioDeviceID? {
+        var deviceID = AudioObjectID(kAudioObjectUnknown)
+        var cfUID = uid as CFString
+        var translation = AudioValueTranslation(
+            mInputData: &cfUID,
+            mInputDataSize: UInt32(MemoryLayout<CFString>.size),
+            mOutputData: &deviceID,
+            mOutputDataSize: UInt32(MemoryLayout<AudioObjectID>.size)
+        )
+        var addr = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyTranslateUIDToDevice,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var size = UInt32(MemoryLayout<AudioValueTranslation>.size)
+        AudioObjectGetPropertyData(
+            AudioObjectID(kAudioObjectSystemObject), &addr, 0, nil, &size, &translation
+        )
+        return deviceID != kAudioObjectUnknown ? deviceID : nil
     }
 }
