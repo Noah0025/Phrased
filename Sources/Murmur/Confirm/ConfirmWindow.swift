@@ -333,6 +333,7 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
             self?.window?.orderOut(nil)
             confirmVM.streamedResult = ""
             confirmVM.showFeedbackField = false
+            confirmVM.isLocked = false
         }
     }
 
@@ -398,5 +399,6 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
         window?.orderOut(nil)
         confirmVM.streamedResult = ""
         confirmVM.showFeedbackField = false
+        confirmVM.isLocked = false
     }
 }
