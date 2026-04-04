@@ -396,7 +396,7 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
         frame.size.height = clamped
         isResizing = true
         window.setFrame(frame, display: true, animate: false)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
             self?.isResizing = false
         }
     }
@@ -405,6 +405,10 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
 
     func windowDidResignKey(_ notification: Notification) {
         guard !isBeingShown, !isResizing, !confirmVM.isLocked else { return }
+        // Suppress dismiss while IME is composing (candidate window temporarily took key focus).
+        // hasMarkedText covers normal composition; isResizing covers the line-wrap moment where
+        // setFrame() triggers IME repositioning before marked text state is updated.
+        if let root = window?.contentView, let tv = findTextView(in: root), tv.hasMarkedText() { return }
         dismissPanel()
     }
 
