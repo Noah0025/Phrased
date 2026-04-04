@@ -4,41 +4,37 @@ import Carbon
 class HotkeyManager {
     private var monitors: [Any] = []
     private let onActivate: () -> Void
+    private var keyCode: UInt16
+    private var modifierFlags: NSEvent.ModifierFlags
 
-    init(onActivate: @escaping () -> Void) {
+    init(keyCode: UInt16 = 49, modifiers: NSEvent.ModifierFlags = .option, onActivate: @escaping () -> Void) {
+        self.keyCode = keyCode
+        self.modifierFlags = modifiers
         self.onActivate = onActivate
         register()
     }
 
+    func update(keyCode: UInt16, modifiers: NSEvent.ModifierFlags) {
+        self.keyCode = keyCode
+        self.modifierFlags = modifiers
+    }
+
     private func register() {
-        // Global monitor (works when other apps are focused)
-        if let monitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown, handler: { [weak self] event in
-            if self?.isActivationHotkey(event) == true {
-                DispatchQueue.main.async { self?.onActivate() }
-            }
-        }) {
-            monitors.append(monitor)
-        }
+        if let m = NSEvent.addGlobalMonitorForEvents(matching: .keyDown, handler: { [weak self] e in
+            if self?.matches(e) == true { DispatchQueue.main.async { self?.onActivate() } }
+        }) { monitors.append(m) }
 
-        // Local monitor (when Murmur is focused)
-        if let local = NSEvent.addLocalMonitorForEvents(matching: .keyDown, handler: { [weak self] event in
-            if self?.isActivationHotkey(event) == true {
-                DispatchQueue.main.async { self?.onActivate() }
-                return nil
-            }
-            return event
-        }) {
-            monitors.append(local)
-        }
+        if let m = NSEvent.addLocalMonitorForEvents(matching: .keyDown, handler: { [weak self] e in
+            guard self?.matches(e) == true else { return e }
+            DispatchQueue.main.async { self?.onActivate() }
+            return nil
+        }) { monitors.append(m) }
     }
 
-    /// ⌥Space: keyCode 49 (Space), modifier .option
-    private func isActivationHotkey(_ event: NSEvent) -> Bool {
-        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        return flags == .option && event.keyCode == 49
+    private func matches(_ event: NSEvent) -> Bool {
+        event.modifierFlags.intersection(.deviceIndependentFlagsMask) == modifierFlags
+            && event.keyCode == keyCode
     }
 
-    deinit {
-        monitors.forEach { NSEvent.removeMonitor($0) }
-    }
+    deinit { monitors.forEach { NSEvent.removeMonitor($0) } }
 }
