@@ -113,7 +113,7 @@ class MicrophoneCapture {
             withUnsafeMutablePointer(to: &deviceID) { outputPtr in
                 var translation = AudioValueTranslation(
                     mInputData: inputPtr,
-                    mInputDataSize: UInt32(MemoryLayout<CFStringRef>.size),
+                    mInputDataSize: UInt32(MemoryLayout<CFString>.size), // CFString is a reference type: size == sizeof(void*) == 8
                     mOutputData: outputPtr,
                     mOutputDataSize: UInt32(MemoryLayout<AudioObjectID>.size)
                 )
