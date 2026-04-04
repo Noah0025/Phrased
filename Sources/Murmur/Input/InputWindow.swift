@@ -156,7 +156,8 @@ struct AutoGrowingTextEditor: NSViewRepresentable {
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         guard let tv = scrollView.documentView as? NSTextView else { return }
-        if tv.string != text {
+        // Skip overwrite while IME composition is in progress (marked text exists)
+        if tv.string != text && tv.markedRange().length == 0 {
             let sel = tv.selectedRange()
             tv.string = text
             tv.setSelectedRange(sel)
