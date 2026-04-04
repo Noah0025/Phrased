@@ -33,16 +33,6 @@ class ConfirmViewModel: ObservableObject {
         generate(feedback: nil)
     }
 
-    func continueWithNewInput(_ input: String, style: WritingStyle = .auto) {
-        originalInput = input
-        currentStyle = style
-        streamedResult = ""
-        feedbackText = ""
-        showFeedbackField = false
-        didCopy = false
-        generate(feedback: nil)
-    }
-
     func regenerate() {
         let feedback = feedbackText.isEmpty ? nil : feedbackText
         streamedResult = ""
