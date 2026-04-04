@@ -12,8 +12,10 @@ class InputViewModel: ObservableObject {
     var onSubmit: ((String, WritingStyle) -> Void)?
 
     private let audioCapture = AudioCapture()
+    private let micCapture = MicrophoneCapture()
     private var transcriber: ASRProvider
     private var pendingSubmit = false
+    var settings: MurmurSettings = MurmurSettings()
 
     init(transcriber: ASRProvider = WhisperTranscriber()) {
         self.transcriber = transcriber
@@ -65,8 +67,14 @@ class InputViewModel: ObservableObject {
         isRecording = true
         inputText = ""
         transcriber.startSession()
-        audioCapture.start { [weak self] buffer in
-            self?.transcriber.appendBuffer(buffer)
+        if settings.audioSource == "microphone" {
+            micCapture.start { [weak self] buffer in
+                self?.transcriber.appendBuffer(buffer)
+            }
+        } else {
+            audioCapture.start { [weak self] buffer in
+                self?.transcriber.appendBuffer(buffer)
+            }
         }
     }
 
@@ -78,6 +86,7 @@ class InputViewModel: ObservableObject {
         isRecording = false
         isTranscribing = true
         audioCapture.stop()
+        micCapture.stop()
         transcriber.stopSession()
     }
 }
