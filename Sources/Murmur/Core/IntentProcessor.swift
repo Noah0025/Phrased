@@ -25,7 +25,7 @@ enum WritingStyle: String, CaseIterable, Identifiable {
 }
 
 class IntentProcessor {
-    func buildMessages(input: String, feedback: String?, style: WritingStyle = .auto) -> [OllamaMessage] {
+    func buildMessages(input: String, feedback: String?, style: WritingStyle = .auto) -> [LLMMessage] {
         var styleInstruction = ""
         if let instruction = style.promptInstruction {
             styleInstruction = "\n风格要求：\(instruction)"
@@ -43,6 +43,6 @@ class IntentProcessor {
             userContent += "\n\n用户对上一次结果不满意，补充说明：\(feedback)\n\n请重新生成。"
         }
 
-        return [OllamaMessage(role: "user", content: userContent)]
+        return [LLMMessage(role: "user", content: userContent)]
     }
 }

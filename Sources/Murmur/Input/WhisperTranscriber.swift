@@ -1,7 +1,7 @@
 import Foundation
 import AVFoundation
 
-class WhisperTranscriber {
+class WhisperTranscriber: ASRProvider {
     var onPartial: ((String) -> Void)?
     var onFinal: ((String) -> Void)?
 

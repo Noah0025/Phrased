@@ -12,15 +12,19 @@ class ConfirmViewModel: ObservableObject {
     @Published var isLocked: Bool = false
     private(set) var currentStyle: WritingStyle = .auto
 
-    private let ollama: OllamaClient
+    private var llm: LLMProvider
     private let processor: IntentProcessor
     private var streamTask: Task<Void, Never>?
 
     var onDismiss: (() -> Void)?
 
-    init(ollama: OllamaClient, processor: IntentProcessor) {
-        self.ollama = ollama
+    init(llm: LLMProvider, processor: IntentProcessor) {
+        self.llm = llm
         self.processor = processor
+    }
+
+    func updateProvider(_ newLLM: LLMProvider) {
+        llm = newLLM
     }
 
     func start(input: String, style: WritingStyle = .auto) {
@@ -61,7 +65,7 @@ class ConfirmViewModel: ObservableObject {
         streamTask?.cancel()
         isStreaming = true
         let messages = processor.buildMessages(input: originalInput, feedback: feedback, style: currentStyle)
-        streamTask = ollama.streamChat(
+        streamTask = llm.streamChat(
             messages: messages,
             onChunk: { [weak self] chunk in
                 self?.streamedResult += chunk

@@ -12,10 +12,11 @@ class InputViewModel: ObservableObject {
     var onSubmit: ((String, WritingStyle) -> Void)?
 
     private let audioCapture = AudioCapture()
-    private let transcriber = WhisperTranscriber()
+    private var transcriber: ASRProvider
     private var pendingSubmit = false
 
-    init() {
+    init(transcriber: ASRProvider = WhisperTranscriber()) {
+        self.transcriber = transcriber
         transcriber.onFinal = { [weak self] text in
             DispatchQueue.main.async {
                 guard let self else { return }
@@ -46,6 +47,10 @@ class InputViewModel: ObservableObject {
         guard !finalText.isEmpty else { return }
         onSubmit?(finalText, selectedStyle)
         inputText = ""
+    }
+
+    func updateASRProvider(_ asr: ASRProvider) {
+        transcriber = asr
     }
 
     func warmUpTranscriber() {
