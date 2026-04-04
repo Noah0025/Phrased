@@ -448,10 +448,11 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
     }
 
     func windowDidResignKey(_ notification: Notification) {
-        // Only dismiss when the whole app loses focus (⌘Tab, clicking another app).
-        // IME candidate windows keep NSApp.isActive = true — don't dismiss for those.
         guard !isBeingShown, !confirmVM.isLocked else { return }
-        guard !NSApp.isActive else { return }
+        // If the text view has uncommitted composing text (pinyin not yet converted),
+        // this resignKey is caused by an IME candidate window — do NOT dismiss.
+        if let tv = findTextView(in: window?.contentView ?? NSView()),
+           tv.hasMarkedText() { return }
         dismissPanel()
     }
 
