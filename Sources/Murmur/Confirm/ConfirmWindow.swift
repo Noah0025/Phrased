@@ -311,9 +311,9 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
     private let hosting: NSHostingController<MurmurView>
     private var cancellables = Set<AnyCancellable>()
     private var isBeingShown = false
+    private var isResizing = false
     private(set) var pendingContext: InputContext = .empty
     private var mouseMonitor: Any?
-    private var resignActiveObserver: NSObjectProtocol?
 
     init(inputVM: InputViewModel, confirmVM: ConfirmViewModel) {
         self.inputVM = inputVM
@@ -367,25 +367,9 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
         confirmVM.onDismiss = { [weak self] in
             self?.dismissPanel()
         }
-
-        // Dismiss when the whole app loses focus (⌘Tab, clicking another app).
-        // Using didResignActiveNotification instead of windowDidResignKey so that
-        // IME candidate windows (which temporarily steal key focus) don't trigger dismiss.
-        resignActiveObserver = NotificationCenter.default.addObserver(
-            forName: NSApplication.didResignActiveNotification,
-            object: nil, queue: .main
-        ) { [weak self] _ in
-            guard let self, !self.confirmVM.isLocked else { return }
-            guard self.window?.isVisible == true else { return }
-            self.dismissPanel()
-        }
     }
 
     required init?(coder: NSCoder) { fatalError() }
-
-    deinit {
-        if let obs = resignActiveObserver { NotificationCenter.default.removeObserver(obs) }
-    }
 
     private func updateWindowHeight(_ newHeight: CGFloat) {
         guard let window else { return }
@@ -410,7 +394,18 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
             // else: origin.y unchanged — window grows upward from where it sits
         }
         frame.size.height = clamped
+        isResizing = true
         window.setFrame(frame, display: true, animate: false)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+            self?.isResizing = false
+        }
+    }
+
+    // MARK: - NSWindowDelegate
+
+    func windowDidResignKey(_ notification: Notification) {
+        guard !isBeingShown, !isResizing, !confirmVM.isLocked else { return }
+        dismissPanel()
     }
 
     func updateTemplates(_ templates: [PromptTemplate]) {
@@ -463,10 +458,6 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
         if let tv = view as? NSTextView { return tv }
         return view.subviews.lazy.compactMap { self.findTextView(in: $0) }.first
     }
-
-    // windowDidResignKey intentionally unused for dismiss.
-    // Dismiss is handled by: mouse monitor (click outside) + didResignActiveNotification (⌘Tab / app switch).
-    // This avoids false dismissals from IME candidate windows and window resize events.
 
     private func dismissPanel() {
         window?.orderOut(nil)
