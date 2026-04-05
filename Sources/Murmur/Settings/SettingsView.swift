@@ -153,7 +153,7 @@ struct SettingsView: View {
                                 }
                             }
                             let limited = llmScanResultsLimited
-                            ForEach(limited.visible, id: \.name) { result in
+                            ForEach(limited.visible) { result in
                                 HStack {
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(result.name).font(.system(size: 12, weight: .medium))
@@ -355,6 +355,7 @@ struct SettingsView: View {
         .background(Color(NSColor.controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.12 as Double), lineWidth: 1))
+        .id(profile.id)
         }
     }
 
@@ -663,7 +664,7 @@ struct SettingsView: View {
                                     withAnimation { _ = expandedASRProfileIDs.remove(profile.id) }
                                     draft.asrProfiles.remove(at: index)
                                     if draft.selectedASRProfileID == id {
-                                        draft.selectedASRProfileID = draft.asrProfiles.first!.id
+                                        draft.selectedASRProfileID = draft.asrProfiles.first?.id ?? ASRProfile.builtinSFSpeech.id
                                     }
                                 }
                                 .buttonStyle(.bordered)
@@ -687,6 +688,7 @@ struct SettingsView: View {
             .background(Color(NSColor.controlBackgroundColor))
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.12 as Double), lineWidth: 1))
+            .id(profile.id)
         }
     }
 
@@ -775,6 +777,8 @@ struct SettingsView: View {
     // MARK: - Local scan helpers
 
     /// Run a command and return true if exit code is 0.
+    /// Note: uses waitUntilExit() — acceptable here because commands are fast (which/brew list)
+    /// and called only during user-initiated scans inside a Task.
     private func shellCheck(_ args: [String]) -> Bool {
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/usr/bin/env")
@@ -803,10 +807,11 @@ struct SettingsView: View {
         let model: String
     }
 
-    struct LLMScanResult {
+    struct LLMScanResult: Identifiable {
         let name: String    // model name (or service name if no models)
         let baseURL: String
         let model: String
+        var id: String { baseURL + "/" + model }
     }
 
     private var llmScanResultsLimited: (visible: [LLMScanResult], hiddenCount: Int) {
@@ -939,6 +944,7 @@ struct SettingsView: View {
     private func scanLocalASRServices() {
         asrScanning = true
         asrScanResults = []
+        asrInstalledNotRunning = []
         asrScanDone = false
 
         Task {
@@ -1075,13 +1081,8 @@ API 地址：（完整 URL）
     }
 
     private func makeLLMFromDraft() -> LLMProvider {
-        switch draft.llmProviderID {
-        case "cloud":
-            return OpenAICompatibleProvider(baseURL: draft.cloudBaseURL, apiKey: draft.cloudAPIKey, model: draft.cloudModel)
-        default:
-            let p = draft.selectedProfile
-            return OpenAICompatibleProvider(baseURL: p.baseURL, apiKey: p.apiKey, model: p.selectedModel)
-        }
+        let p = draft.selectedProfile
+        return OpenAICompatibleProvider(baseURL: p.baseURL, apiKey: p.apiKey, model: p.selectedModel)
     }
 
     // MARK: - Expandable Section
@@ -1411,10 +1412,16 @@ private struct ProfileKeyRowView: View {
                 }
 
                 if isEditing {
-                    Button("完成") { onSave() }
-                        .buttonStyle(.bordered).controlSize(.mini)
-                    Button("取消") { onCancel() }
-                        .buttonStyle(.plain).controlSize(.mini).foregroundColor(.secondary)
+                    Button("完成") {
+                        hasUnsavedInput = false
+                        onSave()
+                    }
+                    .buttonStyle(.bordered).controlSize(.mini)
+                    Button("取消") {
+                        hasUnsavedInput = false
+                        onCancel()
+                    }
+                    .buttonStyle(.plain).controlSize(.mini).foregroundColor(.secondary)
                 }
             }
         }
