@@ -244,9 +244,17 @@ struct MurmurView: View {
 
     private var actionBar: some View {
         HStack(spacing: 6) {
-            Button("修改意见") { confirmVM.showFeedbackField.toggle() }
-                .disabled(confirmVM.isStreaming)
-                .buttonStyle(.plain)
+            Button {
+                confirmVM.isLocked.toggle()
+            } label: {
+                Image(systemName: confirmVM.isLocked ? "pin.fill" : "pin")
+                    .font(.system(size: 13))
+                    .foregroundColor(confirmVM.isLocked ? .accentColor : .secondary)
+            }
+            .buttonStyle(.plain)
+            .help(confirmVM.isLocked ? "已锁定" : "锁定窗口")
+
+            Text("风格")
                 .font(.system(size: 13))
                 .foregroundColor(.secondary)
 
@@ -254,15 +262,11 @@ struct MurmurView: View {
 
             Spacer()
 
-            Button {
-                confirmVM.isLocked.toggle()
-            } label: {
-                Image(systemName: confirmVM.isLocked ? "lock.fill" : "lock.open")
-                    .font(.system(size: 13))
-                    .foregroundColor(confirmVM.isLocked ? .accentColor : .secondary)
-            }
-            .buttonStyle(.plain)
-            .help(confirmVM.isLocked ? "已锁定" : "锁定窗口")
+            Button("修改意见") { confirmVM.showFeedbackField.toggle() }
+                .disabled(confirmVM.isStreaming)
+                .buttonStyle(.plain)
+                .font(.system(size: 13))
+                .foregroundColor(.secondary)
 
             Button("重新生成") { confirmVM.regenerate() }
                 .disabled(confirmVM.isStreaming)
