@@ -89,9 +89,6 @@ struct MurmurView: View {
                 .padding(.horizontal, 8)
                 .padding(.vertical, 10)
 
-            stylePicker
-                .padding(.bottom, 7)
-
             Spacer().frame(width: 12)
 
             submitButton
@@ -252,6 +249,8 @@ struct MurmurView: View {
                 .buttonStyle(.plain)
                 .font(.system(size: 13))
                 .foregroundColor(.secondary)
+
+            stylePicker
 
             Spacer()
 
@@ -418,6 +417,11 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
     // because it fires spuriously during IME candidate window repositioning and window resizes.
 
     func windowDidBecomeKey(_ notification: Notification) {
+        // macOS re-shows standard window buttons when a panel becomes key — hide them again.
+        window?.standardWindowButton(.closeButton)?.isHidden = true
+        window?.standardWindowButton(.miniaturizeButton)?.isHidden = true
+        window?.standardWindowButton(.zoomButton)?.isHidden = true
+
         // Re-focus the input text view whenever the panel gains key status.
         // This covers cases where SwiftUI's layout or activation ordering left the
         // text view without first-responder status.
