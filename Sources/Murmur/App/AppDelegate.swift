@@ -9,10 +9,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var historyWindowController: HistoryWindowController?
 
     private var settings = MurmurSettings.loadOrDefault()
-    private lazy var historyStore = HistoryStore()
+    private lazy var historyStore: HistoryStore = {
+        let s = HistoryStore()
+        s.maxEntries = settings.historyMaxEntries
+        return s
+    }()
     private lazy var vocabularyStore = VocabularyStore.loadOrDefault()
     private lazy var processor = IntentProcessor()
-    private lazy var inputVM = InputViewModel()
+    private lazy var inputVM = InputViewModel(transcriber: makeASRProvider())
     private lazy var confirmVM = ConfirmViewModel(llm: makeLLMProvider(), processor: processor, historyStore: historyStore)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -29,11 +33,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self.confirmVM.start(input: text, template: template, context: context)
         }
 
-        statusBarController = StatusBarController(
-            onOpen:     { [weak self] in self?.showWindow() },
-            onSettings: { [weak self] in self?.showSettings() },
-            onHistory:  { [weak self] in self?.showHistory() }
-        )
+        statusBarController = StatusBarController(appDelegate: self)
 
         hotkeyManager = HotkeyManager(
             keyCode: settings.hotkeyKeyCode,
@@ -55,21 +55,35 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func makeLLMProvider() -> LLMProvider {
-        switch settings.llmProviderID {
-        case "openai":
-            return OpenAICompatibleProvider(
-                baseURL: settings.openAIBaseURL,
-                apiKey: settings.openAIAPIKey,
-                model: settings.openAIModel
-            )
-        default:
-            return OllamaLLMProvider(model: settings.ollamaModel)
+    // MARK: - Menu actions (called by StatusBarController menu items)
+
+    @objc func menuOpen(_ sender: Any?) { showWindow() }
+
+    @objc func menuHistory(_ sender: Any?) { showHistory() }
+
+    @objc func menuSettings(_ sender: Any?) { showSettings() }
+
+    // MARK: - Private
+
+    private func makeASRProvider() -> ASRProvider {
+        let profile = settings.selectedASRProfile
+        switch profile.providerType {
+        case "sfspeech": return SFSpeechTranscriber()
+        default:         return CloudASRTranscriber(baseURL: profile.baseURL, apiKey: profile.apiKey, model: profile.model)
         }
     }
 
+    private func makeLLMProvider() -> LLMProvider {
+        let profile = settings.selectedProfile
+        return OpenAICompatibleProvider(
+            baseURL: profile.baseURL,
+            apiKey: profile.apiKey,
+            model: profile.selectedModel
+        )
+    }
+
     private func showWindow() {
-        let context = ContextCapture.capture()  // must be called before NSApp.activate
+        let context = ContextCapture.capture()
         murmurWindowController?.show(context: context)
     }
 
@@ -81,11 +95,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 self.settings = newSettings
                 try? newSettings.save()
                 self.inputVM.settings = newSettings
+                self.historyStore.maxEntries = newSettings.historyMaxEntries
                 self.hotkeyManager?.update(
                     keyCode: newSettings.hotkeyKeyCode,
                     modifiers: newSettings.hotkeyNSModifiers
                 )
                 self.confirmVM.updateProvider(self.makeLLMProvider())
+                self.inputVM.updateASRProvider(self.makeASRProvider())
                 self.murmurWindowController?.updateTemplates(newSettings.allTemplates)
             }
         )
@@ -95,12 +111,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func showHistory() {
-        if historyWindowController == nil {
-            historyWindowController = HistoryWindowController(store: historyStore)
+        if historyWindowController == nil || historyWindowController?.window?.isVisible == false {
+            historyWindowController = HistoryWindowController(store: historyStore, groupMode: settings.historyGroupMode)
         }
+        NSApp.activate(ignoringOtherApps: true)
         historyWindowController?.showWindow(nil)
         historyWindowController?.window?.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
     }
 
     func applicationWillTerminate(_ notification: Notification) {}
