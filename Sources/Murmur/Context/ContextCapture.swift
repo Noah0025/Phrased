@@ -37,8 +37,7 @@ enum ContextCapture {
     static func capture() -> InputContext {
         let app = NSWorkspace.shared.frontmostApplication
         let selected = selectedTextViaAccessibility(for: app)
-        let clip = NSPasteboard.general.string(forType: .string)
-        return InputContext(frontmostApp: app, selectedText: selected, clipboardText: clip)
+        return InputContext(frontmostApp: app, selectedText: selected, clipboardText: nil)
     }
 
     private static func selectedTextViaAccessibility(for app: NSRunningApplication?) -> String? {

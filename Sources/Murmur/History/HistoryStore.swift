@@ -1,5 +1,16 @@
 import Foundation
 
+// MARK: - HistoryGroupMode
+
+enum HistoryGroupMode: String, CaseIterable, Identifiable, Codable {
+    case date     = "按日期"
+    case template = "按风格"
+    case app      = "按来源"
+    var id: String { rawValue }
+}
+
+// MARK: - HistoryEntry
+
 struct HistoryEntry: Codable, Identifiable {
     var id: UUID
     var createdAt: Date
@@ -11,6 +22,7 @@ struct HistoryEntry: Codable, Identifiable {
 
 class HistoryStore {
     private let storageURL: URL
+    var maxEntries: Int = 500
 
     init(storageURL: URL = HistoryStore.defaultStorageURL()) {
         self.storageURL = storageURL
@@ -33,11 +45,24 @@ class HistoryStore {
     func append(_ entry: HistoryEntry) throws {
         var entries = (try? load()) ?? []
         entries.append(entry)
-        if entries.count > 500 { entries = Array(entries.suffix(500)) }
+        if entries.count > maxEntries { entries = Array(entries.suffix(maxEntries)) }
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = .prettyPrinted
         try encoder.encode(entries).write(to: storageURL, options: .atomic)
+    }
+
+    func delete(ids: Set<UUID>) throws {
+        var entries = (try? load()) ?? []
+        entries.removeAll { ids.contains($0.id) }
+        if entries.isEmpty {
+            try? FileManager.default.removeItem(at: storageURL)
+        } else {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            encoder.outputFormatting = .prettyPrinted
+            try encoder.encode(entries).write(to: storageURL, options: .atomic)
+        }
     }
 
     func clear() throws {

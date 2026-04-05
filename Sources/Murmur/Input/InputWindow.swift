@@ -127,6 +127,7 @@ class InputViewModel: ObservableObject {
 /// NSTextView subclass that keeps textContainer width in sync with the view frame.
 private class WrappingTextView: NSTextView {
     var onWidthChange: ((NSTextView) -> Void)?
+    var onCmdReturn: (() -> Void)?
 
     override func setFrameSize(_ newSize: NSSize) {
         super.setFrameSize(newSize)
@@ -153,6 +154,7 @@ private class WrappingTextView: NSTextView {
         case "v": paste(nil); return true
         case "x": cut(nil); return true
         case "z": undoManager?.undo(); return true
+        case "\r": onCmdReturn?(); return true
         default:  return super.performKeyEquivalent(with: event)
         }
     }
@@ -166,6 +168,7 @@ struct AutoGrowingTextEditor: NSViewRepresentable {
     var maxHeight: CGFloat = 160
     var font: NSFont = .systemFont(ofSize: 15)
     var onFocus: (() -> Void)?
+    var onSubmit: (() -> Void)?
 
     func makeNSView(context: Context) -> NSScrollView {
         let tv = WrappingTextView()
@@ -188,6 +191,9 @@ struct AutoGrowingTextEditor: NSViewRepresentable {
         let coordinator = context.coordinator
         tv.onWidthChange = { [weak coordinator] textView in
             coordinator?.recalcHeight(textView)
+        }
+        tv.onCmdReturn = { [weak coordinator] in
+            coordinator?.parent.onSubmit?()
         }
 
         let scrollView = NSScrollView()

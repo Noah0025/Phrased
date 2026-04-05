@@ -5,9 +5,14 @@ class WhisperTranscriber: ASRProvider {
     var onPartial: ((String) -> Void)?
     var onFinal: ((String) -> Void)?
 
+    private let model: String
     private var audioFile: AVAudioFile?
     private var tempURL: URL?
     private var transcribeTask: Task<Void, Never>?
+
+    init(model: String = "mlx-community/whisper-small-mlx") {
+        self.model = model.isEmpty ? "mlx-community/whisper-small-mlx" : model
+    }
 
     private static let whisperPath: String = {
         let candidates = [
@@ -19,6 +24,7 @@ class WhisperTranscriber: ASRProvider {
     }()
 
     func warmUp() {
+        let model = self.model
         Task.detached(priority: .background) {
             let url = FileManager.default.temporaryDirectory
                 .appendingPathComponent("murmur_warmup")
@@ -45,7 +51,7 @@ class WhisperTranscriber: ASRProvider {
             process.executableURL = URL(fileURLWithPath: Self.whisperPath)
             process.arguments = [
                 url.path,
-                "--model", "mlx-community/whisper-small-mlx",
+                "--model", model,
                 "--output-format", "txt",
                 "--output-dir", url.deletingLastPathComponent().path,
             ]
@@ -111,7 +117,7 @@ class WhisperTranscriber: ASRProvider {
         process.executableURL = URL(fileURLWithPath: Self.whisperPath)
         process.arguments = [
             fileURL.path,
-            "--model", "mlx-community/whisper-small-mlx",
+            "--model", model,
             "--output-format", "txt",
             "--output-dir", fileURL.deletingLastPathComponent().path,
         ]

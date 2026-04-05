@@ -157,9 +157,13 @@ struct MurmurView: View {
             }
             .frame(maxWidth: .infinity, minHeight: 22, alignment: .leading)
         } else {
-            AutoGrowingTextEditor(text: $inputVM.inputText, height: $inputVM.editorHeight)
-                .frame(height: inputVM.editorHeight)
-                .clipped()
+            AutoGrowingTextEditor(
+                text: $inputVM.inputText,
+                height: $inputVM.editorHeight,
+                onSubmit: { inputVM.submit() }
+            )
+            .frame(height: inputVM.editorHeight)
+            .clipped()
         }
     }
 
@@ -181,9 +185,9 @@ struct MurmurView: View {
     private var submitButton: some View {
         Button { inputVM.submit() } label: {
             Image(systemName: "wand.and.stars")
-                .font(.system(size: 16, weight: .medium))
+                .font(.system(size: 14, weight: .medium))
                 .foregroundColor(isSubmitDisabled ? .secondary.opacity(0.4) : .white)
-                .frame(width: 32, height: 32)
+                .frame(width: 28, height: 28)
                 .background(Circle().fill(isSubmitDisabled ? Color.primary.opacity(0.06) : Color.accentColor))
         }
         .buttonStyle(.plain)
@@ -250,6 +254,7 @@ struct MurmurView: View {
                 Image(systemName: confirmVM.isLocked ? "pin.fill" : "pin")
                     .font(.system(size: 13))
                     .foregroundColor(confirmVM.isLocked ? .accentColor : .secondary)
+                    .rotationEffect(confirmVM.isLocked ? .degrees(-45) : .zero)
             }
             .buttonStyle(.plain)
             .help(confirmVM.isLocked ? "已锁定" : "锁定窗口")
@@ -262,26 +267,35 @@ struct MurmurView: View {
 
             Spacer()
 
-            Button("修改意见") { confirmVM.showFeedbackField.toggle() }
-                .disabled(confirmVM.isStreaming)
-                .buttonStyle(.plain)
-                .font(.system(size: 13))
-                .foregroundColor(.secondary)
+            Button { confirmVM.showFeedbackField.toggle() } label: {
+                Image(systemName: "square.and.pencil")
+                    .font(.system(size: 13))
+                    .foregroundColor(.secondary)
+            }
+            .disabled(confirmVM.isStreaming)
+            .buttonStyle(.plain)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.05)))
+            .help("修改意见")
 
-            Button("重新生成") { confirmVM.regenerate() }
-                .disabled(confirmVM.isStreaming)
-                .buttonStyle(.plain)
-                .font(.system(size: 13))
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.05)))
+            Button { confirmVM.regenerate() } label: {
+                Image(systemName: "arrow.clockwise")
+                    .font(.system(size: 13))
+                    .foregroundColor(.secondary)
+            }
+            .disabled(confirmVM.isStreaming)
+            .buttonStyle(.plain)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.05)))
+            .help("重新生成")
 
             let outputMode = inputVM.settings.defaultOutputMode
             let accepted = confirmVM.didCopy
             let acceptLabel = accepted
                 ? (outputMode == "inject" ? "已注入 ✓" : "已复制 ✓")
-                : (outputMode == "inject" ? "注入到光标" : "接受并复制")
+                : (outputMode == "inject" ? "注入" : "复制")
             Button(acceptLabel) { confirmVM.accept(outputMode: outputMode) }
                 .keyboardShortcut(.return)
                 .disabled(confirmVM.isStreaming || confirmVM.streamedResult.isEmpty)
@@ -362,6 +376,18 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
             .receive(on: DispatchQueue.main).sink { _ in resize() }.store(in: &cancellables)
         confirmVM.$showFeedbackField
             .receive(on: DispatchQueue.main).sink { _ in resize() }.store(in: &cancellables)
+
+        // After transcription finishes, AutoGrowingTextEditor re-enters the view hierarchy
+        // but NSTextView isn't automatically made first responder. Re-focus it so that
+        // the Cmd+Return override in WrappingTextView can fire immediately.
+        inputVM.$isTranscribing
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isTranscribing in
+                guard let self, !isTranscribing else { return }
+                // Wait one run loop for SwiftUI to re-render AutoGrowingTextEditor into hierarchy.
+                DispatchQueue.main.async { self.focusTextView() }
+            }
+            .store(in: &cancellables)
 
         confirmVM.onDismiss = { [weak self] in
             self?.dismissPanel()
@@ -478,6 +504,12 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
         guard let root = window?.contentView,
               let tv = findTextView(in: root) else { return }
         tv.string = ""
+        window?.makeFirstResponder(tv)
+    }
+
+    private func focusTextView() {
+        guard let root = window?.contentView,
+              let tv = findTextView(in: root) else { return }
         window?.makeFirstResponder(tv)
     }
 
