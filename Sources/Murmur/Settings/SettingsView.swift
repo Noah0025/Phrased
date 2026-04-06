@@ -4,8 +4,8 @@ import LocalAuthentication
 // MARK: - Navigation items
 
 private enum SettingsSection: String, CaseIterable, Identifiable {
-    case model      = "LLM 配置"
-    case audio      = "音频"
+    case model      = "语言模型"
+    case audio      = "音频与语音"
     case hotkey     = "快捷键"
     case output     = "输出"
     case templates  = "模板"
@@ -115,12 +115,11 @@ struct SettingsView: View {
                         Text(p.name.isEmpty ? "未命名" : p.name).tag(p.id)
                     }
                 }
-                llmProfileDescription
             }
 
             Section("高级设置") {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("可在此添加任意兼容 OpenAI 格式的 LLM 服务，本地或云端均可。")
+                    Text("支持任意兼容 OpenAI 格式的语言模型服务，本地或云端均可。填写服务地址、模型名称和 API Key 后即可使用。")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -552,24 +551,6 @@ struct SettingsView: View {
                 } else {
                     Text("通过云端 API 进行语音识别，支持更多平台和模型，需要网络连接。")
                 }
-            }
-        }
-        .font(.caption)
-        .foregroundColor(.secondary)
-    }
-
-    @ViewBuilder
-    private var llmProfileDescription: some View {
-        let profile = draft.selectedProfile
-        let isLocal = profile.baseURL.hasPrefix("http://localhost") || profile.baseURL.hasPrefix("http://127.")
-        Group {
-            if isLocal {
-                Text("通过本地语言模型处理文字，数据不上传，需在本地启动兼容 OpenAI 格式的服务。")
-            } else {
-                Text("通过云端 API 处理文字，需要网络连接。")
-            }
-            if !profile.selectedModel.isEmpty {
-                Text("当前模型：\(profile.selectedModel)")
             }
         }
         .font(.caption)
