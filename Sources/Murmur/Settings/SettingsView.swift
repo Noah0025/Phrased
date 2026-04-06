@@ -109,17 +109,13 @@ struct SettingsView: View {
 
     private var modelPane: some View {
         Form {
-            Section("LLM 模型") {
-                Picker("模型配置", selection: $draft.selectedProfileID) {
+            Section("语言模型") {
+                Picker("当前配置", selection: $draft.selectedProfileID) {
                     ForEach(draft.localProfiles) { p in
                         Text(p.name.isEmpty ? "未命名" : p.name).tag(p.id)
                     }
                 }
-                let sel = draft.selectedProfile
-                if !sel.selectedModel.isEmpty {
-                    Text("当前模型：\(sel.selectedModel)")
-                        .font(.caption).foregroundColor(.secondary)
-                }
+                llmProfileDescription
             }
 
             Section("高级设置") {
@@ -138,7 +134,7 @@ struct SettingsView: View {
                     if !llmScanResults.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
                             HStack {
-                                Text("检测到以下运行中的模型：")
+                                Text("检测到以下可用的模型：")
                                     .font(.caption).foregroundColor(.secondary)
                                 Spacer()
                                 if llmScanResults.count > 1 {
@@ -237,7 +233,7 @@ struct SettingsView: View {
                 } message: {
                     Text("该配置当前正在使用中，删除后将自动切换到其他配置。")
                 }
-                .alert("未检测到可用的本地 LLM 模型", isPresented: Binding(
+                .alert("未检测到可用的本地模型", isPresented: Binding(
                     get: { llmScanDone && llmScanResults.isEmpty && llmInstalledNotRunning.isEmpty && !llmScanning },
                     set: { if !$0 { llmScanDone = false } }
                 )) {
@@ -337,13 +333,6 @@ struct SettingsView: View {
                         .controlSize(.small)
                         .tint(.red)
 
-                        Spacer()
-
-                        Button("保存") {
-                            withAnimation { _ = expandedLLMProfileIDs.remove(profile.id) }
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.small)
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 8)
@@ -401,8 +390,8 @@ struct SettingsView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
             }
-            Section("语音识别引擎") {
-                Picker("ASR 引擎", selection: $draft.selectedASRProfileID) {
+            Section("语音模型") {
+                Picker("当前配置", selection: $draft.selectedASRProfileID) {
                     ForEach(draft.asrProfiles) { profile in
                         Text(profile.name).tag(profile.id)
                     }
@@ -427,7 +416,7 @@ struct SettingsView: View {
                     if !asrScanResults.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
                             HStack {
-                                Text("检测到以下运行中的服务：")
+                                Text("检测到以下可用的服务：")
                                     .font(.caption).foregroundColor(.secondary)
                                 Spacer()
                                 if asrScanResults.count > 1 {
@@ -529,7 +518,7 @@ struct SettingsView: View {
                         )
                     }
                     .padding(.top, 4)
-                    .alert("未检测到可用的本地语音模型", isPresented: Binding(
+                    .alert("未检测到可用的本地服务", isPresented: Binding(
                         get: { asrScanDone && asrScanResults.isEmpty && asrInstalledNotRunning.isEmpty && !asrScanning },
                         set: { if !$0 { asrScanDone = false } }
                     )) {
@@ -563,6 +552,24 @@ struct SettingsView: View {
                 } else {
                     Text("通过云端 API 进行语音识别，支持更多平台和模型，需要网络连接。")
                 }
+            }
+        }
+        .font(.caption)
+        .foregroundColor(.secondary)
+    }
+
+    @ViewBuilder
+    private var llmProfileDescription: some View {
+        let profile = draft.selectedProfile
+        let isLocal = profile.baseURL.hasPrefix("http://localhost") || profile.baseURL.hasPrefix("http://127.")
+        Group {
+            if isLocal {
+                Text("通过本地语言模型处理文字，数据不上传，需在本地启动兼容 OpenAI 格式的服务。")
+            } else {
+                Text("通过云端 API 处理文字，需要网络连接。")
+            }
+            if !profile.selectedModel.isEmpty {
+                Text("当前模型：\(profile.selectedModel)")
             }
         }
         .font(.caption)
@@ -669,13 +676,6 @@ struct SettingsView: View {
                                 .controlSize(.small)
                                 .tint(.red)
 
-                                Spacer()
-
-                                Button("保存") {
-                                    withAnimation { _ = expandedASRProfileIDs.remove(profile.id) }
-                                }
-                                .buttonStyle(.borderedProminent)
-                                .controlSize(.small)
                             }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 8)
