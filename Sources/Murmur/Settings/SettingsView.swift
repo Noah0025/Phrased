@@ -7,8 +7,7 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
     case model      = "语言模型"
     case audio      = "音频与语音"
     case hotkey     = "快捷键"
-    case output     = "输出"
-    case templates  = "模板"
+    case templates  = "提示词模板"
     case vocabulary = "热词"
     case history    = "历史记录"
 
@@ -19,7 +18,6 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
         case .model:      return "cpu"
         case .audio:      return "waveform"
         case .hotkey:     return "keyboard"
-        case .output:     return "arrow.right.doc.on.clipboard"
         case .templates:  return "text.badge.plus"
         case .vocabulary: return "text.word.spacing"
         case .history:    return "clock"
@@ -43,6 +41,7 @@ struct SettingsView: View {
     @State private var llmInstalledNotRunning: [String] = []
     @State private var llmScanDone = false
     @State private var expandedASRProfileIDs: Set<UUID> = []
+    @State private var expandedTemplateIDs: Set<String> = []
     @State private var editingKeyASRProfileID: UUID? = nil
     @State private var asrKeyVisible = false
     @State private var asrKeyBackup = ""
@@ -55,6 +54,9 @@ struct SettingsView: View {
     @State private var advisorLanguage = ""
     @State private var advisorResult = ""
     @State private var advisorStreaming = false
+    @State private var advisorStreamTask: Task<Void, Never>?
+    @State private var saveTask: DispatchWorkItem?
+    @State private var hasUnsavedChanges = false
     private let onSave: (MurmurSettings) -> Void
 
     init(settings: MurmurSettings, onSave: @escaping (MurmurSettings) -> Void) {
@@ -75,33 +77,43 @@ struct SettingsView: View {
             Divider()
 
             // Detail pane
-            VStack(spacing: 0) {
-                Group {
-                    switch selection {
-                    case .model:      modelPane
-                    case .audio:      audioPane
-                    case .hotkey:     hotkeyPane
-                    case .output:     outputPane
-                    case .templates:  templatesPane
-                    case .vocabulary: vocabularyPane
-                    case .history:    historyPane
-                    case nil:         modelPane
-                    }
+            Group {
+                switch selection {
+                case .model:      modelPane
+                case .audio:      audioPane
+                case .hotkey:     hotkeyPane
+                case .templates:  templatesPane
+                case .vocabulary: vocabularyPane
+                case .history:    historyPane
+                case nil:         modelPane
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-                Divider()
-                HStack {
-                    Spacer()
-                    Button("保存") { onSave(draft) }
-                        .keyboardShortcut(.return, modifiers: .command)
-                        .buttonStyle(.borderedProminent)
-                }
-                .padding()
-                .background(.bar)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(minWidth: 500, maxWidth: .infinity, minHeight: 400, maxHeight: .infinity)
+        .onChange(of: draft) { newValue in
+            hasUnsavedChanges = true
+            saveTask?.cancel()
+            let task = DispatchWorkItem { [newValue] in
+                onSave(newValue)
+                hasUnsavedChanges = false
+            }
+            saveTask = task
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: task)
+        }
+        .onDisappear {
+            flushPendingSave()
+            advisorStreamTask?.cancel()
+            advisorStreamTask = nil
+        }
+    }
+
+    func flushPendingSave() {
+        saveTask?.cancel()
+        saveTask = nil
+        guard hasUnsavedChanges else { return }
+        hasUnsavedChanges = false
+        onSave(draft)
     }
 
     // MARK: - Model
@@ -119,7 +131,7 @@ struct SettingsView: View {
 
             Section("高级设置") {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("支持任意兼容 OpenAI 格式的语言模型服务，本地或云端均可。填写服务地址、模型名称和 API Key 后即可使用。")
+                    Text("支持任意兼容 OpenAI 格式的语言模型服务，本地或云端均可。本地模型推荐使用 7B 及以上参数量的模型，云端模型须填写有效的服务地址、模型名称和 API Key。")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -282,8 +294,24 @@ struct SettingsView: View {
                         .padding(.vertical, 2)
                         .background(Color.primary.opacity(0.06 as Double))
                         .clipShape(RoundedRectangle(cornerRadius: 4))
+                    Button {
+                        let isActive = profile.id == draft.selectedProfileID
+                        if isActive && draft.localProfiles.count > 1 {
+                            deleteActiveProfileIndex = index
+                        } else {
+                            _ = expandedLLMProfileIDs.remove(profile.id)
+                            draft.localProfiles.remove(at: index)
+                            draft.selectedProfileID = draft.localProfiles.first?.id ?? UUID()
+                        }
+                    } label: {
+                        Image(systemName: "trash")
+                            .font(MurmurFont.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("删除")
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 11))
+                        .font(MurmurFont.caption)
                         .foregroundColor(.secondary)
                 }
                 .padding(.horizontal, 10)
@@ -300,41 +328,22 @@ struct SettingsView: View {
                                   draft.localProfiles[index].baseURL.hasPrefix("http://127.")
                     profileFieldRow(label: "名称", content: {
                         TextField("", text: $draft.localProfiles[index].name, prompt: Text("模型标签"))
-                            .font(.system(size: 12))
+                            .font(MurmurFont.secondary)
                     })
                     Divider()
                     profileFieldRow(label: "地址", content: {
                         TextField("", text: $draft.localProfiles[index].baseURL,
                                   prompt: Text(isLocal ? "http://localhost:11434" : "https://api.openai.com/v1"))
-                            .font(.system(size: 12))
+                            .font(MurmurFont.secondary)
                     })
                     Divider()
                     profileFieldRow(label: "模型", content: {
                         TextField("", text: $draft.localProfiles[index].selectedModel,
                                   prompt: Text(isLocal ? "qwen2.5:7b" : "gpt-4o-mini"))
-                            .font(.system(size: 12))
+                            .font(MurmurFont.secondary)
                     })
                     Divider()
                     llmKeyRow(index: index, profile: profile)
-                    Divider()
-                    HStack {
-                        Button("删除") {
-                            let isActive = profile.id == draft.selectedProfileID
-                            if isActive && draft.localProfiles.count > 1 {
-                                deleteActiveProfileIndex = index
-                            } else {
-                                _ = expandedLLMProfileIDs.remove(profile.id)
-                                draft.localProfiles.remove(at: index)
-                                draft.selectedProfileID = draft.localProfiles.first?.id ?? UUID()
-                            }
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .tint(.red)
-
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 8)
                 }
             }
         }
@@ -379,28 +388,21 @@ struct SettingsView: View {
                     Text("系统音频").tag("systemAudio")
                     Text("麦克风").tag("microphone")
                 }
-                Group {
-                    if draft.audioSource == "systemAudio" {
-                        Text("捕获系统播放的音频，适合转写 Zoom/Teams 等会议内容，需要屏幕录制权限。")
-                    } else {
-                        Text("通过麦克风录制你的声音，适合语音转文字输入，需要麦克风权限。")
-                    }
-                }
-                .font(.caption)
-                .foregroundColor(.secondary)
+                Text(draft.audioSource == "systemAudio" ? "需要屏幕录制权限。" : "需要麦克风权限。")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
-            Section("语音模型") {
+            Section("语音识别模型") {
                 Picker("当前配置", selection: $draft.selectedASRProfileID) {
                     ForEach(draft.asrProfiles) { profile in
                         Text(profile.name).tag(profile.id)
                     }
                 }
-                asrProfileDescription
             }
 
             Section("高级设置") {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("可在此添加任意兼容 OpenAI 格式的语音识别服务，本地或云端均可。")
+                    Text("支持 macOS 内置识别及任意兼容 OpenAI 格式的语音识别服务，本地或云端均可。使用本地语音识别服务前须确认服务已运行，云端语音识别服务须填写有效的服务地址、语音识别模型名称和 API Key。")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -415,7 +417,7 @@ struct SettingsView: View {
                     if !asrScanResults.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
                             HStack {
-                                Text("检测到以下可用的服务：")
+                                Text("检测到以下可用的语音识别服务：")
                                     .font(.caption).foregroundColor(.secondary)
                                 Spacer()
                                 if asrScanResults.count > 1 {
@@ -466,7 +468,7 @@ struct SettingsView: View {
                     }
 
                     HStack(spacing: 8) {
-                        Button("扫描本地模型") {
+                        Button("扫描本地语音识别服务") {
                             scanLocalASRServices()
                         }
                         .buttonStyle(.bordered)
@@ -479,7 +481,7 @@ struct SettingsView: View {
                             }
                         }
 
-                        Button("添加云端模型") {
+                        Button("添加云端语音识别服务") {
                             let newProfile = ASRProfile(name: "", providerType: "api",
                                                         baseURL: "https://")
                             draft.asrProfiles.append(newProfile)
@@ -490,7 +492,7 @@ struct SettingsView: View {
 
                         Spacer()
 
-                        Button("模型建议") {
+                        Button("语音识别模型建议") {
                             advisorResult = ""
                             showASRAdvisor = true
                         }
@@ -517,7 +519,7 @@ struct SettingsView: View {
                         )
                     }
                     .padding(.top, 4)
-                    .alert("未检测到可用的本地服务", isPresented: Binding(
+                    .alert("未检测到可用的本地语音识别服务", isPresented: Binding(
                         get: { asrScanDone && asrScanResults.isEmpty && asrInstalledNotRunning.isEmpty && !asrScanning },
                         set: { if !$0 { asrScanDone = false } }
                     )) {
@@ -537,25 +539,6 @@ struct SettingsView: View {
         .navigationTitle("音频")
     }
 
-
-    @ViewBuilder
-    private var asrProfileDescription: some View {
-        let profile = draft.asrProfiles.first { $0.id == draft.selectedASRProfileID } ?? ASRProfile.builtinSFSpeech
-        Group {
-            if profile.providerType == "sfspeech" {
-                Text("使用 macOS 系统内置语音识别，无需额外安装，支持所有 Mac，首次使用需授权。")
-            } else {
-                let isLocal = profile.baseURL.hasPrefix("http://localhost") || profile.baseURL.hasPrefix("http://127.")
-                if isLocal {
-                    Text("通过本地语音识别服务进行转写，音频不上传，需在本地启动兼容 OpenAI 格式的服务。")
-                } else {
-                    Text("通过云端 API 进行语音识别，支持更多平台和模型，需要网络连接。")
-                }
-            }
-        }
-        .font(.caption)
-        .foregroundColor(.secondary)
-    }
 
     private func asrCategory(_ profile: ASRProfile) -> String {
         if profile.providerType == "sfspeech" { return "macOS 内置" }
@@ -595,7 +578,7 @@ struct SettingsView: View {
                             .background(Color.primary.opacity(0.06))
                             .clipShape(RoundedRectangle(cornerRadius: 4))
                         Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 11))
+                            .font(MurmurFont.caption)
                             .foregroundColor(.secondary)
                     }
                     .padding(.horizontal, 10)
@@ -627,19 +610,19 @@ struct SettingsView: View {
                             let isLocal = asrCategory(draft.asrProfiles[index]) == "本地模型"
                             profileFieldRow(label: "名称", content: {
                                 TextField("", text: $draft.asrProfiles[index].name, prompt: Text("模型标签"))
-                                    .font(.system(size: 12))
+                                    .font(MurmurFont.secondary)
                             })
                             Divider()
                             profileFieldRow(label: "地址", content: {
                                 TextField("", text: $draft.asrProfiles[index].baseURL,
                                           prompt: Text(isLocal ? "http://localhost:8000" : "https://api.example.com/v1"))
-                                    .font(.system(size: 12))
+                                    .font(MurmurFont.secondary)
                             })
                             Divider()
-                            profileFieldRow(label: "模型", content: {
+                            profileFieldRow(label: "语音识别模型", content: {
                                 TextField("", text: $draft.asrProfiles[index].model,
                                           prompt: Text(isLocal ? "whisper-1" : "whisper-large-v3"))
-                                    .font(.system(size: 12))
+                                    .font(MurmurFont.secondary)
                             })
                             Divider()
                             asrKeyRow(index: index, profile: profile, optional: isLocal)
@@ -675,7 +658,7 @@ struct SettingsView: View {
     private func profileFieldRow<C: View>(label: String, @ViewBuilder content: () -> C) -> some View {
         HStack(spacing: 8) {
             Text(label)
-                .font(.system(size: 12))
+                .font(MurmurFont.secondary)
                 .foregroundColor(.secondary)
                 .frame(width: 36, alignment: .leading)
             content()
@@ -758,14 +741,22 @@ struct SettingsView: View {
     /// Run a command and return true if exit code is 0.
     /// Note: uses waitUntilExit() — acceptable here because commands are fast (which/brew list)
     /// and called only during user-initiated scans inside a Task.
-    private func shellCheck(_ args: [String]) -> Bool {
-        let p = Process()
-        p.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        p.arguments = args
-        p.environment = ["PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"]
-        p.standardOutput = Pipe(); p.standardError = Pipe()
-        try? p.run(); p.waitUntilExit()
-        return p.terminationStatus == 0
+    private func shellCheck(_ args: [String]) async -> Bool {
+        await withCheckedContinuation { continuation in
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+            p.arguments = args
+            p.environment = ["PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"]
+            p.standardOutput = Pipe(); p.standardError = Pipe()
+            p.terminationHandler = { process in
+                continuation.resume(returning: process.terminationStatus == 0)
+            }
+            do {
+                try p.run()
+            } catch {
+                continuation.resume(returning: false)
+            }
+        }
     }
 
     /// Return true if <appName>.app exists in /Applications or ~/Applications.
@@ -836,7 +827,7 @@ struct SettingsView: View {
         (1234,  "LM Studio"),
         (1337,  "Jan"),
         (8080,  "llama.cpp"),
-        (8000,  "本地服务"),
+        (8000,  "本地语音识别服务"),
     ]
 
     private func scanLocalLLMServices() {
@@ -851,9 +842,9 @@ struct SettingsView: View {
 
             for pkg in knownLLMPackages {
                 var installed = false
-                if let binary = pkg.binary  { installed = shellCheck(["which", binary]) }
+                if let binary = pkg.binary  { installed = await shellCheck(["which", binary]) }
                 if !installed, let app = pkg.appName { installed = appInstalled(app) }
-                if !installed, let brew = pkg.brew   { installed = shellCheck(["brew", "list", brew]) }
+                if !installed, let brew = pkg.brew   { installed = await shellCheck(["brew", "list", brew]) }
                 if installed { installedByPort[pkg.port] = pkg.name }
             }
 
@@ -934,8 +925,8 @@ struct SettingsView: View {
 
             for pkg in knownPackages {
                 var installed = false
-                if let pip = pkg.pip { installed = shellCheck(["pip3", "show", pip]) }
-                if !installed, let brew = pkg.brew { installed = shellCheck(["brew", "list", brew]) }
+                if let pip = pkg.pip { installed = await shellCheck(["pip3", "show", pip]) }
+                if !installed, let brew = pkg.brew { installed = await shellCheck(["brew", "list", brew]) }
                 if installed {
                     installedByPort[pkg.port] = pkg.name
                     installedByName[pkg.name] = (pkg.port, pkg.model)
@@ -979,7 +970,7 @@ struct SettingsView: View {
 
             // Running on unknown port → generic
             for port in runningPorts.subtracting(handledPorts) {
-                running.append(ASRScanResult(name: "本地服务（端口 \(port)）", baseURL: "http://localhost:\(port)", model: ""))
+                running.append(ASRScanResult(name: "本地语音识别服务（端口 \(port)）", baseURL: "http://localhost:\(port)", model: ""))
             }
 
             await MainActor.run {
@@ -1016,6 +1007,7 @@ struct SettingsView: View {
     }
 
     private func askASRAdvisor() {
+        advisorStreamTask?.cancel()
         advisorStreaming = true
         advisorResult = ""
         let hw = hardwareInfo()
@@ -1053,10 +1045,16 @@ API 地址：（完整 URL）
 - 只推荐兼容 OpenAI /v1/audio/transcriptions 格式的服务
 """
         let llm = makeLLMFromDraft()
-        llm.streamChat(
+        advisorStreamTask = llm.streamChat(
             messages: [LLMMessage(role: "user", content: prompt)],
-            onChunk: { [self] chunk in advisorResult += chunk },
-            onDone: { [self] in advisorStreaming = false }
+            onChunk: { [self] chunk in
+                guard advisorResult.count < 50_000 else { return }
+                advisorResult += String(chunk.prefix(50_000 - advisorResult.count))
+            },
+            onDone: { [self] in
+                advisorStreaming = false
+                advisorStreamTask = nil
+            }
         )
     }
 
@@ -1070,62 +1068,88 @@ API 地址：（完整 URL）
 
     // MARK: - Hotkey
 
-    private static let modifierOptions: [(String, String)] = [
-        ("option",  "⌥ Option"),
-        ("command", "⌘ Command"),
-        ("control", "⌃ Control"),
-        ("shift",   "⇧ Shift"),
-    ]
+    private static let defaultHotkeyKeyCode: UInt16 = UInt16.max
+    private static let defaultHotkeyModifiers: [String] = ["control"]
 
     private var hotkeyPane: some View {
         Form {
-            Section("全局唤醒快捷键") {
-                HStack {
-                    Text("修饰键")
-                    Spacer()
-                    ForEach(Self.modifierOptions, id: \.0) { id, label in
-                        Toggle(label, isOn: Binding(
-                            get: { draft.hotkeyModifiers.contains(id) },
-                            set: { on in
-                                if on { draft.hotkeyModifiers.append(id) }
-                                else  { draft.hotkeyModifiers.removeAll { $0 == id } }
-                            }
-                        )).toggleStyle(.button)
-                    }
+            Section(header: Text("全局快捷键"), footer: Text("支持修饰键单击或单独修饰键双击（如双击 ⌃），需包含至少一个修饰键。").font(.caption).foregroundColor(.secondary)) {
+                shortcutRow(
+                    label: "开启 Murmur",
+                    keyCode: $draft.hotkeyKeyCode,
+                    modifiers: $draft.hotkeyModifiers,
+                    defaultKeyCode: Self.defaultHotkeyKeyCode,
+                    defaultModifiers: Self.defaultHotkeyModifiers,
+                    requiresModifier: true,
+                    allowModifierOnly: true,
+                    showDoubleTap: true,
+                    helpText: "恢复默认（双击 Control）"
+                )
+            }
+
+            Section(header: Text("应用内快捷键"), footer: Text("支持修饰键组合或单个裸键，不支持双击。").font(.caption).foregroundColor(.secondary)) {
+                ForEach($draft.appShortcuts) { $shortcut in
+                    let def = AppShortcut.defaults.first { $0.id == shortcut.id }
+                    shortcutRow(
+                        label: shortcut.name,
+                        keyCode: $shortcut.keyCode,
+                        modifiers: $shortcut.modifiers,
+                        defaultKeyCode: def?.keyCode ?? shortcut.keyCode,
+                        defaultModifiers: def?.modifiers ?? shortcut.modifiers,
+                        requiresModifier: false,
+                        allowModifierOnly: false,
+                        showDoubleTap: false,
+                        helpText: "恢复默认"
+                    )
                 }
-                HStack {
-                    Text("当前配置")
-                    Spacer()
-                    Text(hotkeyDescription)
-                        .foregroundColor(.secondary)
-                        .font(.system(.body, design: .monospaced))
-                }
-                Text("目前按键固定为 Space（keyCode 49）。更多按键选择将在后续版本添加。")
-                    .font(.caption).foregroundColor(.secondary)
             }
         }
         .formStyle(.grouped)
         .navigationTitle("快捷键")
     }
 
-    private var hotkeyDescription: String {
-        let m: [String: String] = ["option":"⌥","command":"⌘","control":"⌃","shift":"⇧"]
-        return draft.hotkeyModifiers.compactMap { m[$0] }.joined() + "Space"
+    @ViewBuilder
+    private func shortcutRow(
+        label: String,
+        keyCode: Binding<UInt16>,
+        modifiers: Binding<[String]>,
+        defaultKeyCode: UInt16,
+        defaultModifiers: [String],
+        requiresModifier: Bool,
+        allowModifierOnly: Bool,
+        showDoubleTap: Bool,
+        helpText: String
+    ) -> some View {
+        HStack {
+            Text(label)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            ShortcutRecorderView(
+                keyCode: keyCode,
+                modifiers: modifiers,
+                requiresModifier: requiresModifier,
+                allowModifierOnly: allowModifierOnly,
+                showDoubleTap: showDoubleTap
+            )
+            .frame(width: 120, height: 26)
+            Button {
+                keyCode.wrappedValue = defaultKeyCode
+                modifiers.wrappedValue = defaultModifiers
+            } label: {
+                Image(systemName: "arrow.counterclockwise")
+                    .foregroundColor(.secondary)
+            }
+            .buttonStyle(.borderless)
+            .help(helpText)
+        }
     }
 
     // MARK: - Output
 
     private var outputPane: some View {
         Form {
-            Section("默认输出方式") {
-                Picker("接受后动作", selection: $draft.defaultOutputMode) {
-                    Text("复制到剪贴板").tag("copy")
-                    Text("直接注入光标位置").tag("inject")
-                }
-                if draft.defaultOutputMode == "inject" {
-                    Text("写入剪贴板后模拟 ⌘V 注入光标。原剪贴板内容将在 1 秒后恢复。\n需要辅助功能权限（Accessibility）。")
-                        .font(.caption).foregroundColor(.secondary)
-                }
+            Section("输出方式") {
+                Text("写入剪贴板后模拟 ⌘V 注入光标位置。原剪贴板内容将在 1 秒后恢复。\n需要辅助功能权限（Accessibility）。")
+                    .font(.caption).foregroundColor(.secondary)
             }
         }
         .formStyle(.grouped)
@@ -1135,43 +1159,109 @@ API 地址：（完整 URL）
     // MARK: - Templates
 
     private var templatesPane: some View {
-        VStack(spacing: 0) {
-            List {
-                Section("内置（只读）") {
-                    ForEach(PromptTemplate.builtins) { t in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(t.name).bold()
-                            Text(t.promptInstruction ?? "（无风格指令）")
-                                .font(.caption).foregroundColor(.secondary)
-                        }
-                    }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach($draft.editedBuiltins) { $t in
+                    templateRow(template: $t, isBuiltin: true,
+                                defaultTemplate: PromptTemplate.builtins.first { $0.id == t.id },
+                                onDelete: nil)
                 }
-                Section("自定义") {
-                    ForEach($draft.customTemplates) { $t in
-                        VStack(alignment: .leading, spacing: 4) {
-                            TextField("名称", text: $t.name)
-                            TextField("提示词指令", text: Binding(
-                                get: { t.promptInstruction ?? "" },
-                                set: { t.promptInstruction = $0.isEmpty ? nil : $0 }
-                            ), axis: .vertical)
-                            .lineLimit(3, reservesSpace: true)
-                            .font(.caption)
+                ForEach($draft.customTemplates) { $t in
+                    let idx = draft.customTemplates.firstIndex { $0.id == t.id }
+                    templateRow(template: $t, isBuiltin: false, defaultTemplate: nil,
+                                onDelete: idx.map { i in { draft.customTemplates.remove(at: i) } })
+                }
+                Button("添加模板") {
+                    let t = PromptTemplate(id: UUID().uuidString, name: "", promptInstruction: "")
+                    draft.customTemplates.append(t)
+                    expandedTemplateIDs.insert(t.id)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+            .padding()
+        }
+        .navigationTitle("提示词模板")
+    }
+
+    @ViewBuilder
+    private func templateRow(
+        template: Binding<PromptTemplate>,
+        isBuiltin: Bool,
+        defaultTemplate: PromptTemplate?,
+        onDelete: (() -> Void)?
+    ) -> some View {
+        let t = template.wrappedValue
+        let isExpanded = expandedTemplateIDs.contains(t.id)
+        let isModified = isBuiltin && (t.name != defaultTemplate?.name || t.promptInstruction != defaultTemplate?.promptInstruction)
+
+        VStack(spacing: 0) {
+            // ── 折叠态 ──
+            Button {
+                withAnimation(.easeInOut(duration: 0.18)) {
+                    if isExpanded { expandedTemplateIDs.remove(t.id) }
+                    else          { expandedTemplateIDs.insert(t.id) }
+                }
+            } label: {
+                HStack {
+                    Text(t.name.isEmpty ? "未命名" : t.name)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.primary)
+                    Spacer()
+                    if isModified, let def = defaultTemplate {
+                        Button {
+                            template.wrappedValue.name = def.name
+                            template.wrappedValue.promptInstruction = def.promptInstruction
+                        } label: {
+                            Image(systemName: "arrow.uturn.backward")
+                                .font(MurmurFont.caption)
+                                .foregroundColor(.secondary)
                         }
+                        .buttonStyle(.plain)
+                        .help("恢复默认")
                     }
-                    .onDelete { draft.customTemplates.remove(atOffsets: $0) }
+                    if let del = onDelete {
+                        Button { del() } label: {
+                            Image(systemName: "trash")
+                                .font(MurmurFont.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .help("删除")
+                    }
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(MurmurFont.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 10)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            // ── 展开态 ──
+            if isExpanded {
+                Divider()
+                VStack(alignment: .leading, spacing: 0) {
+                    profileFieldRow(label: "名称", content: {
+                        TextField("", text: template.name, prompt: Text("模板名称"))
+                            .font(MurmurFont.secondary)
+                    })
+                    Divider()
+                    profileFieldRow(label: "提示词", content: {
+                        TextField("", text: Binding(
+                            get: { template.wrappedValue.promptInstruction ?? "" },
+                            set: { template.wrappedValue.promptInstruction = $0.isEmpty ? nil : $0 }
+                        ), prompt: Text("留空表示默认模式"), axis: .vertical)
+                        .lineLimit(3, reservesSpace: true)
+                        .font(MurmurFont.secondary)
+                    })
                 }
             }
-            Divider()
-            HStack {
-                Spacer()
-                Button("添加模板") {
-                    draft.customTemplates.append(
-                        PromptTemplate(id: UUID().uuidString, name: "新模板", promptInstruction: "")
-                    )
-                }.buttonStyle(.bordered)
-            }.padding(.horizontal).padding(.vertical, 8)
         }
-        .navigationTitle("模板")
+        .background(Color(NSColor.controlBackgroundColor))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.12 as Double), lineWidth: 1))
     }
 
     // MARK: - Vocabulary
@@ -1246,7 +1336,7 @@ struct ASRAdvisorSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("语音模型建议").font(.headline)
+                Text("语音识别模型建议").font(.headline)
                 Spacer()
                 Button("关闭") { dismiss() }.buttonStyle(.plain).foregroundColor(.secondary)
             }
@@ -1296,7 +1386,7 @@ struct ASRAdvisorSheet: View {
                 Divider()
                 ScrollView {
                     Text(result)
-                        .font(.system(size: 12))
+                        .font(MurmurFont.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .textSelection(.enabled)
                 }
@@ -1314,7 +1404,7 @@ struct ASRAdvisorSheet: View {
 
     private func exportResult() {
         let panel = NSSavePanel()
-        panel.nameFieldStringValue = "语音模型建议.txt"
+        panel.nameFieldStringValue = "语音识别模型建议.txt"
         panel.allowedContentTypes = [.plainText]
         if panel.runModal() == .OK, let url = panel.url {
             try? result.write(to: url, atomically: true, encoding: .utf8)
@@ -1359,17 +1449,17 @@ private struct ProfileKeyRowView: View {
     var body: some View {
         let hasContent = !key.isEmpty
         let locked = hasContent && !isEditing && !hasUnsavedInput
-        let keyPrompt = optional ? "可选，大多数本地服务无需填写" : "必填，输入 API Key"
+        let keyPrompt = optional ? "可选，大多数本地语音识别服务无需填写" : "必填，输入 API Key"
 
         HStack(spacing: 8) {
             Text("Key")
-                .font(.system(size: 12))
+                .font(MurmurFont.secondary)
                 .foregroundColor(.secondary)
                 .frame(width: 36, alignment: .leading)
 
             if locked {
                 Text("••••••••（已配置）")
-                    .font(.system(size: 12)).foregroundColor(.secondary)
+                    .font(MurmurFont.secondary).foregroundColor(.secondary)
                 Spacer()
                 Button("配置") { onEdit() }
                     .buttonStyle(.bordered).controlSize(.mini)
@@ -1381,12 +1471,12 @@ private struct ProfileKeyRowView: View {
                         SecureField("", text: editableKey, prompt: Text(keyPrompt))
                     }
                 }
-                .font(.system(size: 12))
+                .font(MurmurFont.secondary)
 
                 if hasContent {
                     Button { onToggleVisible() } label: {
                         Image(systemName: keyVisible ? "eye.slash" : "eye")
-                            .font(.system(size: 11)).foregroundColor(.secondary)
+                            .font(MurmurFont.caption).foregroundColor(.secondary)
                     }
                     .buttonStyle(.plain)
                 }
@@ -1409,4 +1499,3 @@ private struct ProfileKeyRowView: View {
         .padding(.vertical, 7)
     }
 }
-

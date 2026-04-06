@@ -4,6 +4,7 @@ import AVFoundation
 class WhisperTranscriber: ASRProvider {
     var onPartial: ((String) -> Void)?
     var onFinal: ((String) -> Void)?
+    var onError: ((Error) -> Void)?
 
     private let model: String
     private var audioFile: AVAudioFile?
@@ -131,7 +132,7 @@ class WhisperTranscriber: ASRProvider {
         do {
             try process.run()
         } catch {
-            DispatchQueue.main.async { self.onFinal?("") }
+            DispatchQueue.main.async { self.onError?(error) }
             return
         }
 

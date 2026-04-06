@@ -17,6 +17,7 @@ enum TextInjector {
         // 2. Write new text
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
+        let changeCountAfterWrite = pasteboard.changeCount
 
         // 3. Activate target app
         if let app = targetApp {
@@ -30,6 +31,7 @@ enum TextInjector {
         // 5. Restore clipboard after 1 second
         Task {
             try? await Task.sleep(nanoseconds: 1_000_000_000)
+            guard pasteboard.changeCount == changeCountAfterWrite else { return }
             pasteboard.clearContents()
             for item in savedItems {
                 item.data.forEach { type, data in pasteboard.setData(data, forType: type) }

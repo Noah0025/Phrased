@@ -5,6 +5,7 @@ import AVFoundation
 class CloudASRTranscriber: ASRProvider {
     var onPartial: ((String) -> Void)?
     var onFinal: ((String) -> Void)?
+    var onError: ((Error) -> Void)?
 
     private let baseURL: String
     private let apiKey: String
@@ -57,7 +58,9 @@ class CloudASRTranscriber: ASRProvider {
 
         guard let endpoint = URL(string: "\(baseURL)/v1/audio/transcriptions"),
               let audioData = try? Data(contentsOf: fileURL) else {
-            DispatchQueue.main.async { self.onFinal?("") }
+            let err = NSError(domain: "CloudASR", code: -1,
+                              userInfo: [NSLocalizedDescriptionKey: "无法读取音频文件或服务地址无效"])
+            DispatchQueue.main.async { self.onError?(err) }
             return
         }
 
@@ -91,7 +94,7 @@ class CloudASRTranscriber: ASRProvider {
             let text = (try? JSONDecoder().decode(TranscriptionResponse.self, from: data))?.text ?? ""
             DispatchQueue.main.async { self.onFinal?(text) }
         } catch {
-            DispatchQueue.main.async { self.onFinal?("") }
+            DispatchQueue.main.async { self.onError?(error) }
         }
     }
 

@@ -7,7 +7,7 @@ extension Array {
     }
 }
 
-struct LLMProfile: Codable, Identifiable {
+struct LLMProfile: Codable, Identifiable, Equatable {
     var id: UUID = UUID()
     var name: String
     var baseURL: String

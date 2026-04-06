@@ -9,6 +9,27 @@ import Combine
 private class MurmurPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
+
+    var appShortcutHandler: ((NSEvent) -> Bool)?
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if appShortcutHandler?(event) == true { return true }
+        return super.performKeyEquivalent(with: event)
+    }
+
+    override func sendEvent(_ event: NSEvent) {
+        super.sendEvent(event)
+    }
+}
+
+private final class FirstMouseHostingView<Content: View>: NSHostingView<Content> {
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+}
+
+private final class FirstMouseHostingController<Content: View>: NSHostingController<Content> {
+    override func loadView() {
+        view = FirstMouseHostingView(rootView: rootView)
+    }
 }
 
 // MARK: - MurmurView
@@ -103,27 +124,21 @@ struct MurmurView: View {
         Button {
             inputVM.toggleRecording()
         } label: {
-            Image(systemName: inputVM.isRecording ? "stop.fill" : "waveform")
+            Image(systemName: "waveform")
                 .font(.system(size: 15, weight: .medium))
                 .foregroundColor(inputVM.isRecording ? .red : .secondary)
+                .opacity(inputVM.isRecording && pulsing ? 0.35 : 1.0)
+                .animation(
+                    inputVM.isRecording
+                        ? .easeInOut(duration: 0.7).repeatForever(autoreverses: true)
+                        : .default,
+                    value: pulsing
+                )
                 .frame(width: 28, height: 28)
         }
         .buttonStyle(.plain)
-        .help(inputVM.isRecording ? "停止录音" : "开始录音（右键选择来源）")
+        .help(inputVM.isRecording ? "停止录音" : "开始录音")
         .onChange(of: inputVM.isRecording) { pulsing = $0 }
-        .contextMenu {
-            Picker("音频来源", selection: Binding(
-                get: { inputVM.settings.audioSource },
-                set: { inputVM.selectAudioSource($0) }
-            )) {
-                ForEach(inputVM.availableDevices) { device in
-                    Label(device.name,
-                          systemImage: device.isSystemAudio ? "desktopcomputer" : "mic")
-                        .tag(device.id)
-                }
-            }
-            .pickerStyle(.inline)
-        }
     }
 
     // MARK: Input area
@@ -131,35 +146,27 @@ struct MurmurView: View {
     @ViewBuilder
     private var inputArea: some View {
         if inputVM.isRecording {
-            HStack(spacing: 8) {
-                ZStack {
-                    Circle()
-                        .fill(Color.red.opacity(0.15))
-                        .frame(width: 22, height: 22)
-                        .scaleEffect(pulsing ? 1.8 : 1.0)
-                        .opacity(pulsing ? 0 : 1)
-                        .animation(.easeOut(duration: 0.9).repeatForever(autoreverses: false), value: pulsing)
-                    Circle().fill(Color.red).frame(width: 8, height: 8)
-                }
-                .onAppear { pulsing = true }
-                .onDisappear { pulsing = false }
-                Text("正在聆听...")
-                    .font(.system(size: 15))
-                    .foregroundColor(.secondary)
-            }
-            .frame(maxWidth: .infinity, minHeight: 22, alignment: .leading)
+            Text(inputVM.inputText)
+                .font(.system(size: 15))
+                .foregroundColor(.primary)
+                .lineLimit(3)
+                .frame(maxWidth: .infinity, minHeight: 22, alignment: .leading)
         } else if inputVM.isTranscribing {
-            HStack(spacing: 8) {
-                ProgressView().scaleEffect(0.65).frame(width: 14, height: 14)
-                Text("正在识别...")
+            HStack(alignment: .center, spacing: 6) {
+                Text(inputVM.inputText)
                     .font(.system(size: 15))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.primary)
+                    .lineLimit(3)
+                    .frame(maxWidth: .infinity, minHeight: 22, alignment: .leading)
+                ProgressView().scaleEffect(0.65).frame(width: 14, height: 14)
             }
-            .frame(maxWidth: .infinity, minHeight: 22, alignment: .leading)
+            .contentShape(Rectangle())
+            .onTapGesture { inputVM.cancelRecording() }
         } else {
             AutoGrowingTextEditor(
                 text: $inputVM.inputText,
                 height: $inputVM.editorHeight,
+                onFocus: { inputVM.cancelRecording() },
                 onSubmit: { inputVM.submit() }
             )
             .frame(height: inputVM.editorHeight)
@@ -185,10 +192,9 @@ struct MurmurView: View {
     private var submitButton: some View {
         Button { inputVM.submit() } label: {
             Image(systemName: "wand.and.stars")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(isSubmitDisabled ? .secondary.opacity(0.4) : .white)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(isSubmitDisabled ? .secondary : .accentColor)
                 .frame(width: 28, height: 28)
-                .background(Circle().fill(isSubmitDisabled ? Color.primary.opacity(0.06) : Color.accentColor))
         }
         .buttonStyle(.plain)
         .disabled(isSubmitDisabled)
@@ -230,7 +236,7 @@ struct MurmurView: View {
     private var feedbackArea: some View {
         HStack(spacing: 8) {
             TextField("说明哪里不对，或想要什么效果...", text: $confirmVM.feedbackText)
-                .font(.system(size: 13))
+                .font(MurmurFont.ui)
                 .textFieldStyle(.roundedBorder)
                 .focused($feedbackFocused)
             Button("生成") { confirmVM.regenerate() }
@@ -252,7 +258,7 @@ struct MurmurView: View {
                 confirmVM.isLocked.toggle()
             } label: {
                 Image(systemName: confirmVM.isLocked ? "pin.fill" : "pin")
-                    .font(.system(size: 13))
+                    .font(MurmurFont.ui)
                     .foregroundColor(confirmVM.isLocked ? .accentColor : .secondary)
                     .rotationEffect(confirmVM.isLocked ? .degrees(-45) : .zero)
             }
@@ -260,7 +266,7 @@ struct MurmurView: View {
             .help(confirmVM.isLocked ? "已锁定" : "锁定窗口")
 
             Text("风格")
-                .font(.system(size: 13))
+                .font(MurmurFont.ui)
                 .foregroundColor(.secondary)
 
             stylePicker
@@ -269,7 +275,7 @@ struct MurmurView: View {
 
             Button { confirmVM.showFeedbackField.toggle() } label: {
                 Image(systemName: "square.and.pencil")
-                    .font(.system(size: 13))
+                    .font(MurmurFont.ui)
                     .foregroundColor(.secondary)
             }
             .disabled(confirmVM.isStreaming)
@@ -281,7 +287,7 @@ struct MurmurView: View {
 
             Button { confirmVM.regenerate() } label: {
                 Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 13))
+                    .font(MurmurFont.ui)
                     .foregroundColor(.secondary)
             }
             .disabled(confirmVM.isStreaming)
@@ -291,12 +297,8 @@ struct MurmurView: View {
             .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.05)))
             .help("重新生成")
 
-            let outputMode = inputVM.settings.defaultOutputMode
-            let accepted = confirmVM.didCopy
-            let acceptLabel = accepted
-                ? (outputMode == "inject" ? "已注入 ✓" : "已复制 ✓")
-                : (outputMode == "inject" ? "注入" : "复制")
-            Button(acceptLabel) { confirmVM.accept(outputMode: outputMode) }
+            let acceptLabel = confirmVM.didCopy ? "已注入" : "注入"
+            Button(acceptLabel) { confirmVM.accept(outputMode: "inject") }
                 .keyboardShortcut(.return)
                 .disabled(confirmVM.isStreaming || confirmVM.streamedResult.isEmpty)
                 .buttonStyle(.plain)
@@ -323,29 +325,28 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
     private let confirmVM: ConfirmViewModel
     private let hosting: NSHostingController<MurmurView>
     private var cancellables = Set<AnyCancellable>()
-    private var isBeingShown = false
     private(set) var pendingContext: InputContext = .empty
     private var mouseMonitor: Any?
+    private var appShortcutMonitor: Any?
     private var workspaceObserver: NSObjectProtocol?
+    private weak var cachedTextView: NSTextView?
 
     init(inputVM: InputViewModel, confirmVM: ConfirmViewModel) {
         self.inputVM = inputVM
         self.confirmVM = confirmVM
 
         let view = MurmurView(inputVM: inputVM, confirmVM: confirmVM)
-        let hosting = NSHostingController(rootView: view)
+        let hosting = FirstMouseHostingController(rootView: view)
         self.hosting = hosting
         hosting.view.wantsLayer = true
         hosting.view.layer?.backgroundColor = .clear
 
         let window = MurmurPanel(
             contentRect: NSRect(x: 0, y: 0, width: 500, height: 52),
-            styleMask: [.titled, .nonactivatingPanel, .fullSizeContentView],
+            styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
         window.backgroundColor = .clear
         window.isOpaque = false
         window.isMovableByWindowBackground = true
@@ -356,9 +357,9 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
         window.center()
         super.init(window: window)
         window.delegate = self
-        window.standardWindowButton(.closeButton)?.isHidden = true
-        window.standardWindowButton(.miniaturizeButton)?.isHidden = true
-        window.standardWindowButton(.zoomButton)?.isHidden = true
+        window.appShortcutHandler = { [weak self] event in
+            self?.handleAppShortcut(event) ?? false
+        }
 
         // Subscribe to the three properties that drive window height changes.
         // Double-async ensures SwiftUI has finished layout before we measure.
@@ -414,6 +415,52 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
         if let obs = workspaceObserver {
             NSWorkspace.shared.notificationCenter.removeObserver(obs)
         }
+        if let m = mouseMonitor { NSEvent.removeMonitor(m) }
+        if let m = appShortcutMonitor { NSEvent.removeMonitor(m) }
+    }
+
+    // MARK: - In-app shortcut wiring
+
+    func installAppShortcutMonitor() {
+        if appShortcutMonitor != nil { return }
+        appShortcutMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self, self.window?.isVisible == true else { return event }
+            return self.handleAppShortcut(event) ? nil : event
+        }
+    }
+
+    private func handleAppShortcut(_ event: NSEvent) -> Bool {
+        let shortcuts = inputVM.settings.appShortcuts
+        let relevantMods: NSEvent.ModifierFlags = [.command, .option, .control, .shift]
+        let eventMods = event.modifierFlags.intersection(relevantMods)
+
+        for shortcut in shortcuts {
+            // Skip "disabled" shortcuts (empty = UInt16.max with no modifiers)
+            guard shortcut.keyCode != UInt16.max || !shortcut.modifiers.isEmpty else { continue }
+            // Skip modifier-only shortcuts (shouldn't appear in app shortcuts, but guard anyway)
+            guard shortcut.keyCode != UInt16.max else { continue }
+            guard event.keyCode == shortcut.keyCode else { continue }
+            let shortcutMods = shortcut.modifiers.reduce(NSEvent.ModifierFlags()) { flags, mod in
+                switch mod {
+                case "command": return flags.union(.command)
+                case "option":  return flags.union(.option)
+                case "control": return flags.union(.control)
+                case "shift":   return flags.union(.shift)
+                default:        return flags
+                }
+            }
+            guard eventMods == shortcutMods else { continue }
+
+            switch shortcut.id {
+            case "transcribe":  inputVM.toggleRecording();                return true
+            case "pin":         confirmVM.isLocked.toggle();              return true
+            case "edit":        confirmVM.showFeedbackField.toggle();     return true
+            case "regenerate":  confirmVM.regenerate();                   return true
+            case "inject":      confirmVM.accept(outputMode: "inject");   return true
+            default: break
+            }
+        }
+        return false
     }
 
     private func updateWindowHeight(_ newHeight: CGFloat) {
@@ -447,24 +494,22 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
     // because it fires spuriously during IME candidate window repositioning and window resizes.
 
     func windowDidBecomeKey(_ notification: Notification) {
-        // macOS re-shows standard window buttons when a panel becomes key — hide them again.
-        window?.standardWindowButton(.closeButton)?.isHidden = true
-        window?.standardWindowButton(.miniaturizeButton)?.isHidden = true
-        window?.standardWindowButton(.zoomButton)?.isHidden = true
+        // Don't steal first responder while recording — doing so interrupts button tracking
+        // and causes the stop button click to be swallowed.
+        guard !inputVM.isRecording else { return }
 
         // Re-focus the input text view whenever the panel gains key status.
-        // This covers cases where SwiftUI's layout or activation ordering left the
-        // text view without first-responder status.
-        guard let root = window?.contentView,
-              let tv = findTextView(in: root),
+        guard let tv = textView(),
               window?.firstResponder !== tv else { return }
         window?.makeFirstResponder(tv)
     }
 
     func updateTemplates(_ templates: [PromptTemplate]) {
         inputVM.allTemplates = templates
-        if !templates.contains(inputVM.selectedTemplate) {
-            inputVM.selectedTemplate = PromptTemplate.builtins[0]
+        if let updated = templates.first(where: { $0.id == inputVM.selectedTemplate.id }) {
+            inputVM.selectedTemplate = updated
+        } else {
+            inputVM.selectedTemplate = templates.first ?? PromptTemplate.builtins[0]
         }
     }
 
@@ -484,7 +529,7 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
             DispatchQueue.main.async { self.dismissPanel() }
         }
 
-        isBeingShown = true
+        inputVM.cancelRecording()
         inputVM.inputText = ""
         inputVM.editorHeight = 22
         showWindow(nil)
@@ -495,30 +540,33 @@ class MurmurWindowController: NSWindowController, NSWindowDelegate {
             self.window?.makeKeyAndOrderFront(nil)
             self.syncAndFocusTextView()
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
-            self?.isBeingShown = false
-        }
     }
 
     private func syncAndFocusTextView() {
-        guard let root = window?.contentView,
-              let tv = findTextView(in: root) else { return }
+        guard let tv = textView() else { return }
         tv.string = ""
         window?.makeFirstResponder(tv)
     }
 
     private func focusTextView() {
-        guard let root = window?.contentView,
-              let tv = findTextView(in: root) else { return }
+        guard let tv = textView() else { return }
         window?.makeFirstResponder(tv)
     }
 
-    private func findTextView(in view: NSView) -> NSTextView? {
+    private func textView() -> NSTextView? {
+        if let tv = cachedTextView, tv.superview != nil { return tv }
+        cachedTextView = findTextView(in: window?.contentView)
+        return cachedTextView
+    }
+
+    private func findTextView(in view: NSView?) -> NSTextView? {
+        guard let view else { return nil }
         if let tv = view as? NSTextView { return tv }
         return view.subviews.lazy.compactMap { self.findTextView(in: $0) }.first
     }
 
     private func dismissPanel() {
+        inputVM.cancelRecording()
         window?.orderOut(nil)
         inputVM.contextAppName = nil
         confirmVM.streamedResult = ""

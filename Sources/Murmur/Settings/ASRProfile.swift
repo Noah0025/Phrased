@@ -1,6 +1,6 @@
 import Foundation
 
-struct ASRProfile: Codable, Identifiable {
+struct ASRProfile: Codable, Identifiable, Equatable {
     var id: UUID = UUID()
     var name: String
     /// "sfspeech" | "api"

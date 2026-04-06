@@ -4,6 +4,7 @@ import AVFoundation
 class SFSpeechTranscriber: ASRProvider {
     var onPartial: ((String) -> Void)?
     var onFinal: ((String) -> Void)?
+    var onError: ((Error) -> Void)?
 
     private let recognizer: SFSpeechRecognizer? = {
         SFSpeechRecognizer(locale: Locale.current) ?? SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
@@ -30,21 +31,26 @@ class SFSpeechTranscriber: ASRProvider {
             if let result {
                 let text = result.bestTranscription.formattedString
                 DispatchQueue.main.async {
-                    if result.isFinal {
-                        self.onFinal?(text)
-                    } else {
+                    if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         self.onPartial?(text)
                     }
+                    if result.isFinal {
+                        self.onFinal?(text)
+                    }
                 }
-            } else if error != nil {
-                DispatchQueue.main.async { self.onFinal?("") }
+            } else if let error {
+                DispatchQueue.main.async { self.onError?(error) }
             }
         }
     }
 
     func stopSession() {
         request?.endAudio()
-        // Don't cancel task — let it finish processing buffered audio
+        // finish() explicitly tells the task to stop accepting audio and deliver final result.
+        // Falls back gracefully on older macOS (14.0+), harmless if unavailable.
+        if #available(macOS 14.0, *) {
+            task?.finish()
+        }
     }
 
     func appendBuffer(_ buffer: AVAudioPCMBuffer) {

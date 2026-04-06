@@ -1,7 +1,7 @@
 import Foundation
 import AppKit
 
-struct MurmurSettings: Codable {
+struct MurmurSettings: Codable, Equatable {
     // LLM provider: "local" | "cloud"
     var llmProviderID: String = "local"
 
@@ -31,11 +31,14 @@ struct MurmurSettings: Codable {
     var asrProviderID: String? = nil
 
     // Audio source
-    var audioSource: String = "systemAudio"
+    var audioSource: String = "microphone"
 
-    // Hotkey
-    var hotkeyKeyCode: UInt16 = 49
-    var hotkeyModifiers: [String] = ["option"]
+    // Hotkey — UInt16.max means modifier-only double-tap (e.g. double-tap Ctrl)
+    var hotkeyKeyCode: UInt16 = UInt16.max
+    var hotkeyModifiers: [String] = ["control"]
+
+    // In-app shortcuts
+    var appShortcuts: [AppShortcut] = AppShortcut.defaults
 
     // Output
     var defaultOutputMode: String = "copy"
@@ -44,10 +47,13 @@ struct MurmurSettings: Codable {
     var historyGroupMode: HistoryGroupMode = .date
     var historyMaxEntries: Int = 500
 
+    // Built-in templates (editable, can be restored to defaults)
+    var editedBuiltins: [PromptTemplate] = PromptTemplate.builtins
+
     // Custom templates
     var customTemplates: [PromptTemplate] = []
 
-    var allTemplates: [PromptTemplate] { PromptTemplate.builtins + customTemplates }
+    var allTemplates: [PromptTemplate] { editedBuiltins + customTemplates }
 
     // MARK: - Helpers
 
@@ -66,6 +72,9 @@ struct MurmurSettings: Codable {
     // MARK: - Migration
 
     mutating func migrate() {
+        // Migrate old sentinel: keyCode 0 used to mean modifier-only; now UInt16.max
+        if hotkeyKeyCode == 0 && !hotkeyModifiers.isEmpty { hotkeyKeyCode = UInt16.max }
+
         // Provider ID
         if llmProviderID == "ollama" { llmProviderID = "local" }
         if llmProviderID == "openai" { llmProviderID = "cloud" }
@@ -134,13 +143,51 @@ struct MurmurSettings: Codable {
             llmProviderID = "local"
         }
 
-        // Remove built-in LLM preset profiles that user never configured (empty model)
+        // Remove built-in LLM preset profiles that user never configured (empty model),
+        // but only if at least one configured/custom profile will remain.
         let builtinLLMIDs = Set([LLMProfile.builtinOllama.id,
                                   LLMProfile.builtinLMStudio.id,
                                   LLMProfile.builtinJan.id])
-        localProfiles.removeAll { builtinLLMIDs.contains($0.id) && $0.selectedModel.isEmpty }
+        let configuredProfiles = localProfiles.filter { !builtinLLMIDs.contains($0.id) || !$0.selectedModel.isEmpty }
+        if !configuredProfiles.isEmpty {
+            localProfiles = configuredProfiles
+        }
+        // If localProfiles is still empty (e.g. corrupted settings), restore the default
+        if localProfiles.isEmpty {
+            localProfiles = [LLMProfile.builtinOllama]
+        }
         if !localProfiles.contains(where: { $0.id == selectedProfileID }) {
             selectedProfileID = localProfiles.first?.id ?? UUID()
+        }
+
+        // Sync app shortcuts with current defaults:
+        // - remove retired IDs (e.g. "copy")
+        // - add new IDs
+        // - update display names (preserving user's keyCode/modifiers)
+        // - reorder to match defaults order
+        let validIDs = Set(AppShortcut.defaults.map { $0.id })
+        appShortcuts.removeAll { !validIDs.contains($0.id) }
+        let existingIDs = Set(appShortcuts.map { $0.id })
+        for def in AppShortcut.defaults where !existingIDs.contains(def.id) {
+            appShortcuts.append(def)
+        }
+        for def in AppShortcut.defaults {
+            if let idx = appShortcuts.firstIndex(where: { $0.id == def.id }) {
+                appShortcuts[idx].name = def.name
+            }
+        }
+        appShortcuts.sort { a, b in
+            let ai = AppShortcut.defaults.firstIndex { $0.id == a.id } ?? Int.max
+            let bi = AppShortcut.defaults.firstIndex { $0.id == b.id } ?? Int.max
+            return ai < bi
+        }
+
+        // Sync editedBuiltins with current builtins: remove retired, add new
+        let currentBuiltinIDs = Set(PromptTemplate.builtins.map { $0.id })
+        editedBuiltins.removeAll { !currentBuiltinIDs.contains($0.id) }
+        let existingBuiltinIDs = Set(editedBuiltins.map { $0.id })
+        for def in PromptTemplate.builtins where !existingBuiltinIDs.contains(def.id) {
+            editedBuiltins.append(def)
         }
 
         // Clear legacy fields so they don't re-trigger migration on next load
@@ -178,11 +225,45 @@ struct MurmurSettings: Codable {
 
     static func load(from url: URL = MurmurSettings.defaultStorageURL()) throws -> MurmurSettings {
         let data = try Data(contentsOf: url)
-        var s = try JSONDecoder().decode(MurmurSettings.self, from: data)
+        // Patch any missing non-optional fields added in newer versions so that
+        // old settings files don't cause a full decode failure (keyNotFound).
+        let patchedData = try patchMissingFields(in: data)
+        var s = try JSONDecoder().decode(MurmurSettings.self, from: patchedData)
         let needsSave = s.hasLegacyFields
         s.migrate()
         if needsSave { try? s.save(to: url) }
         return s
+    }
+
+    /// Fill in any keys missing from an old settings JSON using the current defaults.
+    /// This prevents a `keyNotFound` decode failure when new non-optional fields are added.
+    private static func patchMissingFields(in data: Data) throws -> Data {
+        guard var json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return data
+        }
+        let defaultData = try JSONEncoder().encode(MurmurSettings())
+        guard let defaults = try JSONSerialization.jsonObject(with: defaultData) as? [String: Any] else {
+            return data
+        }
+        let merged = recursiveMerge(defaults: defaults, into: json)
+        guard let patched = merged as? [String: Any] else { return data }
+        if NSDictionary(dictionary: patched).isEqual(to: json) { return data }
+        json = patched
+        return try JSONSerialization.data(withJSONObject: json)
+    }
+
+    private static func recursiveMerge(defaults: Any, into current: Any) -> Any {
+        guard let d = defaults as? [String: Any], var c = current as? [String: Any] else {
+            return current
+        }
+        for (key, defaultValue) in d {
+            if let currentValue = c[key] {
+                c[key] = recursiveMerge(defaults: defaultValue, into: currentValue)
+            } else {
+                c[key] = defaultValue
+            }
+        }
+        return c
     }
 
     private var hasLegacyFields: Bool {
@@ -192,7 +273,11 @@ struct MurmurSettings: Codable {
         (llmProviderID == "cloud" && !cloudBaseURL.isEmpty) ||
         asrProviderID != nil ||
         asrProfiles.contains(where: { $0.providerType == "whisper" }) ||
-        asrProfiles.contains(where: { $0.isBuiltIn && $0.id != ASRProfile.builtinSFSpeech.id })
+        asrProfiles.contains(where: { $0.isBuiltIn && $0.id != ASRProfile.builtinSFSpeech.id }) ||
+        AppShortcut.defaults.contains(where: { def in !appShortcuts.contains(where: { $0.id == def.id }) }) ||
+        appShortcuts.contains(where: { s in !AppShortcut.defaults.contains(where: { $0.id == s.id }) }) ||
+        appShortcuts.contains(where: { s in AppShortcut.defaults.first(where: { $0.id == s.id })?.name != s.name }) ||
+        (hotkeyKeyCode == 0 && !hotkeyModifiers.isEmpty)
     }
 
     static func loadOrDefault() -> MurmurSettings {

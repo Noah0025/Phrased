@@ -91,7 +91,8 @@ class ConfirmViewModel: ObservableObject {
         streamTask = llm.streamChat(
             messages: messages,
             onChunk: { [weak self] chunk in
-                self?.streamedResult += chunk
+                guard let self, self.streamedResult.count < 16_000 else { return }
+                self.streamedResult += String(chunk.prefix(16_000 - self.streamedResult.count))
             },
             onDone: { [weak self] in
                 self?.isStreaming = false

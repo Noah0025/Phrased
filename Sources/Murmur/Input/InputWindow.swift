@@ -20,8 +20,17 @@ class InputViewModel: ObservableObject {
     private let micCapture = MicrophoneCapture()
     private var transcriber: ASRProvider
     private var pendingSubmit = false
+    private var sessionGeneration: UInt64 = 0
     private let deviceManager = AudioDeviceManager()
     var vocabularyStore: VocabularyStore = VocabularyStore()
+
+    // Silence auto-stop: if no partial result arrives within this interval, stop recording.
+    private var silenceWorkItem: DispatchWorkItem?
+    private let silenceTimeout: TimeInterval = 2.5
+
+    // Transcribing timeout: if onFinal hasn't fired within this interval, clear the state.
+    private var transcribingTimeoutItem: DispatchWorkItem?
+    private let transcribingTimeout: TimeInterval = 2
 
     init(transcriber: ASRProvider = WhisperTranscriber()) {
         self.transcriber = transcriber
@@ -29,9 +38,23 @@ class InputViewModel: ObservableObject {
         deviceManager.$devices
             .receive(on: DispatchQueue.main)
             .assign(to: &$availableDevices)
+        bindCallbacks(for: sessionGeneration)
+    }
+
+    private func bindCallbacks(for generation: UInt64) {
+        transcriber.onPartial = { [weak self] text in
+            Task { @MainActor [weak self] in
+                guard let self, generation == self.sessionGeneration, self.isRecording else { return }
+                guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+                self.inputText = text
+                self.rescheduleSilenceTimer()
+            }
+        }
         transcriber.onFinal = { [weak self] text in
             Task { @MainActor [weak self] in
-                guard let self else { return }
+                guard let self, generation == self.sessionGeneration else { return }
+                self.cancelSilenceTimer()
+                self.cancelTranscribingTimeout()
                 self.isTranscribing = false
                 self.inputText = text
                 if self.pendingSubmit {
@@ -42,6 +65,59 @@ class InputViewModel: ObservableObject {
                 }
             }
         }
+        transcriber.onError = { [weak self] error in
+            Task { @MainActor [weak self] in
+                guard let self, generation == self.sessionGeneration else { return }
+                print("[InputViewModel] Transcriber failed: \(error)")
+                self.cancelSilenceTimer()
+                self.cancelTranscribingTimeout()
+                self.pendingSubmit = false
+                self.isRecording = false
+                self.isTranscribing = false
+                self.audioCapture.stop()
+                self.micCapture.stop()
+                self.transcriber.stopSession()
+            }
+        }
+    }
+
+    private func rescheduleSilenceTimer() {
+        cancelSilenceTimer()
+        let item = DispatchWorkItem { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self, self.isRecording else { return }
+                self.stopRecording()
+            }
+        }
+        silenceWorkItem = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + silenceTimeout, execute: item)
+    }
+
+    private func cancelSilenceTimer() {
+        silenceWorkItem?.cancel()
+        silenceWorkItem = nil
+    }
+
+    private func scheduleTranscribingTimeout() {
+        transcribingTimeoutItem?.cancel()
+        let item = DispatchWorkItem { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self, self.isTranscribing else { return }
+                self.isTranscribing = false
+                if self.pendingSubmit {
+                    self.pendingSubmit = false
+                    let text = self.inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !text.isEmpty { self.onSubmit?(text, self.selectedTemplate) }
+                }
+            }
+        }
+        transcribingTimeoutItem = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + transcribingTimeout, execute: item)
+    }
+
+    private func cancelTranscribingTimeout() {
+        transcribingTimeoutItem?.cancel()
+        transcribingTimeoutItem = nil
     }
 
     /// Sets the active audio source and persists the preference.
@@ -72,6 +148,7 @@ class InputViewModel: ObservableObject {
 
     func updateASRProvider(_ asr: ASRProvider) {
         transcriber = asr
+        bindCallbacks(for: sessionGeneration)
     }
 
     func warmUpTranscriber() {
@@ -83,10 +160,30 @@ class InputViewModel: ObservableObject {
     }
 
     private func startRecording() {
+        cancelSilenceTimer()
+        pendingSubmit = false
         isRecording = true
+        isTranscribing = false
         inputText = ""
+        sessionGeneration &+= 1
+        bindCallbacks(for: sessionGeneration)
+        let generation = sessionGeneration
         transcriber.startSession()
+        rescheduleSilenceTimer()
         if settings.audioSource == "systemAudio" {
+            audioCapture.onError = { [weak self] error in
+                Task { @MainActor [weak self] in
+                    guard let self, generation == self.sessionGeneration else { return }
+                    print("[InputViewModel] Audio capture failed: \(error)")
+                    self.cancelSilenceTimer()
+                    self.cancelTranscribingTimeout()
+                    self.pendingSubmit = false
+                    self.isRecording = false
+                    self.isTranscribing = false
+                    self.audioCapture.stop()
+                    self.transcriber.stopSession()
+                }
+            }
             audioCapture.start { [weak self] buffer in
                 self?.transcriber.appendBuffer(buffer)
             }
@@ -111,6 +208,8 @@ class InputViewModel: ObservableObject {
     }
 
     private func stopRecording() {
+        guard isRecording else { return }
+        cancelSilenceTimer()
         isRecording = false
         isTranscribing = true
         if settings.audioSource == "systemAudio" {
@@ -118,6 +217,20 @@ class InputViewModel: ObservableObject {
         } else {
             micCapture.stop()
         }
+        transcriber.stopSession()
+        scheduleTranscribingTimeout()
+    }
+
+    /// Discard any in-progress recording without waiting for a final transcription result.
+    func cancelRecording() {
+        sessionGeneration &+= 1
+        cancelSilenceTimer()
+        cancelTranscribingTimeout()
+        pendingSubmit = false
+        isRecording = false
+        isTranscribing = false
+        audioCapture.stop()
+        micCapture.stop()
         transcriber.stopSession()
     }
 }

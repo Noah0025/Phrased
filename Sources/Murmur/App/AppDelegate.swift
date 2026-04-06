@@ -7,6 +7,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var murmurWindowController: MurmurWindowController?
     private var settingsWindowController: SettingsWindowController?
     private var historyWindowController: HistoryWindowController?
+    private var warmUpTask: Task<Void, Never>?
 
     private var settings = MurmurSettings.loadOrDefault()
     private lazy var historyStore: HistoryStore = {
@@ -23,12 +24,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
 
         murmurWindowController = MurmurWindowController(inputVM: inputVM, confirmVM: confirmVM)
+        murmurWindowController?.installAppShortcutMonitor()
 
         inputVM.settings = settings
         inputVM.allTemplates = settings.allTemplates
         inputVM.vocabularyStore = vocabularyStore
         inputVM.onSubmit = { [weak self] text, template in
             guard let self else { return }
+            if self.settings.selectedProfile.selectedModel.isEmpty {
+                let alert = NSAlert()
+                alert.messageText = "尚未配置 LLM 模型"
+                alert.informativeText = "请前往设置页面选择一个模型，才能使用 AI 功能。"
+                alert.addButton(withTitle: "前往设置")
+                alert.addButton(withTitle: "取消")
+                if alert.runModal() == .alertFirstButtonReturn {
+                    self.showSettings()
+                }
+                return
+            }
             let context = self.murmurWindowController?.pendingContext ?? .empty
             self.confirmVM.start(input: text, template: template, context: context)
         }
@@ -42,7 +55,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
 
         // Pre-warm: kick off a single-token request so the model is loaded before first use
-        makeLLMProvider().streamChat(
+        warmUpTask = makeLLMProvider().streamChat(
             messages: [LLMMessage(role: "user", content: "hi")],
             onChunk: { _ in }, onDone: {}
         )
@@ -88,25 +101,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func showSettings() {
-        settingsWindowController = SettingsWindowController(
-            settings: settings,
-            onSave: { [weak self] newSettings in
-                guard let self else { return }
-                self.settings = newSettings
-                try? newSettings.save()
-                self.inputVM.settings = newSettings
-                self.historyStore.maxEntries = newSettings.historyMaxEntries
-                self.hotkeyManager?.update(
-                    keyCode: newSettings.hotkeyKeyCode,
-                    modifiers: newSettings.hotkeyNSModifiers
-                )
-                self.confirmVM.updateProvider(self.makeLLMProvider())
-                self.inputVM.updateASRProvider(self.makeASRProvider())
-                self.murmurWindowController?.updateTemplates(newSettings.allTemplates)
-            }
-        )
+        if settingsWindowController == nil || settingsWindowController?.window?.isVisible == false {
+            settingsWindowController = SettingsWindowController(
+                settings: settings,
+                onSave: { [weak self] newSettings in
+                    guard let self else { return }
+                    self.settings = newSettings
+                    try? newSettings.save()
+                    self.inputVM.settings = newSettings
+                    self.historyStore.maxEntries = newSettings.historyMaxEntries
+                    self.hotkeyManager?.update(
+                        keyCode: newSettings.hotkeyKeyCode,
+                        modifiers: newSettings.hotkeyNSModifiers
+                    )
+                    self.confirmVM.updateProvider(self.makeLLMProvider())
+                    self.inputVM.updateASRProvider(self.makeASRProvider())
+                    self.murmurWindowController?.updateTemplates(newSettings.allTemplates)
+                }
+            )
+        }
         settingsWindowController?.showWindow(nil)
-        settingsWindowController?.window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
 
@@ -119,5 +133,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         historyWindowController?.window?.makeKeyAndOrderFront(nil)
     }
 
-    func applicationWillTerminate(_ notification: Notification) {}
+    func applicationWillTerminate(_ notification: Notification) {
+        warmUpTask?.cancel()
+    }
 }

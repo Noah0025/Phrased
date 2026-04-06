@@ -67,6 +67,17 @@ private struct SelectableText: NSViewRepresentable {
         tv.font = .systemFont(ofSize: fontSize)
         tv.textColor = color
     }
+
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView: _SelectableTextView, context: Context) -> CGSize? {
+        let width = proposal.width ?? nsView.bounds.width
+        guard width > 0,
+              let container = nsView.textContainer,
+              let layout = nsView.layoutManager else { return nil }
+        container.containerSize = CGSize(width: width, height: .greatestFiniteMagnitude)
+        layout.ensureLayout(for: container)
+        let used = layout.usedRect(for: container)
+        return CGSize(width: width, height: max(18, ceil(used.height)))
+    }
 }
 
 // MARK: - HistoryWindowController
@@ -224,15 +235,15 @@ struct HistoryView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(.secondary)
-                        .font(.system(size: 12))
+                        .font(MurmurFont.secondary)
                     TextField("搜索…", text: $searchText)
                         .textFieldStyle(.plain)
-                        .font(.system(size: 13))
+                        .font(MurmurFont.ui)
                     if !searchText.isEmpty {
                         Button { searchText = "" } label: {
                             Image(systemName: "xmark.circle.fill")
                                 .foregroundColor(.secondary)
-                                .font(.system(size: 12))
+                                .font(MurmurFont.secondary)
                         }
                         .buttonStyle(.plain)
                     }
@@ -266,7 +277,7 @@ struct HistoryView: View {
                                 filterApp = "全部"
                             }
                             .buttonStyle(.plain)
-                            .font(.system(size: 11))
+                            .font(MurmurFont.caption)
                             .foregroundColor(.accentColor)
                         }
                     }
@@ -337,6 +348,9 @@ struct HistoryView: View {
             .padding(.vertical, 10)
         }
         .onAppear { reload() }
+        .onReceive(NotificationCenter.default.publisher(for: .historyStoreDidChange)) { _ in
+            reload()
+        }
         .frame(minWidth: 500, minHeight: 400)
     }
 
@@ -351,7 +365,7 @@ struct HistoryView: View {
     ) -> some View {
         HStack(spacing: 3) {
             Text(title + "：")
-                .font(.system(size: 11))
+                .font(MurmurFont.caption)
                 .foregroundColor(.secondary)
             Picker("", selection: selection) {
                 ForEach(options, id: \.self) { opt in
@@ -378,7 +392,7 @@ struct HistoryView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(.secondary)
                 Text("(\(count))")
-                    .font(.system(size: 11))
+                    .font(MurmurFont.caption)
                     .foregroundColor(Color.secondary.opacity(0.7))
                 Spacer()
             }

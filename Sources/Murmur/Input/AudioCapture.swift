@@ -8,6 +8,7 @@ class AudioCapture: NSObject {
     private let lock = NSLock()
     private var _isRunning = false
     private var _isStopped = false
+    var onError: ((Error) -> Void)?
 
     var isRunning: Bool {
         lock.withLock { _isRunning }
@@ -60,6 +61,7 @@ class AudioCapture: NSObject {
             self.stream = newStream
             lock.withLock { self._isRunning = true }
         } catch {
+            onError?(error)
         }
     }
 }
