@@ -131,7 +131,7 @@ struct SettingsView: View {
                         .padding(.bottom, 4)
 
                     ForEach(draft.localProfiles.indices, id: \.self) { idx in
-                        profileRow(index: idx)
+                        llmProfileRow(index: idx)
                     }
 
                     // 扫描结果：运行中的服务（可添加）
@@ -258,7 +258,7 @@ struct SettingsView: View {
     }
 
     @ViewBuilder
-    private func profileRow(index: Int) -> some View {
+    private func llmProfileRow(index: Int) -> some View {
         if index < draft.localProfiles.count {
         let profile = draft.localProfiles[index]
         let isExpanded = expandedLLMProfileIDs.contains(profile.id)
@@ -303,18 +303,18 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     let isLocal = draft.localProfiles[index].baseURL.hasPrefix("http://localhost") ||
                                   draft.localProfiles[index].baseURL.hasPrefix("http://127.")
-                    asrFieldRow(label: "名称", content: {
+                    profileFieldRow(label: "名称", content: {
                         TextField("", text: $draft.localProfiles[index].name, prompt: Text("模型标签"))
                             .font(.system(size: 12))
                     })
                     Divider()
-                    asrFieldRow(label: "地址", content: {
+                    profileFieldRow(label: "地址", content: {
                         TextField("", text: $draft.localProfiles[index].baseURL,
                                   prompt: Text(isLocal ? "http://localhost:11434" : "https://api.openai.com/v1"))
                             .font(.system(size: 12))
                     })
                     Divider()
-                    asrFieldRow(label: "模型", content: {
+                    profileFieldRow(label: "模型", content: {
                         TextField("", text: $draft.localProfiles[index].selectedModel,
                                   prompt: Text(isLocal ? "qwen2.5:7b" : "gpt-4o-mini"))
                             .font(.system(size: 12))
@@ -330,9 +330,7 @@ struct SettingsView: View {
                             } else {
                                 _ = expandedLLMProfileIDs.remove(profile.id)
                                 draft.localProfiles.remove(at: index)
-                                if let first = draft.localProfiles.first {
-                                    draft.selectedProfileID = first.id
-                                }
+                                draft.selectedProfileID = draft.localProfiles.first?.id ?? UUID()
                             }
                         }
                         .buttonStyle(.bordered)
@@ -443,7 +441,7 @@ struct SettingsView: View {
                                     .buttonStyle(.bordered).controlSize(.mini)
                                 }
                             }
-                            ForEach(asrScanResults, id: \.baseURL) { result in
+                            ForEach(asrScanResults) { result in
                                 HStack {
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(result.name).font(.system(size: 12, weight: .medium))
@@ -639,18 +637,18 @@ struct SettingsView: View {
                             .padding(10)
                         } else {
                             let isLocal = asrCategory(draft.asrProfiles[index]) == "本地模型"
-                            asrFieldRow(label: "名称", content: {
+                            profileFieldRow(label: "名称", content: {
                                 TextField("", text: $draft.asrProfiles[index].name, prompt: Text("模型标签"))
                                     .font(.system(size: 12))
                             })
                             Divider()
-                            asrFieldRow(label: "地址", content: {
+                            profileFieldRow(label: "地址", content: {
                                 TextField("", text: $draft.asrProfiles[index].baseURL,
                                           prompt: Text(isLocal ? "http://localhost:8000" : "https://api.example.com/v1"))
                                     .font(.system(size: 12))
                             })
                             Divider()
-                            asrFieldRow(label: "模型", content: {
+                            profileFieldRow(label: "模型", content: {
                                 TextField("", text: $draft.asrProfiles[index].model,
                                           prompt: Text(isLocal ? "whisper-1" : "whisper-large-v3"))
                                     .font(.system(size: 12))
@@ -693,7 +691,7 @@ struct SettingsView: View {
     }
 
     @ViewBuilder
-    private func asrFieldRow<C: View>(label: String, @ViewBuilder content: () -> C) -> some View {
+    private func profileFieldRow<C: View>(label: String, @ViewBuilder content: () -> C) -> some View {
         HStack(spacing: 8) {
             Text(label)
                 .font(.system(size: 12))
@@ -801,10 +799,11 @@ struct SettingsView: View {
 
     // MARK: - Local ASR Scan
 
-    struct ASRScanResult {
+    struct ASRScanResult: Identifiable {
         let name: String
         let baseURL: String
         let model: String
+        var id: String { baseURL + "/" + model }
     }
 
     struct LLMScanResult: Identifiable {
