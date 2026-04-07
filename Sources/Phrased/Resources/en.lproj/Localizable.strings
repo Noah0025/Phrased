@@ -1,0 +1,275 @@
+/* App */
+"app.name" = "Phrased";
+"app.window.settings.title" = "Phrased Settings";
+"app.window.history.title" = "Phrased History";
+"app.menu.open" = "Open Phrased";
+"app.menu.history" = "History";
+"app.menu.settings" = "Settings";
+"app.menu.quit" = "Quit Phrased";
+"app.alert.llm_not_configured.title" = "No Language Model Configured";
+"app.alert.llm_not_configured.message" = "Go to Settings and select a model before using AI features.";
+"app.alert.settings_corrupted.title" = "Settings Reset";
+"app.alert.settings_corrupted.message" = "Your settings file could not be read and has been reset to defaults. The corrupted file was saved as settings.corrupted.json.";
+"app.button.go_to_settings" = "Open Settings";
+"app.button.cancel" = "Cancel";
+
+/* Settings Sidebar */
+"settings.section.general" = "General";
+"settings.section.backup" = "Backup";
+"settings.section.about" = "About";
+"settings.section.language_model" = "Language Model";
+"settings.section.audio_speech" = "Audio & Speech";
+"settings.section.hotkey" = "Hotkey";
+"settings.section.prompt_templates" = "Prompt Templates";
+"settings.section.text_substitution" = "Text Substitution";
+"settings.section.history" = "History";
+
+/* Settings General */
+"settings.general.behavior" = "Behavior";
+"settings.general.launch_at_login" = "Launch at login";
+"settings.general.play_completion_sound" = "Play sound when output is ready";
+"settings.general.language" = "Language";
+"settings.general.language.system" = "System Default";
+"settings.general.language.chinese" = "Chinese (Simplified)";
+"settings.general.language.english" = "English";
+"settings.general.language.restart_note" = "Takes effect after restarting Phrased.";
+"settings.general.language.restart_button" = "Restart Now";
+
+/* Settings Backup */
+"settings.backup.settings_file" = "Configuration File";
+"settings.backup.export" = "Export Configuration";
+"settings.backup.import" = "Import Configuration";
+"settings.backup.note" = "Importing will overwrite all current configuration. Export a backup first.";
+
+/* Settings About */
+"settings.about.version_format" = "Version %@ (%@)";
+"settings.about.view_on_github" = "View on GitHub";
+
+/* Settings Language Model */
+"settings.model.section" = "Language Model";
+"settings.model.current_profile" = "Current Profile";
+"settings.model.advanced" = "Advanced";
+"settings.model.unnamed" = "Untitled";
+"settings.model.description" = "Supports OpenAI-compatible local or cloud language models. For local models, 7B+ parameters recommended. For cloud models, enter the base URL, model name, and API key.";
+"settings.model.available_models" = "Available models detected:";
+"settings.model.add_all" = "Add All";
+"settings.model.added" = "Added";
+"settings.model.add" = "Add";
+"settings.model.more_hidden_format" = "%@ more model(s) hidden. Click \"Add All\" to import them.";
+"settings.model.installed_not_running" = "Installed but not running. Start it and scan again:";
+"settings.model.scan_local" = "Scan Local Models";
+"settings.model.add_cloud" = "Add Cloud Model";
+"settings.model.navigation_title" = "Language Model Configuration";
+"settings.model.category.local" = "Local Model";
+"settings.model.category.cloud" = "Cloud Model";
+"settings.model.field.name" = "Name";
+"settings.model.field.address" = "URL";
+"settings.model.field.model" = "Model";
+"settings.model.prompt.model_label" = "Model Label";
+"settings.model.alert.delete_active.title" = "Delete the active profile?";
+"settings.model.alert.delete_active.confirm" = "Delete";
+"settings.model.alert.delete_active.message" = "This profile is currently in use. Another profile will be selected automatically after deletion.";
+"settings.model.alert.none_found.title" = "No local model detected";
+"settings.model.alert.none_found.message" = "No running service found on common ports. Make sure the service is started, or add a configuration manually.";
+"settings.button.manual_add" = "Add Manually";
+
+/* Settings Audio & Speech */
+"settings.audio.default_input" = "Default Input Source";
+"settings.audio.input_source" = "Input Source";
+"settings.audio.input.system_audio" = "System Audio";
+"settings.audio.input.microphone" = "Microphone";
+"settings.audio.permission.screen_recording" = "Screen Recording permission is required.";
+"settings.audio.permission.microphone" = "Microphone permission is required.";
+"settings.audio.asr_model" = "Speech Recognition Model";
+"settings.audio.description" = "Supports built-in macOS recognition and any OpenAI-compatible speech recognition service, local or cloud. For local services, make sure the service is running. For cloud services, enter a valid base URL, model name, and API key.";
+"settings.audio.available_services" = "Available speech recognition services detected:";
+"settings.audio.scan_local" = "Scan Local Services";
+"settings.audio.add_cloud" = "Add Cloud Service";
+"settings.audio.recommendation" = "Speech Recognition Recommendations";
+"settings.audio.navigation_title" = "Audio & Speech";
+"settings.audio.category.macos_builtin" = "Built-in macOS";
+"settings.audio.builtin.description" = "Built-in macOS speech recognition. Authorization is requested automatically on first use. No manual setup required.";
+"settings.audio.builtin.apple_silicon" = "• Apple silicon: on-device recognition, works offline, audio is not uploaded.";
+"settings.audio.builtin.intel" = "• Intel processors: recognition via Apple servers, requires network, audio is uploaded to Apple.";
+"settings.audio.field.asr_model" = "Speech Recognition Model";
+"settings.audio.alert.none_found.title" = "No local speech recognition service detected";
+"settings.audio.local_service_name" = "Local Speech Recognition Service";
+"settings.audio.local_service_with_port_format" = "Local Speech Recognition Service (Port %@)";
+
+/* Settings Shared */
+"settings.scan.installed_not_running" = "Installed but not running. Start it and scan again:";
+"settings.field.name" = "Name";
+"settings.field.address" = "URL";
+"settings.field.model" = "Model";
+"settings.placeholder.model_label" = "Model Label";
+"settings.button.delete" = "Delete";
+"settings.help.delete" = "Delete";
+"settings.key.auth_reason" = "Authenticate to access the API key";
+"settings.key.label" = "API Key";
+"settings.key.prompt.optional" = "Optional. Most local services do not require this.";
+"settings.key.prompt.required" = "Required. Enter the API key.";
+"settings.key.configured_masked" = "•••••••• (Configured)";
+"settings.button.configure" = "Configure";
+"settings.button.done" = "Done";
+
+/* Settings Hotkey */
+"settings.hotkey.global" = "Global Hotkey";
+"settings.hotkey.global.footer" = "Supports a single modifier tap or a double-tap on a standalone modifier (e.g., double-tap ⌃). At least one modifier is required.";
+"settings.hotkey.open_murmur" = "Open Phrased";
+"settings.hotkey.restore_default_double_control" = "Restore Default (Double-Tap Control)";
+"settings.hotkey.in_app" = "In-App Hotkeys";
+"settings.hotkey.in_app.footer" = "Supports modifier combinations or a single bare key. Double-tap is not supported.";
+"settings.hotkey.restore_default" = "Restore Default";
+
+/* Settings Output */
+"settings.output.method" = "Output Method";
+"settings.output.description" = "Writes to the clipboard and simulates ⌘V to insert at the cursor. The original clipboard content is restored after 1 second.\nAccessibility permission is required.";
+"settings.output.navigation_title" = "Output";
+
+/* Settings Templates */
+"settings.templates.add" = "Add Template";
+"settings.templates.navigation_title" = "Prompt Templates";
+"settings.templates.field.prompt" = "Prompt";
+"settings.templates.placeholder.template_name" = "Template Name";
+"settings.templates.placeholder.default_mode" = "Leave blank for default";
+"settings.templates.help.restore_default" = "Restore Default";
+
+/* Settings Vocabulary */
+"settings.vocabulary.description" = "Automatically replaces matching words on submit. Example: tmr expands to tomorrow.";
+"settings.vocabulary.trigger" = "Trigger";
+"settings.vocabulary.expand_to" = "Expand To";
+"settings.vocabulary.navigation_title" = "Text Substitution";
+
+/* Settings History */
+"settings.history.grouping" = "Grouping";
+"settings.history.default_grouping" = "Default Grouping";
+"settings.history.grouping_note" = "Applied when opening the history window.";
+"settings.history.retention" = "Storage Limit";
+"settings.history.retention_period" = "Retention Period";
+"settings.history.retention.30_days" = "30 Days";
+"settings.history.retention.90_days" = "90 Days";
+"settings.history.retention.180_days" = "180 Days";
+"settings.history.retention.1_year" = "1 Year";
+"settings.history.retention.forever" = "Keep Forever";
+"settings.history.retention_note" = "Entries past the retention period are cleaned up automatically on the next write.";
+"settings.history.actions" = "Actions";
+"settings.history.open" = "Open History";
+"settings.history.export" = "Export History";
+"settings.history.export_note" = "Supports TXT, JSON, and CSV. You can export selected entries from the history window.";
+
+/* ASR Advisor */
+"settings.asr_advisor.title" = "Speech Recognition Recommendations";
+"settings.asr_advisor.close" = "Close";
+"settings.asr_advisor.region" = "Region";
+"settings.asr_advisor.region_placeholder" = "e.g., Mainland China, North America, Europe";
+"settings.asr_advisor.language" = "Primary Language";
+"settings.asr_advisor.language_placeholder" = "e.g., Chinese, English, mixed Chinese and English";
+"settings.asr_advisor.get_recommendations" = "Get Recommendations";
+"settings.asr_advisor.analyzing" = "Analyzing…";
+"settings.asr_advisor.ai_analyzing" = "AI is analyzing…";
+"settings.asr_advisor.export" = "Export";
+"settings.asr_advisor.disclaimer" = "AI recommendations are for reference only";
+"settings.asr_advisor.export_filename" = "speech-recognition-recommendations.txt";
+"settings.hardware.format" = "Chip: %@, Memory: %@ GB";
+"settings.hardware.apple_silicon" = "Apple silicon";
+"settings.hardware.unknown" = "Unknown";
+"settings.asr_advisor.unspecified" = "Unspecified";
+"settings.asr_advisor.prompt_format" = "You are a speech recognition model advisor. Based on the following information, recommend speech recognition solutions:\n\nDevice: %1$@\nRegion: %2$@\nLanguage: %3$@\n\nOutput format (follow strictly, no extra explanation):\n\n[Local Models] (recommend 2–3)\n\nSolution:\nAPI URL: (localhost address)\nModel name:\nReason: (one sentence)\n\n[Cloud Models] (recommend 2–3)\n\nSolution:\nAPI URL: (full URL)\nModel name:\nReason: (one sentence)\n\nNotes:\n- For local solutions, consider whether device memory (%4$d GB) is sufficient\n- Cloud solutions must be directly accessible in the user\'s region (no proxy), avoid services blocked locally\n- Only recommend services compatible with OpenAI /v1/audio/transcriptions format";
+
+/* Confirm Window */
+"confirm.button.insert" = "Insert";
+"confirm.button.inserted" = "Inserted";
+"confirm.button.copy" = "Copy";
+"confirm.button.copied" = "Copied";
+"confirm.help.stop_recording" = "Stop Recording";
+"confirm.help.start_recording" = "Start Recording";
+"confirm.generating" = "Generating…";
+"confirm.feedback.placeholder" = "Tell me what to adjust, or the result you're looking for…";
+"confirm.button.generate" = "Generate";
+"confirm.help.locked" = "Locked";
+"confirm.help.lock_window" = "Lock Window";
+"confirm.style" = "Style";
+"confirm.help.feedback" = "Feedback";
+"confirm.help.regenerate" = "Regenerate";
+
+/* History Window */
+"history.group.date" = "Date";
+"history.group.template" = "Template";
+"history.group.app" = "App";
+"history.time.today" = "Today";
+"history.time.last_7_days" = "Last 7 Days";
+"history.time.last_30_days" = "Last 30 Days";
+"history.time.all" = "All";
+"history.filter.other" = "Other";
+"history.time.yesterday" = "Yesterday";
+"history.search.placeholder" = "Search…";
+"history.help.filter" = "Filter";
+"history.filter.source" = "Source";
+"history.filter.style" = "Style";
+"history.filter.time" = "Time";
+"history.filter.reset" = "Reset";
+"history.empty.no_records" = "No Records";
+"history.empty.no_matches" = "No Matches";
+"history.button.clear_all" = "Clear All";
+"history.button.delete_selected" = "Delete Selected";
+"history.button.export_all" = "Export All";
+"history.button.export_selected" = "Export Selected";
+"history.menu.copy_input" = "Copy Input";
+"history.menu.copy_output" = "Copy Output";
+"history.alert.corrupted.title" = "History Data Recovered";
+"history.alert.corrupted.message" = "Your history file could not be read and has been reset. The original file was saved as history.corrupted.json.";
+
+/* History Export */
+"history.export.alert.no_history" = "No History";
+"history.export.title" = "Export History";
+"history.export.default_filename" = "murmur-history.txt";
+"history.export.csv.header" = "Time,Style,Source,Input,Output";
+"history.export.txt.meta_format" = "[%@] Style: %@%@";
+"history.export.txt.app_suffix_format" = " | %@";
+"history.export.txt.input_format" = "Input: %@";
+"history.export.txt.output_format" = "Output: %@";
+"history.export.txt.header_format" = "Phrased History  Exported at %@\n\n---\n\n";
+
+/* Prompt Templates */
+"prompt.template.polish" = "Auto";
+"prompt.template.formal" = "Formal";
+"prompt.template.concise" = "Concise";
+"prompt.template.ai_prompt" = "AI Prompt";
+"prompt.instruction.auto" = "The user is working in %@. Adjust the tone to suit the app's typical context (e.g., more formal for email, casual for messaging, neutral for notes).";
+"prompt.instruction.formal" = "Use a formal tone and precise wording, suitable for business or official contexts.";
+"prompt.instruction.concise" = "Keep it concise, remove redundancy, and preserve the core meaning.";
+"prompt.instruction.ai_prompt" = "Rewrite this as a prompt suitable for sending to an AI: make the intent explicit, keep the structure clear, include the necessary context, remove colloquial phrasing, and split it into Background / Task / Requirements when helpful.";
+
+/* Shortcuts */
+"shortcut.default.transcribe" = "Start/Stop Speech Recognition";
+"shortcut.default.submit" = "Submit";
+"shortcut.default.newline" = "New Line";
+"shortcut.default.pin" = "Pin Window";
+"shortcut.default.edit" = "Feedback";
+"shortcut.default.regenerate" = "Regenerate";
+"shortcut.default.inject" = "Insert";
+"shortcut.recorder.recording" = "Recording…";
+"shortcut.recorder.click_to_set" = "Click to Set";
+"shortcut.key.space" = "Space";
+"accessibility.shortcut_recorder" = "Shortcut Recorder";
+"accessibility.configure_api_key_format" = "Configure API Key for %@";
+"accessibility.delete_profile_format" = "Delete %@";
+"accessibility.scanning_local_models" = "Scanning for local models...";
+"accessibility.scanning_local_services" = "Scanning for local services...";
+"error.llm.invalid_url" = "Invalid server URL.";
+"error.llm.timeout" = "Request timed out. Check your server.";
+"error.llm.network_unavailable" = "No network connection.";
+"error.llm.server_error_format" = "Server returned error %ld.";
+"error.llm.unknown" = "An unknown error occurred.";
+
+/* Audio Devices */
+"audio.device.system_audio" = "System Audio";
+"audio.profile.macos_speech" = "macOS Speech Recognition";
+"settings.backup.import_failed" = "Failed to import configuration";
+"error.asr.invalid_audio_or_url" = "Unable to read audio file or invalid service URL";
+
+/* Accessibility */
+"accessibility.result" = "Result";
+"accessibility.clear_search" = "Clear search";
+"accessibility.collapsed" = "Collapsed";
+"accessibility.expanded" = "Expanded";

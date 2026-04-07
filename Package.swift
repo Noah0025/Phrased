@@ -2,17 +2,19 @@
 import PackageDescription
 
 let package = Package(
-    name: "Murmur",
+    name: "Phrased",
+    defaultLocalization: "zh-Hans",
     platforms: [.macOS(.v14)],
     targets: [
         .executableTarget(
-            name: "Murmur",
-            path: "Sources/Murmur"
+            name: "Phrased",
+            path: "Sources/Phrased",
+            resources: [.process("Resources")]
         ),
         .testTarget(
-            name: "MurmurTests",
-            dependencies: ["Murmur"],
-            path: "Tests/MurmurTests"
+            name: "PhrasedTests",
+            dependencies: ["Phrased"],
+            path: "Tests/PhrasedTests"
         )
     ]
 )

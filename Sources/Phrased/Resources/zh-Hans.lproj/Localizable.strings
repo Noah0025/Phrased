@@ -1,0 +1,275 @@
+/* App */
+"app.name" = "Phrased";
+"app.window.settings.title" = "Phrased 设置";
+"app.window.history.title" = "Phrased 历史记录";
+"app.menu.open" = "打开 Phrased";
+"app.menu.history" = "历史记录";
+"app.menu.settings" = "设置";
+"app.menu.quit" = "退出 Phrased";
+"app.alert.llm_not_configured.title" = "尚未配置语言模型";
+"app.alert.llm_not_configured.message" = "请前往设置选择一个模型，才能使用 AI 功能。";
+"app.alert.settings_corrupted.title" = "设置已重置";
+"app.alert.settings_corrupted.message" = "无法读取设置文件，已重置为默认值。损坏的文件已备份为 settings.corrupted.json。";
+"app.button.go_to_settings" = "前往设置";
+"app.button.cancel" = "取消";
+
+/* Settings Sidebar */
+"settings.section.general" = "通用";
+"settings.section.backup" = "备份";
+"settings.section.about" = "关于";
+"settings.section.language_model" = "语言模型";
+"settings.section.audio_speech" = "音频与语音";
+"settings.section.hotkey" = "快捷键";
+"settings.section.prompt_templates" = "提示词模板";
+"settings.section.text_substitution" = "文字替换";
+"settings.section.history" = "历史记录";
+
+/* Settings General */
+"settings.general.behavior" = "行为";
+"settings.general.launch_at_login" = "开机时自动启动";
+"settings.general.play_completion_sound" = "输出完成时播放提示音";
+"settings.general.language" = "语言";
+"settings.general.language.system" = "跟随系统";
+"settings.general.language.chinese" = "中文（简体）";
+"settings.general.language.english" = "English";
+"settings.general.language.restart_note" = "重启 Phrased 后生效。";
+"settings.general.language.restart_button" = "立即重启";
+
+/* Settings Backup */
+"settings.backup.settings_file" = "配置文件";
+"settings.backup.export" = "导出配置";
+"settings.backup.import" = "导入配置";
+"settings.backup.note" = "导入将覆盖当前所有配置，操作前建议先导出备份。";
+
+/* Settings About */
+"settings.about.version_format" = "版本 %@ (%@)";
+"settings.about.view_on_github" = "在 GitHub 上查看";
+
+/* Settings Language Model */
+"settings.model.section" = "语言模型";
+"settings.model.current_profile" = "当前配置";
+"settings.model.advanced" = "高级";
+"settings.model.unnamed" = "未命名";
+"settings.model.description" = "支持兼容 OpenAI 格式的本地或云端语言模型。本地模型推荐 7B 及以上参数量；云端模型须填写服务地址、模型名称和 API Key。";
+"settings.model.available_models" = "检测到以下可用模型：";
+"settings.model.add_all" = "全部添加";
+"settings.model.added" = "已添加";
+"settings.model.add" = "添加";
+"settings.model.more_hidden_format" = "还有 %@ 个模型未显示，点击「全部添加」可一并导入。";
+"settings.model.installed_not_running" = "已安装但未运行，启动后重新扫描：";
+"settings.model.scan_local" = "扫描本地模型";
+"settings.model.add_cloud" = "添加云端模型";
+"settings.model.navigation_title" = "语言模型配置";
+"settings.model.category.local" = "本地模型";
+"settings.model.category.cloud" = "云端模型";
+"settings.model.field.name" = "名称";
+"settings.model.field.address" = "地址";
+"settings.model.field.model" = "模型";
+"settings.model.prompt.model_label" = "模型标签";
+"settings.model.alert.delete_active.title" = "删除当前使用中的配置？";
+"settings.model.alert.delete_active.confirm" = "删除";
+"settings.model.alert.delete_active.message" = "该配置正在使用中，删除后将自动切换到其他配置。";
+"settings.model.alert.none_found.title" = "未检测到可用的本地模型";
+"settings.model.alert.none_found.message" = "未在常见端口检测到运行中的服务，请确认服务已启动，或手动添加配置。";
+"settings.button.manual_add" = "手动添加";
+
+/* Settings Audio & Speech */
+"settings.audio.default_input" = "默认输入源";
+"settings.audio.input_source" = "输入源";
+"settings.audio.input.system_audio" = "系统音频";
+"settings.audio.input.microphone" = "麦克风";
+"settings.audio.permission.screen_recording" = "需要屏幕录制权限。";
+"settings.audio.permission.microphone" = "需要麦克风权限。";
+"settings.audio.asr_model" = "语音识别模型";
+"settings.audio.description" = "支持 macOS 内置识别及任意兼容 OpenAI 格式的语音识别服务，本地或云端均可。使用本地服务前须确认服务已运行；云端服务须填写有效的服务地址、模型名称和 API Key。";
+"settings.audio.available_services" = "检测到以下可用的语音识别服务：";
+"settings.audio.scan_local" = "扫描本地服务";
+"settings.audio.add_cloud" = "添加云端服务";
+"settings.audio.recommendation" = "语音识别模型建议";
+"settings.audio.navigation_title" = "音频与语音";
+"settings.audio.category.macos_builtin" = "macOS 内置";
+"settings.audio.builtin.description" = "macOS 系统内置语音识别，首次使用时自动请求授权，无需手动配置。";
+"settings.audio.builtin.apple_silicon" = "• Apple 芯片：本地识别，离线可用，音频不上传。";
+"settings.audio.builtin.intel" = "• Intel 处理器：通过 Apple 服务器识别，需联网，音频会上传至 Apple。";
+"settings.audio.field.asr_model" = "语音识别模型";
+"settings.audio.alert.none_found.title" = "未检测到可用的本地语音识别服务";
+"settings.audio.local_service_name" = "本地语音识别服务";
+"settings.audio.local_service_with_port_format" = "本地语音识别服务（端口 %@）";
+
+/* Settings Shared */
+"settings.scan.installed_not_running" = "已安装但未运行，启动后重新扫描：";
+"settings.field.name" = "名称";
+"settings.field.address" = "地址";
+"settings.field.model" = "模型";
+"settings.placeholder.model_label" = "模型标签";
+"settings.button.delete" = "删除";
+"settings.help.delete" = "删除";
+"settings.key.auth_reason" = "验证身份以访问 API Key";
+"settings.key.label" = "API Key";
+"settings.key.prompt.optional" = "可选，大多数本地服务无需填写";
+"settings.key.prompt.required" = "必填，输入 API Key";
+"settings.key.configured_masked" = "••••••••（已配置）";
+"settings.button.configure" = "设置";
+"settings.button.done" = "完成";
+
+/* Settings Hotkey */
+"settings.hotkey.global" = "全局快捷键";
+"settings.hotkey.global.footer" = "支持修饰键单击或单独修饰键双击（如双击 ⌃），需包含至少一个修饰键。";
+"settings.hotkey.open_murmur" = "打开 Phrased";
+"settings.hotkey.restore_default_double_control" = "恢复默认（双击 Control）";
+"settings.hotkey.in_app" = "应用内快捷键";
+"settings.hotkey.in_app.footer" = "支持修饰键组合或单个裸键，不支持双击。";
+"settings.hotkey.restore_default" = "恢复默认";
+
+/* Settings Output */
+"settings.output.method" = "输出方式";
+"settings.output.description" = "写入剪贴板后模拟 ⌘V 插入光标位置。原剪贴板内容将在 1 秒后恢复。\n需要辅助功能权限（Accessibility）。";
+"settings.output.navigation_title" = "输出";
+
+/* Settings Templates */
+"settings.templates.add" = "添加模板";
+"settings.templates.navigation_title" = "提示词模板";
+"settings.templates.field.prompt" = "提示词";
+"settings.templates.placeholder.template_name" = "模板名称";
+"settings.templates.placeholder.default_mode" = "留空表示默认模式";
+"settings.templates.help.restore_default" = "恢复默认";
+
+/* Settings Vocabulary */
+"settings.vocabulary.description" = "提交时自动替换匹配的词。例：输入 tmr → 自动展开为 tomorrow。";
+"settings.vocabulary.trigger" = "触发词";
+"settings.vocabulary.expand_to" = "展开为";
+"settings.vocabulary.navigation_title" = "文字替换";
+
+/* Settings History */
+"settings.history.grouping" = "分组方式";
+"settings.history.default_grouping" = "默认分组";
+"settings.history.grouping_note" = "打开历史记录窗口时使用此分组方式。";
+"settings.history.retention" = "存储限制";
+"settings.history.retention_period" = "保留时长";
+"settings.history.retention.30_days" = "30 天";
+"settings.history.retention.90_days" = "90 天";
+"settings.history.retention.180_days" = "180 天";
+"settings.history.retention.1_year" = "1 年";
+"settings.history.retention.forever" = "永久保留";
+"settings.history.retention_note" = "超出保留期限的记录将在下次写入时自动清理。";
+"settings.history.actions" = "操作";
+"settings.history.open" = "打开历史记录";
+"settings.history.export" = "导出历史记录";
+"settings.history.export_note" = "支持导出为 TXT、JSON、CSV 格式。在历史记录窗口中可选择导出指定条目。";
+
+/* ASR Advisor */
+"settings.asr_advisor.title" = "语音识别模型建议";
+"settings.asr_advisor.close" = "关闭";
+"settings.asr_advisor.region" = "所在地区";
+"settings.asr_advisor.region_placeholder" = "如：中国大陆、北美、欧洲";
+"settings.asr_advisor.language" = "主要语言";
+"settings.asr_advisor.language_placeholder" = "如：中文、英语、中英混合";
+"settings.asr_advisor.get_recommendations" = "获取建议";
+"settings.asr_advisor.analyzing" = "分析中…";
+"settings.asr_advisor.ai_analyzing" = "AI 正在分析…";
+"settings.asr_advisor.export" = "导出";
+"settings.asr_advisor.disclaimer" = "AI 建议，仅供参考";
+"settings.asr_advisor.export_filename" = "语音识别模型建议.txt";
+"settings.hardware.format" = "芯片：%@，内存：%@ GB";
+"settings.hardware.apple_silicon" = "Apple 芯片";
+"settings.hardware.unknown" = "未知";
+"settings.asr_advisor.unspecified" = "未指定";
+"settings.asr_advisor.prompt_format" = "你是语音识别模型选型顾问。根据以下信息推荐语音识别方案：\n\n设备：%1$@\n地区：%2$@\n语言：%3$@\n\n格式要求（严格按此输出，不要多余说明）：\n\n【本地模型】（推荐 2-3 个）\n\n方案名：\nAPI 地址：（localhost 地址）\n模型名：\n推荐理由：（一句话）\n\n【云端模型】（推荐 2-3 个）\n\n方案名：\nAPI 地址：（完整 URL）\n模型名：\n推荐理由：（一句话）\n\n注意：\n- 本地方案考虑设备内存（%4$d GB）是否够用\n- 云端方案必须在用户所在地区可直接访问（无需代理），根据地区避开当地无法访问的服务\n- 只推荐兼容 OpenAI /v1/audio/transcriptions 格式的服务";
+
+/* Confirm Window */
+"confirm.button.insert" = "插入";
+"confirm.button.inserted" = "已插入";
+"confirm.button.copy" = "复制";
+"confirm.button.copied" = "已复制";
+"confirm.help.stop_recording" = "停止录音";
+"confirm.help.start_recording" = "开始录音";
+"confirm.generating" = "正在生成…";
+"confirm.feedback.placeholder" = "请告诉我哪里需要调整，或者你想要的效果…";
+"confirm.button.generate" = "生成";
+"confirm.help.locked" = "已锁定";
+"confirm.help.lock_window" = "锁定窗口";
+"confirm.style" = "风格";
+"confirm.help.feedback" = "修改意见";
+"confirm.help.regenerate" = "重新生成";
+
+/* History Window */
+"history.group.date" = "按日期";
+"history.group.template" = "按风格";
+"history.group.app" = "按来源";
+"history.time.today" = "今天";
+"history.time.last_7_days" = "最近 7 天";
+"history.time.last_30_days" = "最近 30 天";
+"history.time.all" = "全部";
+"history.filter.other" = "其他";
+"history.time.yesterday" = "昨天";
+"history.search.placeholder" = "搜索…";
+"history.help.filter" = "筛选";
+"history.filter.source" = "来源";
+"history.filter.style" = "风格";
+"history.filter.time" = "时间";
+"history.filter.reset" = "重置";
+"history.empty.no_records" = "暂无记录";
+"history.empty.no_matches" = "无匹配结果";
+"history.button.clear_all" = "清空全部";
+"history.button.delete_selected" = "删除所选";
+"history.button.export_all" = "导出全部";
+"history.button.export_selected" = "导出所选";
+"history.menu.copy_input" = "复制输入";
+"history.menu.copy_output" = "复制输出";
+"history.alert.corrupted.title" = "历史记录已恢复";
+"history.alert.corrupted.message" = "历史记录文件无法读取，已重置为空。原始文件已保存为 history.corrupted.json。";
+
+/* History Export */
+"history.export.alert.no_history" = "暂无历史记录";
+"history.export.title" = "导出历史记录";
+"history.export.default_filename" = "murmur-history.txt";
+"history.export.csv.header" = "时间,风格,来源,输入,输出";
+"history.export.txt.meta_format" = "[%@] 风格：%@%@";
+"history.export.txt.app_suffix_format" = " | %@";
+"history.export.txt.input_format" = "输入：%@";
+"history.export.txt.output_format" = "输出：%@";
+"history.export.txt.header_format" = "Phrased 历史记录  导出于 %@\n\n---\n\n";
+
+/* Prompt Templates */
+"prompt.template.polish" = "自动";
+"prompt.template.formal" = "正式";
+"prompt.template.concise" = "简洁";
+"prompt.template.ai_prompt" = "AI 提示词";
+"prompt.instruction.auto" = "用户正在使用「%@」，请根据该应用的典型使用场景适当调整语气（如邮件类偏正式、即时通讯类偏口语、笔记类保持中性）。";
+"prompt.instruction.formal" = "语气正式，用词严谨，适合商务或官方场合。";
+"prompt.instruction.concise" = "尽量精简，去掉冗余，保留核心意思。";
+"prompt.instruction.ai_prompt" = "改写为适合发送给 AI 的提示词：意图明确、结构清晰、包含必要上下文、去除口语化表达，必要时拆解为背景/任务/要求三部分。";
+
+/* Shortcuts */
+"shortcut.default.transcribe" = "开启/关闭语音识别";
+"shortcut.default.submit" = "提交";
+"shortcut.default.newline" = "换行";
+"shortcut.default.pin" = "钉住窗口";
+"shortcut.default.edit" = "修改意见";
+"shortcut.default.regenerate" = "重新生成";
+"shortcut.default.inject" = "插入";
+"shortcut.recorder.recording" = "录制中…";
+"shortcut.recorder.click_to_set" = "点击设置";
+"shortcut.key.space" = "Space";
+"accessibility.shortcut_recorder" = "快捷键录制器";
+"accessibility.configure_api_key_format" = "配置 %@ 的 API Key";
+"accessibility.delete_profile_format" = "删除 %@";
+"accessibility.scanning_local_models" = "正在扫描本地模型...";
+"accessibility.scanning_local_services" = "正在扫描本地服务...";
+"error.llm.invalid_url" = "无效的服务器地址。";
+"error.llm.timeout" = "请求超时，请检查服务器。";
+"error.llm.network_unavailable" = "无网络连接。";
+"error.llm.server_error_format" = "服务器返回错误 %ld。";
+"error.llm.unknown" = "发生未知错误。";
+
+/* Audio Devices */
+"audio.device.system_audio" = "系统音频";
+"audio.profile.macos_speech" = "macOS 语音识别";
+"settings.backup.import_failed" = "导入配置失败";
+"error.asr.invalid_audio_or_url" = "无法读取音频文件或服务地址无效";
+
+/* Accessibility */
+"accessibility.result" = "结果";
+"accessibility.clear_search" = "清除搜索";
+"accessibility.collapsed" = "已收起";
+"accessibility.expanded" = "已展开";
