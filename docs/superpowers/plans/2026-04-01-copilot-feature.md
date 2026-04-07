@@ -442,12 +442,12 @@ git commit -m "feat: wire CopilotFeature to block click in AppDelegate"
 ```bash
 cd ~/Projects/InterviewCopilot && make package 2>&1
 ```
-Expected: `==> Done: Murmur.app`
+Expected: `==> Done: Phrased.app`
 
 - [ ] **Step 2: Launch**
 
 ```bash
-open ~/Projects/InterviewCopilot/Murmur.app
+open ~/Projects/InterviewCopilot/Phrased.app
 ```
 
 - [ ] **Step 3: Smoke test — copilot panel**
@@ -455,7 +455,7 @@ open ~/Projects/InterviewCopilot/Murmur.app
 Use test mode to verify without needing audio:
 
 ```bash
-open ~/Projects/InterviewCopilot/Murmur.app --args --test
+open ~/Projects/InterviewCopilot/Phrased.app --args --test
 ```
 
 In the test input box, type a sentence and press Enter (onFinal). This creates a finalized block. Click the block.

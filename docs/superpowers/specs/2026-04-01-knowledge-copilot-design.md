@@ -7,7 +7,7 @@
 
 ## Overview
 
-Add a click-to-retrieve knowledge base panel to Murmur. When the user clicks a finalized subtitle block, the app retrieves the most relevant section from a pre-prepared Markdown knowledge base and displays it in an expanded right panel. Intended for interview use: click a heard question → instantly see prepared talking points.
+Add a click-to-retrieve knowledge base panel to Phrased. When the user clicks a finalized subtitle block, the app retrieves the most relevant section from a pre-prepared Markdown knowledge base and displays it in an expanded right panel. Intended for interview use: click a heard question → instantly see prepared talking points.
 
 ---
 

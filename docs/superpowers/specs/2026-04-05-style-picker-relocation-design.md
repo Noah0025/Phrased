@@ -35,7 +35,7 @@ No "auto" label, no indicator. The input bar is for input only. Users who want a
 
 ## Files Changed
 
-- Modify: `Sources/Murmur/Confirm/ConfirmWindow.swift`
+- Modify: `Sources/Phrased/Confirm/ConfirmWindow.swift`
   - Remove `stylePicker` from `inputBar` (line ~92)
   - Add `stylePicker` to `actionBar` after "修改意见" button (line ~250)
 

@@ -4,7 +4,7 @@
 
 **Goal:** Replace the top-level audio source toggle button with a right-click context menu on the mic button, and enumerate all real audio input devices (built-in, AirPods, Bluetooth headsets) instead of just "microphone" vs "system audio".
 
-**Architecture:** `AudioDeviceManager` enumerates `AVCaptureDevice` audio inputs and publishes a reactive device list. `MicrophoneCapture` gains a `deviceUID` parameter to target a specific device via Core Audio's `AudioUnitSetProperty`. `InputViewModel` wires the two together and exposes a `selectAudioSource()` action. The mic button in `MurmurView` gets a `.contextMenu` using SwiftUI `Picker(.inline)` for clean checkmark rendering; the old `audioSourceButton` is removed.
+**Architecture:** `AudioDeviceManager` enumerates `AVCaptureDevice` audio inputs and publishes a reactive device list. `MicrophoneCapture` gains a `deviceUID` parameter to target a specific device via Core Audio's `AudioUnitSetProperty`. `InputViewModel` wires the two together and exposes a `selectAudioSource()` action. The mic button in `PhrasedView` gets a `.contextMenu` using SwiftUI `Picker(.inline)` for clean checkmark rendering; the old `audioSourceButton` is removed.
 
 **Tech Stack:** Swift, AVFoundation (device enumeration + capture), CoreAudio + AudioToolbox (device UID→ID translation + AudioUnit property), SwiftUI `.contextMenu` + `Picker(.inline)`
 
@@ -14,17 +14,17 @@
 
 | Action | Path | Responsibility |
 |--------|------|----------------|
-| Create | `Sources/Murmur/Input/AudioDeviceManager.swift` | `AudioDevice` model + live enumeration + change notifications |
-| Modify | `Sources/Murmur/Input/MicrophoneCapture.swift` | Accept `deviceUID` param, set device on AVAudioEngine |
-| Modify | `Sources/Murmur/Input/InputWindow.swift` | `InputViewModel`: host manager, expose devices, `selectAudioSource()` |
-| Modify | `Sources/Murmur/Confirm/ConfirmWindow.swift` | `MurmurView`: context menu on mic button, remove `audioSourceButton` |
+| Create | `Sources/Phrased/Input/AudioDeviceManager.swift` | `AudioDevice` model + live enumeration + change notifications |
+| Modify | `Sources/Phrased/Input/MicrophoneCapture.swift` | Accept `deviceUID` param, set device on AVAudioEngine |
+| Modify | `Sources/Phrased/Input/InputWindow.swift` | `InputViewModel`: host manager, expose devices, `selectAudioSource()` |
+| Modify | `Sources/Phrased/Confirm/ConfirmWindow.swift` | `PhrasedView`: context menu on mic button, remove `audioSourceButton` |
 
 ---
 
 ## Task 1: AudioDevice model + AudioDeviceManager
 
 **Files:**
-- Create: `Sources/Murmur/Input/AudioDeviceManager.swift`
+- Create: `Sources/Phrased/Input/AudioDeviceManager.swift`
 
 - [ ] **Step 1: Write the file**
 
@@ -107,7 +107,7 @@ Expected: `Build complete!`
 
 ```bash
 cd ~/Projects/InterviewCopilot
-git add Sources/Murmur/Input/AudioDeviceManager.swift
+git add Sources/Phrased/Input/AudioDeviceManager.swift
 git commit -m "feat: add AudioDevice model and AudioDeviceManager"
 ```
 
@@ -116,7 +116,7 @@ git commit -m "feat: add AudioDevice model and AudioDeviceManager"
 ## Task 2: MicrophoneCapture — specific device support
 
 **Files:**
-- Modify: `Sources/Murmur/Input/MicrophoneCapture.swift`
+- Modify: `Sources/Phrased/Input/MicrophoneCapture.swift`
 
 `AVAudioEngine.inputNode` uses the system default input device unless overridden.
 To target a specific device, obtain its `AudioDeviceID` from the UID string via
@@ -250,7 +250,7 @@ Expected: `Build complete!`
 
 ```bash
 cd ~/Projects/InterviewCopilot
-git add Sources/Murmur/Input/MicrophoneCapture.swift
+git add Sources/Phrased/Input/MicrophoneCapture.swift
 git commit -m "feat: MicrophoneCapture accepts deviceUID for specific input device"
 ```
 
@@ -259,7 +259,7 @@ git commit -m "feat: MicrophoneCapture accepts deviceUID for specific input devi
 ## Task 3: InputViewModel — integrate AudioDeviceManager
 
 **Files:**
-- Modify: `Sources/Murmur/Input/InputWindow.swift`
+- Modify: `Sources/Phrased/Input/InputWindow.swift`
 
 Changes:
 1. `settings` → `@Published var settings` so the Picker binding re-renders on change.
@@ -283,7 +283,7 @@ class InputViewModel: ObservableObject {
     @Published var selectedTemplate: PromptTemplate = PromptTemplate.builtins[0]
     @Published var allTemplates: [PromptTemplate] = PromptTemplate.builtins
     @Published var contextAppName: String? = nil
-    @Published var settings: MurmurSettings = MurmurSettings()
+    @Published var settings: PhrasedSettings = PhrasedSettings()
     @Published var availableDevices: [AudioDevice] = []
 
     var onSubmit: ((String, PromptTemplate) -> Void)?
@@ -386,12 +386,12 @@ class InputViewModel: ObservableObject {
 
 - [ ] **Step 2: Remove the now-unused `var settings` line from `InputViewModel`**
 
-The old `var settings: MurmurSettings = MurmurSettings()` (non-published) is replaced by `@Published var settings` above. Verify the file has no duplicate `settings` declaration:
+The old `var settings: PhrasedSettings = PhrasedSettings()` (non-published) is replaced by `@Published var settings` above. Verify the file has no duplicate `settings` declaration:
 
 ```bash
-grep -n "var settings" ~/Projects/InterviewCopilot/Sources/Murmur/Input/InputWindow.swift
+grep -n "var settings" ~/Projects/InterviewCopilot/Sources/Phrased/Input/InputWindow.swift
 ```
-Expected: exactly one line, `@Published var settings: MurmurSettings = MurmurSettings()`.
+Expected: exactly one line, `@Published var settings: PhrasedSettings = PhrasedSettings()`.
 
 - [ ] **Step 3: Build**
 
@@ -404,16 +404,16 @@ Expected: `Build complete!`
 
 ```bash
 cd ~/Projects/InterviewCopilot
-git add Sources/Murmur/Input/InputWindow.swift
+git add Sources/Phrased/Input/InputWindow.swift
 git commit -m "feat: InputViewModel uses AudioDeviceManager, exposes availableDevices and selectAudioSource"
 ```
 
 ---
 
-## Task 4: MurmurView — context menu + remove audioSourceButton
+## Task 4: PhrasedView — context menu + remove audioSourceButton
 
 **Files:**
-- Modify: `Sources/Murmur/Confirm/ConfirmWindow.swift`
+- Modify: `Sources/Phrased/Confirm/ConfirmWindow.swift`
 
 Two changes:
 1. Add `.contextMenu` with an inline `Picker` to `micButton`. SwiftUI renders an inline picker inside a context menu as a list of NSMenuItems with checkmarks — no custom drawing needed.
@@ -511,7 +511,7 @@ Expected: `Build complete!`
 
 ```bash
 cd ~/Projects/InterviewCopilot && make package 2>&1 | tail -4
-pkill -x Murmur 2>/dev/null; sleep 0.5; open Murmur.app
+pkill -x Phrased 2>/dev/null; sleep 0.5; open Phrased.app
 ```
 
 Manual checks:
@@ -524,6 +524,6 @@ Manual checks:
 
 ```bash
 cd ~/Projects/InterviewCopilot
-git add Sources/Murmur/Confirm/ConfirmWindow.swift
+git add Sources/Phrased/Confirm/ConfirmWindow.swift
 git commit -m "feat: mic button context menu for audio source, remove top-level toggle button"
 ```

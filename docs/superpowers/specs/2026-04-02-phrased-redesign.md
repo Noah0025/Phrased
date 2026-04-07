@@ -1,4 +1,4 @@
-# Murmur 重设计规格文档
+# Phrased 重设计规格文档
 
 **日期**：2026-04-02  
 **版本**：v1.0  
@@ -8,7 +8,7 @@
 
 ## 一、产品定位
 
-Murmur 是一个**个人语言中间层（Personal Language OS）**。
+Phrased 是一个**个人语言中间层（Personal Language OS）**。
 
 核心价值：在用户的原始表达（模糊、跳跃、多语言混杂）和最终输出之间插入一个本地 AI 层，理解用户真实意图，转化为更清晰、更适合目标场景的文字。随着使用时间积累，系统越来越懂用户的表达习惯。
 
@@ -74,7 +74,7 @@ Murmur 是一个**个人语言中间层（Personal Language OS）**。
 ```
 
 ### 关键设计原则
-- **异步隔离**：AudioCapture / Ollama 调用全部在独立异步 Task，不阻塞主线程（解决现有 Murmur 卡顿问题）
+- **异步隔离**：AudioCapture / Ollama 调用全部在独立异步 Task，不阻塞主线程（解决现有 Phrased 卡顿问题）
 - **流式输出**：OllamaClient 使用 URLSession stream，逐 token 回调更新 ConfirmWindow
 - **单一职责**：每个模块只做一件事，InputWindow 不感知 Ollama，ConfirmWindow 不感知剪贴板
 - **预留扩展点**：输入层设计为协议，后续可加任意触发方式；输出层设计为协议，后续可加注入方式

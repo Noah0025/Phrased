@@ -1,4 +1,4 @@
-# Copilot Feature Design — Murmur
+# Copilot Feature Design — Phrased
 
 **Date:** 2026-04-01
 **Status:** Approved

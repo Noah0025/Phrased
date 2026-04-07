@@ -1,8 +1,8 @@
-# Murmur Roadmap Implementation Plan
+# Phrased Roadmap Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Transform Murmur from a fixed-style, Ollama-only input enhancer into a fully configurable, context-aware text assistant with pluggable ASR/LLM providers, selectable audio source (mic or system audio), user-defined templates, direct text injection, history, and vocabulary expansion.
+**Goal:** Transform Phrased from a fixed-style, Ollama-only input enhancer into a fully configurable, context-aware text assistant with pluggable ASR/LLM providers, selectable audio source (mic or system audio), user-defined templates, direct text injection, history, and vocabulary expansion.
 
 **Architecture:** Phase 0 fixes existing bugs before any new feature work. Phases 1–2 are infrastructure (providers + settings + audio source) that everything else depends on. Phases 3–7 build features on top. The Settings window grows incrementally each phase.
 
@@ -13,7 +13,7 @@
 ## File Structure
 
 ```
-Sources/Murmur/
+Sources/Phrased/
 ├── App/
 │   ├── AppDelegate.swift                [modify] wire providers, settings, history
 │   ├── StatusBarController.swift        [modify] add menu: Settings, History, Quit
@@ -31,13 +31,13 @@ Sources/Murmur/
 │   └── UserProfile.swift                [delete — always empty, never written, dead code]
 │
 ├── Settings/
-│   ├── MurmurSettings.swift             [create] Codable, all user prefs
+│   ├── PhrasedSettings.swift             [create] Codable, all user prefs
 │   ├── SettingsWindowController.swift   [create] NSWindowController wrapper
 │   └── SettingsView.swift               [create] SwiftUI TabView UI
 │
 ├── Input/
 │   ├── InputWindow.swift                [modify] use ASRProvider, audio source toggle
-│   ├── HotkeyManager.swift              [modify] load hotkey from MurmurSettings
+│   ├── HotkeyManager.swift              [modify] load hotkey from PhrasedSettings
 │   ├── AudioCapture.swift               [rename → SystemAudioCapture.swift] system audio via SCK
 │   ├── MicrophoneCapture.swift          [create] mic input via AVAudioEngine
 │   ├── SpeechTranscriber.swift          [delete — dead code, never used]
@@ -61,11 +61,11 @@ Sources/Murmur/
 └── Vocabulary/
     └── VocabularyStore.swift            [create] trigger→expansion pairs, whole-word regex
 
-Tests/MurmurTests/
+Tests/PhrasedTests/
 ├── LLMProviderTests.swift
 ├── ASRProviderTests.swift
 ├── PromptTemplateTests.swift
-├── MurmurSettingsTests.swift
+├── PhrasedSettingsTests.swift
 ├── ContextCaptureTests.swift
 ├── HistoryStoreTests.swift
 └── VocabularyStoreTests.swift
@@ -80,11 +80,11 @@ Tests/MurmurTests/
 ### Task 0.1: 修复 `isLocked` 跨 session 不重置
 
 **Files:**
-- Modify: `Sources/Murmur/Confirm/ConfirmWindow.swift`
+- Modify: `Sources/Phrased/Confirm/ConfirmWindow.swift`
 
 - [ ] **Step 1: 在 `onDismiss` 和 `windowDidResignKey` 里补充重置**
 
-在 `MurmurWindowController.init()` 的 `onDismiss` 闭包里：
+在 `PhrasedWindowController.init()` 的 `onDismiss` 闭包里：
 ```swift
 confirmVM.onDismiss = { [weak self] in
     self?.window?.orderOut(nil)
@@ -113,7 +113,7 @@ Expected: `Build complete!`
 - [ ] **Step 3: Commit**
 
 ```bash
-git add Sources/Murmur/Confirm/ConfirmWindow.swift
+git add Sources/Phrased/Confirm/ConfirmWindow.swift
 git commit -m "fix: reset isLocked on dismiss so next session starts unlocked"
 ```
 
@@ -122,15 +122,15 @@ git commit -m "fix: reset isLocked on dismiss so next session starts unlocked"
 ### Task 0.2: 删除死代码
 
 **Files:**
-- Delete: `Sources/Murmur/Input/SpeechTranscriber.swift`
-- Modify: `Sources/Murmur/Confirm/ConfirmViewModel.swift`
-- Modify: `Sources/Murmur/Core/IntentProcessor.swift`
-- Delete: `Sources/Murmur/Core/UserProfile.swift`
+- Delete: `Sources/Phrased/Input/SpeechTranscriber.swift`
+- Modify: `Sources/Phrased/Confirm/ConfirmViewModel.swift`
+- Modify: `Sources/Phrased/Core/IntentProcessor.swift`
+- Delete: `Sources/Phrased/Core/UserProfile.swift`
 
 - [ ] **Step 1: 删除 SpeechTranscriber**
 
 ```bash
-rm Sources/Murmur/Input/SpeechTranscriber.swift
+rm Sources/Phrased/Input/SpeechTranscriber.swift
 ```
 
 - [ ] **Step 2: 删除 UserProfile**
@@ -140,7 +140,7 @@ rm Sources/Murmur/Input/SpeechTranscriber.swift
 从 `IntentProcessor.swift` 中删除 `UserProfile` 相关内容。保留 `buildMessages()` 函数，但去掉 `profile` 属性、`updateProfile()`、`profileDescription()`，以及 system message 逻辑（该逻辑永远不执行）：
 
 ```swift
-// Sources/Murmur/Core/IntentProcessor.swift
+// Sources/Phrased/Core/IntentProcessor.swift
 import Foundation
 
 class IntentProcessor {
@@ -168,7 +168,7 @@ class IntentProcessor {
 ```
 
 ```bash
-rm Sources/Murmur/Core/UserProfile.swift
+rm Sources/Phrased/Core/UserProfile.swift
 ```
 
 - [ ] **Step 3: 删除 ConfirmViewModel 里的 `continueWithNewInput`**
@@ -204,7 +204,7 @@ git commit -m "chore: remove dead code — SpeechTranscriber, UserProfile, conti
 ### Task 0.3: 修复 `WhisperTranscriber` 阻塞协程线程
 
 **Files:**
-- Modify: `Sources/Murmur/Input/WhisperTranscriber.swift`
+- Modify: `Sources/Phrased/Input/WhisperTranscriber.swift`
 
 问题：`process.waitUntilExit()` 是同步阻塞调用，在 `Task { await transcribe(...) }` 内部会占住 Swift 协程池线程。
 
@@ -278,7 +278,7 @@ Expected: `Build complete!`
 - [ ] **Step 3: Commit**
 
 ```bash
-git add Sources/Murmur/Input/WhisperTranscriber.swift
+git add Sources/Phrased/Input/WhisperTranscriber.swift
 git commit -m "fix: replace blocking waitUntilExit with terminationHandler continuation in WhisperTranscriber"
 ```
 
@@ -287,7 +287,7 @@ git commit -m "fix: replace blocking waitUntilExit with terminationHandler conti
 ### Task 0.4: 修复 `AudioCapture` 竞态条件
 
 **Files:**
-- Modify: `Sources/Murmur/Input/AudioCapture.swift`
+- Modify: `Sources/Phrased/Input/AudioCapture.swift`
 
 问题：`stop()` 在 `startCapture()` Task 完成前调用时，`stream` 为 nil，stop 无效；之后 startCapture 完成，stream 被赋值但再也不会被 stop。
 
@@ -344,7 +344,7 @@ Expected: `Build complete!`
 - [ ] **Step 3: Commit**
 
 ```bash
-git add Sources/Murmur/Input/AudioCapture.swift
+git add Sources/Phrased/Input/AudioCapture.swift
 git commit -m "fix: prevent SCStream leak when stop() races with startCapture() async task"
 ```
 
@@ -355,15 +355,15 @@ git commit -m "fix: prevent SCStream leak when stop() races with startCapture() 
 ### Task 1.1: LLMProvider Protocol
 
 **Files:**
-- Create: `Sources/Murmur/Core/Providers/LLMProvider.swift`
-- Create: `Tests/MurmurTests/LLMProviderTests.swift`
+- Create: `Sources/Phrased/Core/Providers/LLMProvider.swift`
+- Create: `Tests/PhrasedTests/LLMProviderTests.swift`
 
 - [ ] **Step 1: Write the failing test**
 
 ```swift
-// Tests/MurmurTests/LLMProviderTests.swift
+// Tests/PhrasedTests/LLMProviderTests.swift
 import XCTest
-@testable import Murmur
+@testable import Phrased
 
 final class LLMProviderTests: XCTestCase {
     func test_mockProvider_streamsChunks() async {
@@ -404,7 +404,7 @@ Expected: FAIL — `LLMProvider`, `LLMMessage` not defined
 - [ ] **Step 3: Create the protocol**
 
 ```swift
-// Sources/Murmur/Core/Providers/LLMProvider.swift
+// Sources/Phrased/Core/Providers/LLMProvider.swift
 import Foundation
 
 struct LLMMessage {
@@ -430,7 +430,7 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/Murmur/Core/Providers/LLMProvider.swift Tests/MurmurTests/LLMProviderTests.swift
+git add Sources/Phrased/Core/Providers/LLMProvider.swift Tests/PhrasedTests/LLMProviderTests.swift
 git commit -m "feat: LLMProvider protocol with LLMMessage"
 ```
 
@@ -439,9 +439,9 @@ git commit -m "feat: LLMProvider protocol with LLMMessage"
 ### Task 1.2: OllamaLLMProvider + OpenAICompatibleProvider
 
 **Files:**
-- Create: `Sources/Murmur/Core/Providers/OllamaLLMProvider.swift`
-- Create: `Sources/Murmur/Core/Providers/OpenAICompatibleProvider.swift`
-- Modify: `Tests/MurmurTests/LLMProviderTests.swift`
+- Create: `Sources/Phrased/Core/Providers/OllamaLLMProvider.swift`
+- Create: `Sources/Phrased/Core/Providers/OpenAICompatibleProvider.swift`
+- Modify: `Tests/PhrasedTests/LLMProviderTests.swift`
 
 - [ ] **Step 1: Add conformance tests**
 
@@ -468,7 +468,7 @@ Expected: FAIL
 - [ ] **Step 3: Create OllamaLLMProvider**
 
 ```swift
-// Sources/Murmur/Core/Providers/OllamaLLMProvider.swift
+// Sources/Phrased/Core/Providers/OllamaLLMProvider.swift
 import Foundation
 
 class OllamaLLMProvider: LLMProvider {
@@ -492,7 +492,7 @@ class OllamaLLMProvider: LLMProvider {
 - [ ] **Step 4: Create OpenAICompatibleProvider**
 
 ```swift
-// Sources/Murmur/Core/Providers/OpenAICompatibleProvider.swift
+// Sources/Phrased/Core/Providers/OpenAICompatibleProvider.swift
 import Foundation
 
 /// Supports OpenAI, Groq, Moonshot, DeepSeek, llama.cpp, etc.
@@ -561,9 +561,9 @@ Expected: PASS
 - [ ] **Step 6: Commit**
 
 ```bash
-git add Sources/Murmur/Core/Providers/OllamaLLMProvider.swift \
-        Sources/Murmur/Core/Providers/OpenAICompatibleProvider.swift \
-        Tests/MurmurTests/LLMProviderTests.swift
+git add Sources/Phrased/Core/Providers/OllamaLLMProvider.swift \
+        Sources/Phrased/Core/Providers/OpenAICompatibleProvider.swift \
+        Tests/PhrasedTests/LLMProviderTests.swift
 git commit -m "feat: OllamaLLMProvider and OpenAICompatibleProvider"
 ```
 
@@ -572,9 +572,9 @@ git commit -m "feat: OllamaLLMProvider and OpenAICompatibleProvider"
 ### Task 1.3: ASRProvider Protocol
 
 **Files:**
-- Create: `Sources/Murmur/Core/Providers/ASRProvider.swift`
-- Modify: `Sources/Murmur/Input/WhisperTranscriber.swift`
-- Create: `Tests/MurmurTests/ASRProviderTests.swift`
+- Create: `Sources/Phrased/Core/Providers/ASRProvider.swift`
+- Modify: `Sources/Phrased/Input/WhisperTranscriber.swift`
+- Create: `Tests/PhrasedTests/ASRProviderTests.swift`
 
 `onPartial` 和 `onFinal` 语义说明：
 - `onPartial(String)` — 识别中间结果，可多次触发，用于实时字幕显示
@@ -583,10 +583,10 @@ git commit -m "feat: OllamaLLMProvider and OpenAICompatibleProvider"
 - [ ] **Step 1: Write the failing test**
 
 ```swift
-// Tests/MurmurTests/ASRProviderTests.swift
+// Tests/PhrasedTests/ASRProviderTests.swift
 import XCTest
 import AVFoundation
-@testable import Murmur
+@testable import Phrased
 
 final class ASRProviderTests: XCTestCase {
     func test_mockASRProvider_conformsToProtocol() {
@@ -618,7 +618,7 @@ Expected: FAIL
 - [ ] **Step 3: Create ASRProvider protocol**
 
 ```swift
-// Sources/Murmur/Core/Providers/ASRProvider.swift
+// Sources/Phrased/Core/Providers/ASRProvider.swift
 import AVFoundation
 
 protocol ASRProvider: AnyObject {
@@ -698,13 +698,13 @@ Expected: `Build complete!`
 - [ ] **Step 7: Commit**
 
 ```bash
-git add Sources/Murmur/Core/Providers/ASRProvider.swift \
-        Sources/Murmur/Input/WhisperTranscriber.swift \
-        Sources/Murmur/Core/IntentProcessor.swift \
-        Sources/Murmur/Confirm/ConfirmViewModel.swift \
-        Sources/Murmur/Input/InputWindow.swift \
-        Sources/Murmur/App/AppDelegate.swift \
-        Tests/MurmurTests/ASRProviderTests.swift
+git add Sources/Phrased/Core/Providers/ASRProvider.swift \
+        Sources/Phrased/Input/WhisperTranscriber.swift \
+        Sources/Phrased/Core/IntentProcessor.swift \
+        Sources/Phrased/Confirm/ConfirmViewModel.swift \
+        Sources/Phrased/Input/InputWindow.swift \
+        Sources/Phrased/App/AppDelegate.swift \
+        Tests/PhrasedTests/ASRProviderTests.swift
 git commit -m "feat: ASRProvider protocol, migrate to LLMProvider+ASRProvider throughout"
 ```
 
@@ -715,13 +715,13 @@ git commit -m "feat: ASRProvider protocol, migrate to LLMProvider+ASRProvider th
 ### Task 2.1: MicrophoneCapture
 
 **Files:**
-- Create: `Sources/Murmur/Input/MicrophoneCapture.swift`
+- Create: `Sources/Phrased/Input/MicrophoneCapture.swift`
 - Rename: `AudioCapture.swift` → `SystemAudioCapture.swift` (class name stays `AudioCapture` for now, rename optional)
 
 - [ ] **Step 1: Create MicrophoneCapture**
 
 ```swift
-// Sources/Murmur/Input/MicrophoneCapture.swift
+// Sources/Phrased/Input/MicrophoneCapture.swift
 import AVFoundation
 
 /// Captures microphone input via AVAudioEngine.
@@ -796,26 +796,26 @@ Expected: `Build complete!`
 - [ ] **Step 3: Commit**
 
 ```bash
-git add Sources/Murmur/Input/MicrophoneCapture.swift
+git add Sources/Phrased/Input/MicrophoneCapture.swift
 git commit -m "feat: MicrophoneCapture via AVAudioEngine, outputs 16kHz mono PCM"
 ```
 
 ---
 
-### Task 2.2: MurmurSettings Model
+### Task 2.2: PhrasedSettings Model
 
 **Files:**
-- Create: `Sources/Murmur/Settings/MurmurSettings.swift`
-- Create: `Tests/MurmurTests/MurmurSettingsTests.swift`
+- Create: `Sources/Phrased/Settings/PhrasedSettings.swift`
+- Create: `Tests/PhrasedTests/PhrasedSettingsTests.swift`
 
 - [ ] **Step 1: Write the failing test**
 
 ```swift
-// Tests/MurmurTests/MurmurSettingsTests.swift
+// Tests/PhrasedTests/PhrasedSettingsTests.swift
 import XCTest
-@testable import Murmur
+@testable import Phrased
 
-final class MurmurSettingsTests: XCTestCase {
+final class PhrasedSettingsTests: XCTestCase {
     var tmpURL: URL!
 
     override func setUp() {
@@ -825,21 +825,21 @@ final class MurmurSettingsTests: XCTestCase {
     override func tearDown() { try? FileManager.default.removeItem(at: tmpURL) }
 
     func test_defaultSettings_roundTrip() throws {
-        let s = MurmurSettings()
+        let s = PhrasedSettings()
         try s.save(to: tmpURL)
-        let loaded = try MurmurSettings.load(from: tmpURL)
+        let loaded = try PhrasedSettings.load(from: tmpURL)
         XCTAssertEqual(loaded.llmProviderID, s.llmProviderID)
         XCTAssertEqual(loaded.hotkeyKeyCode, s.hotkeyKeyCode)
         XCTAssertEqual(loaded.audioSource, s.audioSource)
     }
 
     func test_modifiedSettings_persist() throws {
-        var s = MurmurSettings()
+        var s = PhrasedSettings()
         s.llmProviderID = "openai"
         s.audioSource = "microphone"
         s.hotkeyKeyCode = 36
         try s.save(to: tmpURL)
-        let loaded = try MurmurSettings.load(from: tmpURL)
+        let loaded = try PhrasedSettings.load(from: tmpURL)
         XCTAssertEqual(loaded.llmProviderID, "openai")
         XCTAssertEqual(loaded.audioSource, "microphone")
         XCTAssertEqual(loaded.hotkeyKeyCode, 36)
@@ -849,16 +849,16 @@ final class MurmurSettingsTests: XCTestCase {
 
 - [ ] **Step 2: Run to verify fail**
 
-Run: `swift test --filter MurmurSettingsTests`
+Run: `swift test --filter PhrasedSettingsTests`
 Expected: FAIL
 
-- [ ] **Step 3: Create MurmurSettings**
+- [ ] **Step 3: Create PhrasedSettings**
 
 ```swift
-// Sources/Murmur/Settings/MurmurSettings.swift
+// Sources/Phrased/Settings/PhrasedSettings.swift
 import Foundation
 
-struct MurmurSettings: Codable {
+struct PhrasedSettings: Codable {
     // LLM
     var llmProviderID: String = "ollama"        // "ollama" | "openai"
     var ollamaModel: String = "qwen2.5:7b"
@@ -884,23 +884,23 @@ struct MurmurSettings: Codable {
 
     static func defaultStorageURL() -> URL {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let dir = appSupport.appendingPathComponent("Murmur", isDirectory: true)
+        let dir = appSupport.appendingPathComponent("Phrased", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent("settings.json")
     }
 
-    func save(to url: URL = MurmurSettings.defaultStorageURL()) throws {
+    func save(to url: URL = PhrasedSettings.defaultStorageURL()) throws {
         let data = try JSONEncoder().encode(self)
         try data.write(to: url, options: .atomic)
     }
 
-    static func load(from url: URL = MurmurSettings.defaultStorageURL()) throws -> MurmurSettings {
+    static func load(from url: URL = PhrasedSettings.defaultStorageURL()) throws -> PhrasedSettings {
         let data = try Data(contentsOf: url)
-        return try JSONDecoder().decode(MurmurSettings.self, from: data)
+        return try JSONDecoder().decode(PhrasedSettings.self, from: data)
     }
 
-    static func loadOrDefault() -> MurmurSettings {
-        (try? load()) ?? MurmurSettings()
+    static func loadOrDefault() -> PhrasedSettings {
+        (try? load()) ?? PhrasedSettings()
     }
 
     var hotkeyNSModifiers: NSEvent.ModifierFlags {
@@ -918,14 +918,14 @@ struct MurmurSettings: Codable {
 
 - [ ] **Step 4: Run to verify pass**
 
-Run: `swift test --filter MurmurSettingsTests`
+Run: `swift test --filter PhrasedSettingsTests`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/Murmur/Settings/MurmurSettings.swift Tests/MurmurTests/MurmurSettingsTests.swift
-git commit -m "feat: MurmurSettings with LLM, ASR, audio source, hotkey, output prefs"
+git add Sources/Phrased/Settings/PhrasedSettings.swift Tests/PhrasedTests/PhrasedSettingsTests.swift
+git commit -m "feat: PhrasedSettings with LLM, ASR, audio source, hotkey, output prefs"
 ```
 
 ---
@@ -933,7 +933,7 @@ git commit -m "feat: MurmurSettings with LLM, ASR, audio source, hotkey, output 
 ### Task 2.3: Wire Audio Source into InputViewModel
 
 **Files:**
-- Modify: `Sources/Murmur/Input/InputWindow.swift`
+- Modify: `Sources/Phrased/Input/InputWindow.swift`
 
 InputViewModel 目前硬编码使用 `AudioCapture`（系统音频）。改为根据设置切换。
 
@@ -994,7 +994,7 @@ Expected: `Build complete!`
 - [ ] **Step 4: Commit**
 
 ```bash
-git add Sources/Murmur/Input/InputWindow.swift Sources/Murmur/App/AppDelegate.swift
+git add Sources/Phrased/Input/InputWindow.swift Sources/Phrased/App/AppDelegate.swift
 git commit -m "feat: InputViewModel supports systemAudio/microphone source selection"
 ```
 
@@ -1003,13 +1003,13 @@ git commit -m "feat: InputViewModel supports systemAudio/microphone source selec
 ### Task 2.4: 音频源快速切换按钮 + 状态显示
 
 **Files:**
-- Modify: `Sources/Murmur/Confirm/ConfirmWindow.swift`
+- Modify: `Sources/Phrased/Confirm/ConfirmWindow.swift`
 
 在 `inputBar` 里麦克风按钮旁边，根据当前音频源显示不同图标，点击可快速切换。
 
-- [ ] **Step 1: 在 MurmurView 里加音频源切换按钮**
+- [ ] **Step 1: 在 PhrasedView 里加音频源切换按钮**
 
-在 `MurmurView` 的 `inputBar` 里，`micButton` 后面（或整合进 micButton label）添加：
+在 `PhrasedView` 的 `inputBar` 里，`micButton` 后面（或整合进 micButton label）添加：
 
 ```swift
 // 替换 micButton 的 label，加音频源标识：
@@ -1053,14 +1053,14 @@ Expected: `Build complete!`
 - [ ] **Step 3: 手动测试**
 
 ```bash
-make package && open .build/release/Murmur.app
+make package && open .build/release/Phrased.app
 # 右键麦克风按钮 → 切换到 "麦克风输入" → 录音 → 验证图标变化
 ```
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add Sources/Murmur/Confirm/ConfirmWindow.swift Sources/Murmur/Input/InputWindow.swift
+git add Sources/Phrased/Confirm/ConfirmWindow.swift Sources/Phrased/Input/InputWindow.swift
 git commit -m "feat: audio source toggle button with context menu (mic / system audio)"
 ```
 
@@ -1069,16 +1069,16 @@ git commit -m "feat: audio source toggle button with context menu (mic / system 
 ### Task 2.5: Settings Window
 
 **Files:**
-- Create: `Sources/Murmur/Settings/SettingsWindowController.swift`
-- Create: `Sources/Murmur/Settings/SettingsView.swift`
-- Modify: `Sources/Murmur/App/StatusBarController.swift`
-- Modify: `Sources/Murmur/App/AppDelegate.swift`
-- Modify: `Sources/Murmur/Input/HotkeyManager.swift`
+- Create: `Sources/Phrased/Settings/SettingsWindowController.swift`
+- Create: `Sources/Phrased/Settings/SettingsView.swift`
+- Modify: `Sources/Phrased/App/StatusBarController.swift`
+- Modify: `Sources/Phrased/App/AppDelegate.swift`
+- Modify: `Sources/Phrased/Input/HotkeyManager.swift`
 
 - [ ] **Step 1: 更新 HotkeyManager 支持动态快捷键**
 
 ```swift
-// Sources/Murmur/Input/HotkeyManager.swift
+// Sources/Phrased/Input/HotkeyManager.swift
 import AppKit
 import Carbon
 
@@ -1123,12 +1123,12 @@ class HotkeyManager {
 - [ ] **Step 2: 创建 SettingsWindowController**
 
 ```swift
-// Sources/Murmur/Settings/SettingsWindowController.swift
+// Sources/Phrased/Settings/SettingsWindowController.swift
 import AppKit
 import SwiftUI
 
 class SettingsWindowController: NSWindowController {
-    init(settings: MurmurSettings, onSave: @escaping (MurmurSettings) -> Void) {
+    init(settings: PhrasedSettings, onSave: @escaping (PhrasedSettings) -> Void) {
         let view = SettingsView(settings: settings, onSave: onSave)
         let hosting = NSHostingController(rootView: view)
         let window = NSWindow(
@@ -1136,7 +1136,7 @@ class SettingsWindowController: NSWindowController {
             styleMask: [.titled, .closable],
             backing: .buffered, defer: false
         )
-        window.title = "Murmur 设置"
+        window.title = "Phrased 设置"
         window.contentViewController = hosting
         window.center()
         super.init(window: window)
@@ -1148,14 +1148,14 @@ class SettingsWindowController: NSWindowController {
 - [ ] **Step 3: 创建 SettingsView**
 
 ```swift
-// Sources/Murmur/Settings/SettingsView.swift
+// Sources/Phrased/Settings/SettingsView.swift
 import SwiftUI
 
 struct SettingsView: View {
-    @State private var draft: MurmurSettings
-    private let onSave: (MurmurSettings) -> Void
+    @State private var draft: PhrasedSettings
+    private let onSave: (PhrasedSettings) -> Void
 
-    init(settings: MurmurSettings, onSave: @escaping (MurmurSettings) -> Void) {
+    init(settings: PhrasedSettings, onSave: @escaping (PhrasedSettings) -> Void) {
         _draft = State(initialValue: settings)
         self.onSave = onSave
     }
@@ -1288,7 +1288,7 @@ struct SettingsView: View {
 - [ ] **Step 4: 更新 StatusBarController 支持菜单**
 
 ```swift
-// Sources/Murmur/App/StatusBarController.swift
+// Sources/Phrased/App/StatusBarController.swift
 import AppKit
 
 class StatusBarController {
@@ -1306,14 +1306,14 @@ class StatusBarController {
         self.onSettings = onSettings
         self.onHistory = onHistory
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        statusItem.button?.image = NSImage(systemSymbolName: "quote.bubble", accessibilityDescription: "Murmur")
+        statusItem.button?.image = NSImage(systemSymbolName: "quote.bubble", accessibilityDescription: "Phrased")
         let menu = NSMenu()
-        menu.addItem(withTitle: "打开 Murmur",    action: #selector(doOpen),     keyEquivalent: "").target = self
+        menu.addItem(withTitle: "打开 Phrased",    action: #selector(doOpen),     keyEquivalent: "").target = self
         menu.addItem(.separator())
         menu.addItem(withTitle: "历史记录",        action: #selector(doHistory),  keyEquivalent: "").target = self
         menu.addItem(withTitle: "设置…",           action: #selector(doSettings), keyEquivalent: ",").target = self
         menu.addItem(.separator())
-        menu.addItem(withTitle: "退出 Murmur",    action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(withTitle: "退出 Phrased",    action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         statusItem.menu = menu
     }
 
@@ -1326,24 +1326,24 @@ class StatusBarController {
 - [ ] **Step 5: 更新 AppDelegate 连接所有设置**
 
 ```swift
-// Sources/Murmur/App/AppDelegate.swift
+// Sources/Phrased/App/AppDelegate.swift
 import AppKit
 
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusBarController: StatusBarController?
     private var hotkeyManager: HotkeyManager?
-    private var murmurWindowController: MurmurWindowController?
+    private var phrasedWindowController: PhrasedWindowController?
     private var settingsWindowController: SettingsWindowController?
 
-    private var settings = MurmurSettings.loadOrDefault()
+    private var settings = PhrasedSettings.loadOrDefault()
     private lazy var processor = IntentProcessor()
     private lazy var inputVM = InputViewModel()
     private lazy var confirmVM = ConfirmViewModel(llm: makeLLMProvider(), processor: processor)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
-        murmurWindowController = MurmurWindowController(inputVM: inputVM, confirmVM: confirmVM)
+        phrasedWindowController = PhrasedWindowController(inputVM: inputVM, confirmVM: confirmVM)
         inputVM.onSubmit = { [weak self] text, template in
             guard let self else { return }
             self.confirmVM.start(input: text, template: template)
@@ -1376,7 +1376,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func showWindow() { murmurWindowController?.show() }
+    private func showWindow() { phrasedWindowController?.show() }
 
     private func showSettings() {
         // Always recreate so settings reflects current state
@@ -1393,7 +1393,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 self.confirmVM.updateProvider(self.makeLLMProvider())
                 self.inputVM.setAudioSource(newSettings.audioSource == "microphone" ? .microphone : .systemAudio)
                 // Notify windowController of new templates (Phase 3)
-                self.murmurWindowController?.updateTemplates(newSettings.allTemplates)
+                self.phrasedWindowController?.updateTemplates(newSettings.allTemplates)
             }
         )
         settingsWindowController?.showWindow(nil)
@@ -1409,7 +1409,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 }
 ```
 
-> `murmurWindowController?.updateTemplates(...)` 是 Phase 3 才实现的方法，此处可先留存 `// TODO: Phase 3` 注释或定义空 stub。
+> `phrasedWindowController?.updateTemplates(...)` 是 Phase 3 才实现的方法，此处可先留存 `// TODO: Phase 3` 注释或定义空 stub。
 
 - [ ] **Step 6: Build 确认无错**
 
@@ -1419,7 +1419,7 @@ Expected: `Build complete!`
 - [ ] **Step 7: 手动测试**
 
 ```bash
-make package && open .build/release/Murmur.app
+make package && open .build/release/Phrased.app
 # 验证：菜单栏右键 → 三个菜单项存在
 # 打开设置 → 四个 Tab 正常显示
 # 修改 LLM 供应商 → 保存 → 再打开设置 → 值已保存
@@ -1428,7 +1428,7 @@ make package && open .build/release/Murmur.app
 - [ ] **Step 8: Commit**
 
 ```bash
-git add Sources/Murmur/Settings/ Sources/Murmur/App/ Sources/Murmur/Input/HotkeyManager.swift
+git add Sources/Phrased/Settings/ Sources/Phrased/App/ Sources/Phrased/Input/HotkeyManager.swift
 git commit -m "feat: settings window (model/audio/hotkey/output), dynamic hotkey, menu bar"
 ```
 
@@ -1439,15 +1439,15 @@ git commit -m "feat: settings window (model/audio/hotkey/output), dynamic hotkey
 ### Task 3.1: PromptTemplate Model
 
 **Files:**
-- Create: `Sources/Murmur/Core/PromptTemplate.swift`
-- Create: `Tests/MurmurTests/PromptTemplateTests.swift`
+- Create: `Sources/Phrased/Core/PromptTemplate.swift`
+- Create: `Tests/PhrasedTests/PromptTemplateTests.swift`
 
 - [ ] **Step 1: Write the failing test**
 
 ```swift
-// Tests/MurmurTests/PromptTemplateTests.swift
+// Tests/PhrasedTests/PromptTemplateTests.swift
 import XCTest
-@testable import Murmur
+@testable import Phrased
 
 final class PromptTemplateTests: XCTestCase {
     func test_builtins_notEmpty() {
@@ -1477,7 +1477,7 @@ Expected: FAIL
 - [ ] **Step 3: Create PromptTemplate**
 
 ```swift
-// Sources/Murmur/Core/PromptTemplate.swift
+// Sources/Phrased/Core/PromptTemplate.swift
 import Foundation
 
 struct PromptTemplate: Codable, Identifiable, Hashable {
@@ -1496,7 +1496,7 @@ struct PromptTemplate: Codable, Identifiable, Hashable {
     ]
 }
 
-extension MurmurSettings {
+extension PhrasedSettings {
     var allTemplates: [PromptTemplate] { PromptTemplate.builtins + customTemplates }
 }
 ```
@@ -1509,8 +1509,8 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/Murmur/Core/PromptTemplate.swift Tests/MurmurTests/PromptTemplateTests.swift
-git commit -m "feat: PromptTemplate model with builtins, MurmurSettings.allTemplates"
+git add Sources/Phrased/Core/PromptTemplate.swift Tests/PhrasedTests/PromptTemplateTests.swift
+git commit -m "feat: PromptTemplate model with builtins, PhrasedSettings.allTemplates"
 ```
 
 ---
@@ -1518,10 +1518,10 @@ git commit -m "feat: PromptTemplate model with builtins, MurmurSettings.allTempl
 ### Task 3.2: 迁移 WritingStyle → PromptTemplate
 
 **Files:**
-- Modify: `Sources/Murmur/Core/IntentProcessor.swift`
-- Modify: `Sources/Murmur/Confirm/ConfirmViewModel.swift`
-- Modify: `Sources/Murmur/Input/InputWindow.swift`
-- Modify: `Sources/Murmur/Confirm/ConfirmWindow.swift`
+- Modify: `Sources/Phrased/Core/IntentProcessor.swift`
+- Modify: `Sources/Phrased/Confirm/ConfirmViewModel.swift`
+- Modify: `Sources/Phrased/Input/InputWindow.swift`
+- Modify: `Sources/Phrased/Confirm/ConfirmWindow.swift`
 
 - [ ] **Step 1: 更新 IntentProcessor**
 
@@ -1561,12 +1561,12 @@ let messages = processor.buildMessages(input: originalInput, feedback: feedback,
 var onSubmit: ((String, PromptTemplate) -> Void)?
 ```
 
-- [ ] **Step 4: 更新 MurmurView — 模板 Picker 支持动态列表**
+- [ ] **Step 4: 更新 PhrasedView — 模板 Picker 支持动态列表**
 
-`MurmurWindowController` 需要持有并可更新模板列表。关键：用 `@Published` 让 SwiftUI 响应更新：
+`PhrasedWindowController` 需要持有并可更新模板列表。关键：用 `@Published` 让 SwiftUI 响应更新：
 
 ```swift
-// 在 MurmurWindowController 里加：
+// 在 PhrasedWindowController 里加：
 @Published var allTemplates: [PromptTemplate] = PromptTemplate.builtins
 
 func updateTemplates(_ templates: [PromptTemplate]) {
@@ -1578,11 +1578,11 @@ func updateTemplates(_ templates: [PromptTemplate]) {
 }
 ```
 
-`MurmurView` 通过 `@ObservedObject` 监听 controller 的 `allTemplates` 变化：
+`PhrasedView` 通过 `@ObservedObject` 监听 controller 的 `allTemplates` 变化：
 
 ```swift
-// MurmurView 新增参数：
-@ObservedObject var windowController: MurmurWindowController
+// PhrasedView 新增参数：
+@ObservedObject var windowController: PhrasedWindowController
 
 private var stylePicker: some View {
     Picker("", selection: $inputVM.selectedTemplate) {
@@ -1653,9 +1653,9 @@ Expected: `Build complete!`
 - [ ] **Step 7: Commit**
 
 ```bash
-git add Sources/Murmur/Core/IntentProcessor.swift Sources/Murmur/Core/PromptTemplate.swift \
-        Sources/Murmur/Confirm/ConfirmViewModel.swift Sources/Murmur/Confirm/ConfirmWindow.swift \
-        Sources/Murmur/Input/InputWindow.swift Sources/Murmur/Settings/SettingsView.swift
+git add Sources/Phrased/Core/IntentProcessor.swift Sources/Phrased/Core/PromptTemplate.swift \
+        Sources/Phrased/Confirm/ConfirmViewModel.swift Sources/Phrased/Confirm/ConfirmWindow.swift \
+        Sources/Phrased/Input/InputWindow.swift Sources/Phrased/Settings/SettingsView.swift
 git commit -m "feat: replace WritingStyle with PromptTemplate, dynamic template list, custom template editor"
 ```
 
@@ -1666,15 +1666,15 @@ git commit -m "feat: replace WritingStyle with PromptTemplate, dynamic template 
 ### Task 4.1: ContextCapture
 
 **Files:**
-- Create: `Sources/Murmur/Context/ContextCapture.swift`
-- Create: `Tests/MurmurTests/ContextCaptureTests.swift`
+- Create: `Sources/Phrased/Context/ContextCapture.swift`
+- Create: `Tests/PhrasedTests/ContextCaptureTests.swift`
 
 - [ ] **Step 1: Write the failing test**
 
 ```swift
-// Tests/MurmurTests/ContextCaptureTests.swift
+// Tests/PhrasedTests/ContextCaptureTests.swift
 import XCTest
-@testable import Murmur
+@testable import Phrased
 
 final class ContextCaptureTests: XCTestCase {
     func test_captureReturnsValue() {
@@ -1702,7 +1702,7 @@ Expected: FAIL
 - [ ] **Step 3: Create ContextCapture**
 
 ```swift
-// Sources/Murmur/Context/ContextCapture.swift
+// Sources/Phrased/Context/ContextCapture.swift
 import AppKit
 import ApplicationServices
 
@@ -1736,7 +1736,7 @@ struct InputContext {
 }
 
 enum ContextCapture {
-    /// Must be called BEFORE Murmur window is activated (while user's app is still frontmost).
+    /// Must be called BEFORE Phrased window is activated (while user's app is still frontmost).
     static func capture() -> InputContext {
         let app = NSWorkspace.shared.frontmostApplication
         let selected = selectedTextViaAccessibility(for: app)
@@ -1768,7 +1768,7 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/Murmur/Context/ContextCapture.swift Tests/MurmurTests/ContextCaptureTests.swift
+git add Sources/Phrased/Context/ContextCapture.swift Tests/PhrasedTests/ContextCaptureTests.swift
 git commit -m "feat: ContextCapture with AX selected text, clipboard, frontmost app"
 ```
 
@@ -1777,16 +1777,16 @@ git commit -m "feat: ContextCapture with AX selected text, clipboard, frontmost 
 ### Task 4.2: 传递 Context 至 LLM 提示词
 
 **Files:**
-- Modify: `Sources/Murmur/Core/IntentProcessor.swift`
-- Modify: `Sources/Murmur/Confirm/ConfirmViewModel.swift`
-- Modify: `Sources/Murmur/Confirm/ConfirmWindow.swift`
-- Modify: `Sources/Murmur/App/AppDelegate.swift`
+- Modify: `Sources/Phrased/Core/IntentProcessor.swift`
+- Modify: `Sources/Phrased/Confirm/ConfirmViewModel.swift`
+- Modify: `Sources/Phrased/Confirm/ConfirmWindow.swift`
+- Modify: `Sources/Phrased/App/AppDelegate.swift`
 
 Context 流向设计：
 ```
 AppDelegate.showWindow()
   → ContextCapture.capture()           // 此时用户 app 还是 frontmost
-  → MurmurWindowController.show(context:)
+  → PhrasedWindowController.show(context:)
      → 存为 pendingContext
      → inputVM.onSubmit 闭包从 controller 读取 pendingContext
        → confirmVM.start(input:template:context:)
@@ -1845,10 +1845,10 @@ func start(input: String, template: PromptTemplate, context: InputContext = .ini
 let messages = processor.buildMessages(input: originalInput, feedback: feedback, template: currentTemplate, context: currentContext)
 ```
 
-- [ ] **Step 3: MurmurWindowController 接收并暂存 context**
+- [ ] **Step 3: PhrasedWindowController 接收并暂存 context**
 
 ```swift
-// 在 MurmurWindowController 里加：
+// 在 PhrasedWindowController 里加：
 private var pendingContext = InputContext(frontmostApp: nil, selectedText: nil, clipboardText: nil)
 
 func show(context: InputContext = InputContext(frontmostApp: nil, selectedText: nil, clipboardText: nil)) {
@@ -1868,7 +1868,7 @@ func show(context: InputContext = InputContext(frontmostApp: nil, selectedText: 
 // AppDelegate:
 inputVM.onSubmit = { [weak self] text, template in
     guard let self else { return }
-    let context = self.murmurWindowController?.pendingContext
+    let context = self.phrasedWindowController?.pendingContext
         ?? InputContext(frontmostApp: nil, selectedText: nil, clipboardText: nil)
     self.confirmVM.start(input: text, template: template, context: context)
 }
@@ -1879,17 +1879,17 @@ inputVM.onSubmit = { [weak self] text, template in
 ```swift
 private func showWindow() {
     let context = ContextCapture.capture()  // 必须在 NSApp.activate 之前调用
-    murmurWindowController?.show(context: context)
+    phrasedWindowController?.show(context: context)
 }
 ```
 
 - [ ] **Step 5: 在输入框下显示来源 app 标签**
 
-在 `MurmurView.inputBar` 的 `inputArea` 外层加一行小字：
+在 `PhrasedView.inputBar` 的 `inputArea` 外层加一行小字：
 
 ```swift
 // inputBar VStack 顶部加（当有 frontmostApp 时显示）：
-if let appName = murmurWindowController?.pendingContext.frontmostAppName {
+if let appName = phrasedWindowController?.pendingContext.frontmostAppName {
     HStack {
         Image(systemName: "app.badge")
             .font(.caption2).foregroundColor(.secondary.opacity(0.5))
@@ -1920,8 +1920,8 @@ Expected: `Build complete!`
 - [ ] **Step 8: Commit**
 
 ```bash
-git add Sources/Murmur/Core/IntentProcessor.swift Sources/Murmur/Confirm/ConfirmViewModel.swift \
-        Sources/Murmur/Confirm/ConfirmWindow.swift Sources/Murmur/App/AppDelegate.swift
+git add Sources/Phrased/Core/IntentProcessor.swift Sources/Phrased/Confirm/ConfirmViewModel.swift \
+        Sources/Phrased/Confirm/ConfirmWindow.swift Sources/Phrased/App/AppDelegate.swift
 git commit -m "feat: context capture — selected text, clipboard, frontmost app auto-style, AX permission request"
 ```
 
@@ -1932,14 +1932,14 @@ git commit -m "feat: context capture — selected text, clipboard, frontmost app
 ### Task 5.1: TextInjector
 
 **Files:**
-- Create: `Sources/Murmur/Output/TextInjector.swift`
-- Modify: `Sources/Murmur/Confirm/ConfirmViewModel.swift`
-- Modify: `Sources/Murmur/Confirm/ConfirmWindow.swift`
+- Create: `Sources/Phrased/Output/TextInjector.swift`
+- Modify: `Sources/Phrased/Confirm/ConfirmViewModel.swift`
+- Modify: `Sources/Phrased/Confirm/ConfirmWindow.swift`
 
 - [ ] **Step 1: Create TextInjector**
 
 ```swift
-// Sources/Murmur/Output/TextInjector.swift
+// Sources/Phrased/Output/TextInjector.swift
 import AppKit
 
 enum TextInjector {
@@ -2019,7 +2019,7 @@ func accept(outputMode: String = "copy") {
 
 ```swift
 // ConfirmWindow.swift actionBar 里，accept 按钮改为：
-// outputMode 从 settings 传入（或直接从 MurmurWindowController 读取）
+// outputMode 从 settings 传入（或直接从 PhrasedWindowController 读取）
 let outputMode: String  // "copy" | "inject"，由 init 传入
 
 Button(confirmVM.didCopy
@@ -2043,8 +2043,8 @@ Expected: `Build complete!`
 - [ ] **Step 6: Commit**
 
 ```bash
-git add Sources/Murmur/Output/TextInjector.swift Sources/Murmur/Confirm/ConfirmViewModel.swift \
-        Sources/Murmur/Confirm/ConfirmWindow.swift
+git add Sources/Phrased/Output/TextInjector.swift Sources/Phrased/Confirm/ConfirmViewModel.swift \
+        Sources/Phrased/Confirm/ConfirmWindow.swift
 git commit -m "feat: TextInjector — clipboard swap + ⌘V injection, restore clipboard after 1s"
 ```
 
@@ -2055,15 +2055,15 @@ git commit -m "feat: TextInjector — clipboard swap + ⌘V injection, restore c
 ### Task 6.1: HistoryStore
 
 **Files:**
-- Create: `Sources/Murmur/History/HistoryStore.swift`
-- Create: `Tests/MurmurTests/HistoryStoreTests.swift`
+- Create: `Sources/Phrased/History/HistoryStore.swift`
+- Create: `Tests/PhrasedTests/HistoryStoreTests.swift`
 
 - [ ] **Step 1: Write the failing test**
 
 ```swift
-// Tests/MurmurTests/HistoryStoreTests.swift
+// Tests/PhrasedTests/HistoryStoreTests.swift
 import XCTest
-@testable import Murmur
+@testable import Phrased
 
 final class HistoryStoreTests: XCTestCase {
     var store: HistoryStore!
@@ -2103,7 +2103,7 @@ Expected: FAIL
 - [ ] **Step 3: Create HistoryStore**
 
 ```swift
-// Sources/Murmur/History/HistoryStore.swift
+// Sources/Phrased/History/HistoryStore.swift
 import Foundation
 
 struct HistoryEntry: Codable, Identifiable {
@@ -2124,7 +2124,7 @@ class HistoryStore {
 
     static func defaultStorageURL() -> URL {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-            .appendingPathComponent("Murmur", isDirectory: true)
+            .appendingPathComponent("Phrased", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent("history.json")
     }
@@ -2183,8 +2183,8 @@ init(llm: LLMProvider, processor: IntentProcessor, historyStore: HistoryStore = 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add Sources/Murmur/History/HistoryStore.swift Tests/MurmurTests/HistoryStoreTests.swift \
-        Sources/Murmur/Confirm/ConfirmViewModel.swift
+git add Sources/Phrased/History/HistoryStore.swift Tests/PhrasedTests/HistoryStoreTests.swift \
+        Sources/Phrased/Confirm/ConfirmViewModel.swift
 git commit -m "feat: HistoryStore JSON append-log, write entry on accept"
 ```
 
@@ -2193,13 +2193,13 @@ git commit -m "feat: HistoryStore JSON append-log, write entry on accept"
 ### Task 6.2: History Window
 
 **Files:**
-- Create: `Sources/Murmur/History/HistoryWindowController.swift`
-- Modify: `Sources/Murmur/App/AppDelegate.swift`
+- Create: `Sources/Phrased/History/HistoryWindowController.swift`
+- Modify: `Sources/Phrased/App/AppDelegate.swift`
 
 - [ ] **Step 1: Create HistoryWindowController**
 
 ```swift
-// Sources/Murmur/History/HistoryWindowController.swift
+// Sources/Phrased/History/HistoryWindowController.swift
 import AppKit
 import SwiftUI
 
@@ -2211,7 +2211,7 @@ class HistoryWindowController: NSWindowController {
             styleMask: [.titled, .closable, .resizable],
             backing: .buffered, defer: false
         )
-        window.title = "Murmur 历史记录"
+        window.title = "Phrased 历史记录"
         window.contentViewController = hosting
         window.center()
         super.init(window: window)
@@ -2283,7 +2283,7 @@ Expected: `Build complete!`
 - [ ] **Step 4: Commit**
 
 ```bash
-git add Sources/Murmur/History/HistoryWindowController.swift Sources/Murmur/App/AppDelegate.swift
+git add Sources/Phrased/History/HistoryWindowController.swift Sources/Phrased/App/AppDelegate.swift
 git commit -m "feat: history window — list all entries, copy result, clear history"
 ```
 
@@ -2294,15 +2294,15 @@ git commit -m "feat: history window — list all entries, copy result, clear his
 ### Task 7.1: VocabularyStore
 
 **Files:**
-- Create: `Sources/Murmur/Vocabulary/VocabularyStore.swift`
-- Create: `Tests/MurmurTests/VocabularyStoreTests.swift`
+- Create: `Sources/Phrased/Vocabulary/VocabularyStore.swift`
+- Create: `Tests/PhrasedTests/VocabularyStoreTests.swift`
 
 - [ ] **Step 1: Write the failing test**
 
 ```swift
-// Tests/MurmurTests/VocabularyStoreTests.swift
+// Tests/PhrasedTests/VocabularyStoreTests.swift
 import XCTest
-@testable import Murmur
+@testable import Phrased
 
 final class VocabularyStoreTests: XCTestCase {
     func test_replacesWholeWord() {
@@ -2339,7 +2339,7 @@ Expected: FAIL
 - [ ] **Step 3: Create VocabularyStore**
 
 ```swift
-// Sources/Murmur/Vocabulary/VocabularyStore.swift
+// Sources/Phrased/Vocabulary/VocabularyStore.swift
 import Foundation
 
 struct VocabEntry: Codable, Identifiable {
@@ -2367,7 +2367,7 @@ class VocabularyStore {
 
     static func defaultStorageURL() -> URL {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-            .appendingPathComponent("Murmur", isDirectory: true)
+            .appendingPathComponent("Phrased", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent("vocabulary.json")
     }
@@ -2393,7 +2393,7 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/Murmur/Vocabulary/VocabularyStore.swift Tests/MurmurTests/VocabularyStoreTests.swift
+git add Sources/Phrased/Vocabulary/VocabularyStore.swift Tests/PhrasedTests/VocabularyStoreTests.swift
 git commit -m "feat: VocabularyStore whole-word regex replacement, JSON persistence"
 ```
 
@@ -2402,9 +2402,9 @@ git commit -m "feat: VocabularyStore whole-word regex replacement, JSON persiste
 ### Task 7.2: 连接热词 + Settings Tab
 
 **Files:**
-- Modify: `Sources/Murmur/Input/InputWindow.swift`
-- Modify: `Sources/Murmur/App/AppDelegate.swift`
-- Modify: `Sources/Murmur/Settings/SettingsView.swift`
+- Modify: `Sources/Phrased/Input/InputWindow.swift`
+- Modify: `Sources/Phrased/App/AppDelegate.swift`
+- Modify: `Sources/Phrased/Settings/SettingsView.swift`
 
 - [ ] **Step 1: InputViewModel.submit() 应用热词**
 
@@ -2477,8 +2477,8 @@ Expected: `Build complete!`
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Sources/Murmur/Input/InputWindow.swift Sources/Murmur/App/AppDelegate.swift \
-        Sources/Murmur/Settings/SettingsView.swift
+git add Sources/Phrased/Input/InputWindow.swift Sources/Phrased/App/AppDelegate.swift \
+        Sources/Phrased/Settings/SettingsView.swift
 git commit -m "feat: vocabulary substitution on submit, hot-word management in settings"
 ```
 

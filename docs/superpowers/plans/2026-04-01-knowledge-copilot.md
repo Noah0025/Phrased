@@ -460,12 +460,12 @@ git commit -m "feat: wire onBlockClicked to KnowledgeBase retrieval"
 cd ~/Projects/InterviewCopilot && make package 2>&1 | tail -5
 ```
 
-Expected: `==> Done: Murmur.app`
+Expected: `==> Done: Phrased.app`
 
 - [ ] **Step 2: Launch**
 
 ```bash
-open ~/Projects/InterviewCopilot/Murmur.app
+open ~/Projects/InterviewCopilot/Phrased.app
 ```
 
 - [ ] **Step 3: Verify — subtitle mode still works**
