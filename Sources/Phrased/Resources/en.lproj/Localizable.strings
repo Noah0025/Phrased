@@ -115,7 +115,7 @@
 /* Settings Hotkey */
 "settings.hotkey.global" = "Global Hotkey";
 "settings.hotkey.global.footer" = "Supports a single modifier tap or a double-tap on a standalone modifier (e.g., double-tap ⌃). At least one modifier is required.";
-"settings.hotkey.open_murmur" = "Open Phrased";
+"settings.hotkey.open_phrased" = "Open Phrased";
 "settings.hotkey.restore_default_double_control" = "Restore Default (Double-Tap Control)";
 "settings.hotkey.in_app" = "In-App Hotkeys";
 "settings.hotkey.in_app.footer" = "Supports modifier combinations or a single bare key. Double-tap is not supported.";
@@ -222,7 +222,7 @@
 /* History Export */
 "history.export.alert.no_history" = "No History";
 "history.export.title" = "Export History";
-"history.export.default_filename" = "murmur-history.txt";
+"history.export.default_filename" = "phrased-history.txt";
 "history.export.csv.header" = "Time,Style,Source,Input,Output";
 "history.export.txt.meta_format" = "[%@] Style: %@%@";
 "history.export.txt.app_suffix_format" = " | %@";

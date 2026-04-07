@@ -115,7 +115,7 @@
 /* Settings Hotkey */
 "settings.hotkey.global" = "全局快捷键";
 "settings.hotkey.global.footer" = "支持修饰键单击或单独修饰键双击（如双击 ⌃），需包含至少一个修饰键。";
-"settings.hotkey.open_murmur" = "打开 Phrased";
+"settings.hotkey.open_phrased" = "打开 Phrased";
 "settings.hotkey.restore_default_double_control" = "恢复默认（双击 Control）";
 "settings.hotkey.in_app" = "应用内快捷键";
 "settings.hotkey.in_app.footer" = "支持修饰键组合或单个裸键，不支持双击。";
@@ -222,7 +222,7 @@
 /* History Export */
 "history.export.alert.no_history" = "暂无历史记录";
 "history.export.title" = "导出历史记录";
-"history.export.default_filename" = "murmur-history.txt";
+"history.export.default_filename" = "phrased-history.txt";
 "history.export.csv.header" = "时间,风格,来源,输入,输出";
 "history.export.txt.meta_format" = "[%@] 风格：%@%@";
 "history.export.txt.app_suffix_format" = " | %@";

@@ -8,7 +8,7 @@ extension SettingsView {
         Form {
             Section(header: Text("settings.hotkey.global"), footer: Text("settings.hotkey.global.footer").font(.caption).foregroundColor(.secondary)) {
                 shortcutRow(
-                    label: String(localized: "settings.hotkey.open_murmur"),
+                    label: String(localized: "settings.hotkey.open_phrased"),
                     keyCode: $draft.hotkeyKeyCode,
                     modifiers: $draft.hotkeyModifiers,
                     defaultKeyCode: Self.defaultHotkeyKeyCode,
