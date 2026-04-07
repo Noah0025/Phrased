@@ -26,6 +26,8 @@
     <string>Phrased captures system audio to provide real-time transcription.</string>
     <key>NSAppleEventsUsageDescription</key>
     <string>Phrased needs this to function properly.</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>NSHumanReadableCopyright</key>
     <string>© 2025 Helm Project. All rights reserved.</string>
 </dict>

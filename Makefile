@@ -19,6 +19,7 @@ package: build
 	@rm -rf $(APP_BUNDLE)/Contents/Resources/en.lproj $(APP_BUNDLE)/Contents/Resources/zh-Hans.lproj
 	@cp -r $(BUILD_DIR)/Phrased_Phrased.bundle/en.lproj $(APP_BUNDLE)/Contents/Resources/en.lproj
 	@cp -r $(BUILD_DIR)/Phrased_Phrased.bundle/zh-hans.lproj $(APP_BUNDLE)/Contents/Resources/zh-Hans.lproj
+	@cp Resources/AppIcon.icns $(APP_BUNDLE)/Contents/Resources/AppIcon.icns
 	@codesign --force --deep --sign - --entitlements Phrased.entitlements $(APP_BUNDLE)
 	@echo "==> Done: $(APP_BUNDLE)"
 
