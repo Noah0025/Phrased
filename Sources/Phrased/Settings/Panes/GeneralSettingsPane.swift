@@ -3,16 +3,18 @@ import SwiftUI
 extension SettingsView {
     var generalPane: some View {
         Form {
-            Section("settings.general.behavior") {
+            Section {
                 Toggle("settings.general.launch_at_login", isOn: $draft.launchAtLogin)
                     .onChange(of: draft.launchAtLogin) { enabled in
                         LaunchAtLoginHelper.set(enabled: enabled)
                     }
+                Toggle("settings.general.show_in_menu_bar", isOn: $draft.showInMenuBar)
                 Toggle("settings.general.play_completion_sound", isOn: $draft.playCompletionSound)
             }
 
             Section {
                 Picker("settings.general.language", selection: $draft.appLanguage) {
+                    Text("settings.general.language.system").tag(AppLanguage.system)
                     Text("settings.general.language.chinese").tag(AppLanguage.zhHans)
                     Text("settings.general.language.english").tag(AppLanguage.english)
                 }

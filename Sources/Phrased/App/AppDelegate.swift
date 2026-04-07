@@ -56,7 +56,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self.confirmVM.start(input: text, template: template, context: context)
         }
 
-        statusBarController = StatusBarController(appDelegate: self)
+        if settings.showInMenuBar {
+            statusBarController = StatusBarController(appDelegate: self, settings: settings)
+        }
 
         hotkeyManager = HotkeyManager(
             keyCode: settings.hotkeyKeyCode,
@@ -64,18 +66,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             onActivate: { [weak self] in self?.showWindow() }
         )
 
-        // Pre-warm: kick off a single-token request so the model is loaded before first use
-        warmUpTask = makeLLMProvider().streamChat(
-            messages: [LLMMessage(role: .user, content: "hi")],
-            onChunk: { _ in },
-            onDone: {},
-            onError: { _ in }
-        )
+        // Pre-warm local models only: kick off a single-token request so the model is
+        // loaded into GPU memory before first use. Skip cloud endpoints to avoid billing.
+        let profile = settings.selectedProfile
+        let isLocal = profile.baseURL.hasPrefix("http://localhost") || profile.baseURL.hasPrefix("http://127.")
+        if isLocal, !profile.selectedModel.isEmpty {
+            warmUpTask = makeLLMProvider().streamChat(
+                messages: [LLMMessage(role: .user, content: "hi")],
+                onChunk: { _ in },
+                onDone: {},
+                onError: { _ in }
+            )
+        }
         inputVM.warmUpTranscriber()
 
         // Request Accessibility permission (needed for selected text capture)
         if !AXIsProcessTrusted() {
-            let options = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true] as CFDictionary
+            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
             AXIsProcessTrustedWithOptions(options)
         }
 
@@ -149,16 +156,38 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func applySettings(_ newSettings: PhrasedSettings) {
+        let menuBarChanged = newSettings.showInMenuBar != settings.showInMenuBar
+        var newSettings = newSettings
+        // Normalize base URLs: strip trailing /v1 and slashes so the provider
+        // always appends /v1/chat/completions cleanly.
+        for i in newSettings.localProfiles.indices {
+            newSettings.localProfiles[i].baseURL = Self.normalizeBaseURL(newSettings.localProfiles[i].baseURL)
+        }
+        for i in newSettings.asrProfiles.indices {
+            newSettings.asrProfiles[i].baseURL = Self.normalizeBaseURL(newSettings.asrProfiles[i].baseURL)
+        }
         settings = newSettings
         try? newSettings.save()
         inputVM.settings = newSettings
         confirmVM.settings = newSettings
         historyStore.retentionDays = newSettings.historyRetentionDays
+        try? historyStore.pruneIfNeeded()
         hotkeyManager?.update(keyCode: newSettings.hotkeyKeyCode, modifiers: newSettings.hotkeyNSModifiers)
         confirmVM.updateProvider(makeLLMProvider())
         inputVM.updateASRProvider(makeASRProvider())
         phrasedWindowController?.updateTemplates(newSettings.allTemplates)
+        vocabularyStore = VocabularyStore.loadOrDefault()
+        inputVM.vocabularyStore = vocabularyStore
         LaunchAtLoginHelper.set(enabled: newSettings.launchAtLogin)
+        if menuBarChanged {
+            statusBarController = newSettings.showInMenuBar ? StatusBarController(appDelegate: self, settings: newSettings) : nil
+        }
+    }
+
+    private static func normalizeBaseURL(_ url: String) -> String {
+        var s = url.trimmingCharacters(in: .whitespaces)
+        while s.hasSuffix("/") { s = String(s.dropLast()) }
+        return s
     }
 
     private func showHistory() {
@@ -168,6 +197,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
         historyWindowController?.showWindow(nil)
         historyWindowController?.window?.makeKeyAndOrderFront(nil)
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag { showSettings() }
+        return true
     }
 
     func applicationWillTerminate(_ notification: Notification) {

@@ -130,15 +130,14 @@ class WhisperTranscriber: ASRProvider {
         process.standardOutput = Pipe()
         process.standardError = Pipe()
 
-        do {
-            try process.run()
-        } catch {
-            DispatchQueue.main.async { self.onError?(error) }
-            return
-        }
-
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             process.terminationHandler = { _ in continuation.resume() }
+            do {
+                try process.run()
+            } catch {
+                DispatchQueue.main.async { self.onError?(error) }
+                continuation.resume()
+            }
         }
 
         let text = (try? String(contentsOf: txtURL, encoding: .utf8))?

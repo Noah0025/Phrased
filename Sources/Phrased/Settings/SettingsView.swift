@@ -57,6 +57,8 @@ struct SettingsView: View {
     @State var llmScanResults: [ServiceScanResult] = []
     @State var llmInstalledNotRunning: [String] = []
     @State var llmScanDone = false
+    @State var llmTestingProfileID: UUID? = nil
+    @State var llmTestResults: [UUID: (ok: Bool, message: String)] = [:]
     @State var expandedASRProfileIDs: Set<UUID> = []
     @State var expandedTemplateIDs: Set<String> = []
     @State var editingKeyASRProfileID: UUID? = nil
@@ -150,11 +152,16 @@ struct SettingsView: View {
 
     func profileField(_ label: LocalizedStringKey, text: Binding<String>, prompt: LocalizedStringKey? = nil) -> some View {
         HStack {
-            Text(label).font(PhrasedFont.secondary).frame(width: 50, alignment: .trailing)
-            TextField("", text: text, prompt: prompt.map { Text($0) })
-                .textFieldStyle(.roundedBorder)
+            Text(label)
+                .font(PhrasedFont.secondary)
+                .foregroundColor(.secondary)
+                .frame(width: 54, alignment: .leading)
+            TextField("", text: text, prompt: prompt.map { Text($0).foregroundColor(Color.secondary.opacity(0.6)) })
+                .textFieldStyle(.plain)
                 .font(PhrasedFont.secondary)
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
     }
 
     @ViewBuilder
@@ -270,11 +277,11 @@ private struct ProfileKeyRowView: View {
         let locked = hasContent && !isEditing && !hasUnsavedInput
         let keyPrompt = optional ? String(localized: "settings.key.prompt.optional") : String(localized: "settings.key.prompt.required")
 
-        HStack(spacing: 8) {
+        HStack {
             Text("settings.key.label")
                 .font(PhrasedFont.secondary)
                 .foregroundColor(.secondary)
-                .frame(width: 36, alignment: .leading)
+                .frame(width: 54, alignment: .leading)
 
             if locked {
                 Text("settings.key.configured_masked")
@@ -286,11 +293,12 @@ private struct ProfileKeyRowView: View {
             } else {
                 Group {
                     if keyVisible {
-                        TextField("", text: editableKey, prompt: Text(keyPrompt))
+                        TextField("", text: editableKey, prompt: Text(keyPrompt).foregroundColor(Color.secondary.opacity(0.6)))
                     } else {
-                        SecureField("", text: editableKey, prompt: Text(keyPrompt))
+                        SecureField("", text: editableKey, prompt: Text(keyPrompt).foregroundColor(Color.secondary.opacity(0.6)))
                     }
                 }
+                .textFieldStyle(.plain)
                 .font(PhrasedFont.secondary)
 
                 if hasContent {
@@ -315,7 +323,7 @@ private struct ProfileKeyRowView: View {
                 }
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
     }
 }

@@ -25,7 +25,7 @@
 "settings.section.history" = "History";
 
 /* Settings General */
-"settings.general.behavior" = "Behavior";
+"settings.general.show_in_menu_bar" = "Show in menu bar";
 "settings.general.launch_at_login" = "Launch at login";
 "settings.general.play_completion_sound" = "Play sound when output is ready";
 "settings.general.language" = "Language";
@@ -59,6 +59,14 @@
 "settings.model.installed_not_running" = "Installed but not running. Start it and scan again:";
 "settings.model.scan_local" = "Scan Local Models";
 "settings.model.add_cloud" = "Add Cloud Model";
+"settings.model.presets" = "Templates";
+"settings.audio.presets" = "Templates";
+"settings.model.test_connection" = "Test Connection";
+"settings.model.test.error.invalid_url" = "Invalid URL";
+"settings.model.test.error.invalid_response" = "Invalid response";
+"settings.model.test.error.timeout" = "Connection timed out";
+"settings.model.test.error.cannot_connect" = "Cannot connect to server";
+"settings.model.test.error.no_network" = "No network connection";
 "settings.model.navigation_title" = "Language Model Configuration";
 "settings.model.category.local" = "Local Model";
 "settings.model.category.cloud" = "Cloud Model";
@@ -135,9 +143,9 @@
 "settings.templates.help.restore_default" = "Restore Default";
 
 /* Settings Vocabulary */
-"settings.vocabulary.description" = "Automatically replaces matching words on submit. Example: tmr expands to tomorrow.";
+"settings.vocabulary.description" = "Automatically replaces matching words on submit. Example: tmr → tomorrow.";
 "settings.vocabulary.trigger" = "Trigger";
-"settings.vocabulary.expand_to" = "Expand To";
+"settings.vocabulary.expand_to" = "Replace With";
 "settings.vocabulary.navigation_title" = "Text Substitution";
 
 /* Settings History */

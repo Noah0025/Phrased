@@ -267,13 +267,26 @@ class ShortcutRecorderNSView: NSView {
         case 51: return "⌫"
         case 53: return "⎋"
         default:
-            // Attempt layout-aware name via UCKeyTranslate
-            guard let source = TISCopyCurrentKeyboardInputSource()?.takeRetainedValue(),
-                  let dataRef = TISGetInputSourceProperty(source, kTISPropertyUnicodeKeyLayoutData) else {
-                return "(\(keyCode))"
+            // Attempt layout-aware name via UCKeyTranslate.
+            // CJK input sources lack kTISPropertyUnicodeKeyLayoutData; fall back to the
+            // ASCII-capable layout so key labels always render as letters, not numbers.
+            func layoutData(for src: TISInputSource) -> Unmanaged<CFData>? {
+                TISGetInputSourceProperty(src, kTISPropertyUnicodeKeyLayoutData)
+                    .map { Unmanaged.fromOpaque($0).retain() }
             }
-            let data = unsafeBitCast(dataRef, to: CFData.self)
-            let layout = unsafeBitCast(CFDataGetBytePtr(data), to: UnsafePointer<UCKeyboardLayout>.self)
+            let dataRef: CFData? = {
+                if let src = TISCopyCurrentKeyboardInputSource()?.takeRetainedValue(),
+                   let ref = TISGetInputSourceProperty(src, kTISPropertyUnicodeKeyLayoutData) {
+                    return unsafeBitCast(ref, to: CFData.self)
+                }
+                if let src = TISCopyCurrentASCIICapableKeyboardLayoutInputSource()?.takeRetainedValue(),
+                   let ref = TISGetInputSourceProperty(src, kTISPropertyUnicodeKeyLayoutData) {
+                    return unsafeBitCast(ref, to: CFData.self)
+                }
+                return nil
+            }()
+            guard let dataRef else { return "(\(keyCode))" }
+            let layout = unsafeBitCast(CFDataGetBytePtr(dataRef), to: UnsafePointer<UCKeyboardLayout>.self)
             var dead: UInt32 = 0
             var chars = [UniChar](repeating: 0, count: 4)
             var len = 0

@@ -27,8 +27,14 @@ enum SettingsBackup {
                 return
             }
             do {
-                let data = try Data(contentsOf: url)
-                let settings = try JSONDecoder().decode(PhrasedSettings.self, from: data)
+                // Copy to a temp file so PhrasedSettings.load (which may write back after
+                // migration) never touches the user's original backup.
+                let tmp = FileManager.default.temporaryDirectory
+                    .appendingPathComponent(UUID().uuidString)
+                    .appendingPathExtension("json")
+                try FileManager.default.copyItem(at: url, to: tmp)
+                defer { try? FileManager.default.removeItem(at: tmp) }
+                let settings = try PhrasedSettings.load(from: tmp)
                 completion(settings)
             } catch {
                 let alert = NSAlert()

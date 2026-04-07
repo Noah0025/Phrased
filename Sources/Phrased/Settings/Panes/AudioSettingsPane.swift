@@ -110,6 +110,20 @@ extension SettingsView {
                         .buttonStyle(.bordered)
                         .controlSize(.small)
 
+                        Menu("settings.audio.presets") {
+                            ForEach(ASRProfile.cloudPresets, id: \.name) { preset in
+                                Button(preset.name) {
+                                    let p = ASRProfile(name: preset.name, providerType: .api,
+                                                       baseURL: preset.baseURL, model: preset.model)
+                                    draft.asrProfiles.append(p)
+                                    expandedASRProfileIDs.insert(p.id)
+                                }
+                            }
+                        }
+                        .menuStyle(.borderlessButton)
+                        .fixedSize()
+                        .buttonStyle(.bordered).controlSize(.small)
+
                         Spacer()
 
                         Button("settings.audio.recommendation") {
@@ -189,7 +203,14 @@ extension SettingsView {
                         }
                     }
                 },
-                onDelete: nil
+                onDelete: isSFSpeech ? nil : {
+                    let id = profile.id
+                    withAnimation { _ = expandedASRProfileIDs.remove(id) }
+                    draft.asrProfiles.remove(at: index)
+                    if draft.selectedASRProfileID == id {
+                        draft.selectedASRProfileID = draft.asrProfiles.first?.id ?? ASRProfile.builtinSFSpeech.id
+                    }
+                }
             ) {
                 Text(profile.name.isEmpty ? String(localized: "settings.model.unnamed") : profile.name)
                     .font(.system(size: 13, weight: .medium))
@@ -234,26 +255,6 @@ extension SettingsView {
                         )
                         Divider()
                         asrKeyRow(index: index, profile: profile, optional: isLocal)
-                        Divider()
-                        HStack {
-                            Button("settings.button.delete") {
-                                let id = profile.id
-                                withAnimation { _ = expandedASRProfileIDs.remove(profile.id) }
-                                draft.asrProfiles.remove(at: index)
-                                if draft.selectedASRProfileID == id {
-                                    draft.selectedASRProfileID = draft.asrProfiles.first?.id ?? ASRProfile.builtinSFSpeech.id
-                                }
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
-                            .tint(.red)
-                            .accessibilityLabel(String(
-                                format: NSLocalizedString("accessibility.delete_profile_format", comment: ""),
-                                profile.name
-                            ))
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
                     }
                 }
             }

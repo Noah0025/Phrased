@@ -57,8 +57,11 @@ struct LLMProfile: Codable, Identifiable, Equatable {
     var keychainKey: String { "llm-\(id.uuidString)" }
 
     func saveKeyToKeychain() {
-        guard !apiKey.isEmpty else { return }
-        KeychainHelper.save(key: keychainKey, data: apiKey)
+        if apiKey.isEmpty {
+            KeychainHelper.delete(key: keychainKey)
+        } else {
+            KeychainHelper.save(key: keychainKey, data: apiKey)
+        }
     }
 
     mutating func loadKeyFromKeychain() {
@@ -81,6 +84,23 @@ struct LLMProfile: Codable, Identifiable, Equatable {
                                                     isBuiltIn: true)
 
     static var defaultProfiles: [LLMProfile] { [] }
+
+    // MARK: - Cloud presets
+
+    struct CloudPreset {
+        let name: String
+        let baseURL: String
+    }
+
+    static let cloudPresets: [CloudPreset] = [
+        CloudPreset(name: "OpenAI",          baseURL: "https://api.openai.com"),
+        CloudPreset(name: "DeepSeek",        baseURL: "https://api.deepseek.com"),
+        CloudPreset(name: "Moonshot (Kimi)", baseURL: "https://api.moonshot.cn"),
+        CloudPreset(name: "Groq",            baseURL: "https://api.groq.com/openai"),
+        CloudPreset(name: "阿里云百炼",       baseURL: "https://dashscope.aliyuncs.com/compatible-mode"),
+        CloudPreset(name: "智谱 GLM",        baseURL: "https://open.bigmodel.cn/api/paas/v4"),
+        CloudPreset(name: "Mistral",         baseURL: "https://api.mistral.ai"),
+    ]
 
     // MARK: - Install URLs (for "install" button when models not found)
 

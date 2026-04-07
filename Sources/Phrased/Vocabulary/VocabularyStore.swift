@@ -14,11 +14,13 @@ class VocabularyStore {
     func apply(to text: String) -> String {
         var result = text
         for entry in words where !entry.trigger.isEmpty {
+            let escaped = NSRegularExpression.escapedPattern(for: entry.trigger)
             guard let regex = try? NSRegularExpression(
-                pattern: "(?<![\\w])\\Q\(entry.trigger)\\E(?![\\w])"
+                pattern: "(?<![\\w])\(escaped)(?![\\w])"
             ) else { continue }
             let range = NSRange(result.startIndex..., in: result)
-            result = regex.stringByReplacingMatches(in: result, range: range, withTemplate: entry.expansion)
+            let template = NSRegularExpression.escapedTemplate(for: entry.expansion)
+            result = regex.stringByReplacingMatches(in: result, range: range, withTemplate: template)
         }
         return result
     }

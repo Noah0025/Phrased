@@ -82,8 +82,11 @@ struct ASRProfile: Codable, Identifiable, Equatable {
     var keychainKey: String { "asr-\(id.uuidString)" }
 
     func saveKeyToKeychain() {
-        guard !apiKey.isEmpty else { return }
-        KeychainHelper.save(key: keychainKey, data: apiKey)
+        if apiKey.isEmpty {
+            KeychainHelper.delete(key: keychainKey)
+        } else {
+            KeychainHelper.save(key: keychainKey, data: apiKey)
+        }
     }
 
     mutating func loadKeyFromKeychain() {
@@ -100,4 +103,18 @@ struct ASRProfile: Codable, Identifiable, Equatable {
     )
 
     static var defaultProfiles: [ASRProfile] { [builtinSFSpeech] }
+
+    // MARK: - Cloud presets
+
+    struct CloudPreset {
+        let name: String
+        let baseURL: String
+        let model: String
+    }
+
+    static let cloudPresets: [CloudPreset] = [
+        CloudPreset(name: "OpenAI Whisper",  baseURL: "https://api.openai.com",                          model: "whisper-1"),
+        CloudPreset(name: "Groq Whisper",    baseURL: "https://api.groq.com/openai",                     model: "whisper-large-v3"),
+        CloudPreset(name: "阿里云百炼",       baseURL: "https://dashscope.aliyuncs.com/compatible-mode",  model: "paraformer-realtime-v2"),
+    ]
 }

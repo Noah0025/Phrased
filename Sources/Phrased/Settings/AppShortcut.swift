@@ -10,7 +10,7 @@ struct AppShortcut: Codable, Identifiable, Equatable {
     // MARK: - Defaults
 
     static let defaults: [AppShortcut] = [
-        AppShortcut(id: "transcribe",   name: NSLocalizedString("shortcut.default.transcribe", comment: ""), keyCode: 0, modifiers: ["command"]), // ⌘A
+        AppShortcut(id: "transcribe",   name: NSLocalizedString("shortcut.default.transcribe", comment: ""), keyCode: 0, modifiers: ["command", "shift"]), // ⌘⇧A
         AppShortcut(id: "submit",       name: NSLocalizedString("shortcut.default.submit", comment: ""), keyCode: 36, modifiers: ["command"]), // ⌘↩
         AppShortcut(id: "newline",      name: NSLocalizedString("shortcut.default.newline", comment: ""), keyCode: 36, modifiers: []), // ↩
         AppShortcut(id: "pin",          name: NSLocalizedString("shortcut.default.pin", comment: ""), keyCode: 35, modifiers: ["command"]), // ⌘P

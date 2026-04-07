@@ -104,6 +104,19 @@ extension SettingsView {
                         }
                         .buttonStyle(.bordered).controlSize(.small)
 
+                        Menu("settings.model.presets") {
+                            ForEach(LLMProfile.cloudPresets, id: \.name) { preset in
+                                Button(preset.name) {
+                                    let p = LLMProfile(name: preset.name, baseURL: preset.baseURL)
+                                    draft.localProfiles.append(p)
+                                    expandedLLMProfileIDs.insert(p.id)
+                                }
+                            }
+                        }
+                        .menuStyle(.borderlessButton)
+                        .fixedSize()
+                        .buttonStyle(.bordered).controlSize(.small)
+
                         Spacer()
                     }
                     .frame(maxWidth: .infinity)
@@ -201,7 +214,7 @@ extension SettingsView {
                     profileField(
                         "settings.model.field.address",
                         text: $draft.localProfiles[index].baseURL,
-                        prompt: LocalizedStringKey(isLocal ? "http://localhost:11434" : "https://api.openai.com/v1")
+                        prompt: LocalizedStringKey(isLocal ? "http://localhost:11434" : "https://api.openai.com")
                     )
                     Divider()
                     profileField(
@@ -211,6 +224,8 @@ extension SettingsView {
                     )
                     Divider()
                     llmKeyRow(index: index, profile: profile)
+                    Divider()
+                    llmTestRow(index: index, profile: profile)
                 }
             }
             .id(profile.id)
@@ -259,6 +274,94 @@ extension SettingsView {
                 }
             }
         )
+    }
+
+    @ViewBuilder
+    func llmTestRow(index: Int, profile: LLMProfile) -> some View {
+        let testing = llmTestingProfileID == profile.id
+        HStack {
+            Spacer()
+            if testing {
+                ProgressView().scaleEffect(0.6)
+            } else if let result = llmTestResults[profile.id] {
+                if result.ok {
+                    Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
+                    Text(result.message).font(.caption).foregroundColor(.secondary)
+                } else {
+                    Image(systemName: "xmark.circle.fill").foregroundColor(.red)
+                    Text(result.message).font(.caption).foregroundColor(.red).lineLimit(1)
+                }
+            }
+            Button("settings.model.test_connection") {
+                testLLMConnection(profile: draft.localProfiles[index])
+            }
+            .buttonStyle(.bordered).controlSize(.mini)
+            .disabled(testing)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+    }
+
+    func testLLMConnection(profile: LLMProfile) {
+        let id = profile.id
+        llmTestingProfileID = id
+        llmTestResults.removeValue(forKey: id)
+
+        Task {
+            let result = await performLLMTest(profile: profile)
+            await MainActor.run {
+                llmTestingProfileID = nil
+                llmTestResults[id] = result
+            }
+        }
+    }
+
+    private func performLLMTest(profile: LLMProfile) async -> (ok: Bool, message: String) {
+        let base = profile.baseURL.hasSuffix("/") ? String(profile.baseURL.dropLast()) : profile.baseURL
+        guard !base.isEmpty, let url = URL(string: base + OpenAICompatibleProvider.chatCompletionsPath(for: base)) else {
+            return (false, String(localized: "settings.model.test.error.invalid_url"))
+        }
+        var request = URLRequest(url: url, timeoutInterval: 15)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if !profile.apiKey.isEmpty {
+            request.setValue("Bearer \(profile.apiKey)", forHTTPHeaderField: "Authorization")
+        }
+        let model = profile.selectedModel.isEmpty ? "gpt-4o-mini" : profile.selectedModel
+        let body: [String: Any] = [
+            "model": model,
+            "messages": [["role": "user", "content": "hi"]],
+            "max_tokens": 1
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        do {
+            let start = Date()
+            let (data, response) = try await URLSession.shared.data(for: request)
+            let elapsed = Int(Date().timeIntervalSince(start) * 1000)
+            guard let http = response as? HTTPURLResponse else {
+                return (false, String(localized: "settings.model.test.error.invalid_response"))
+            }
+            if http.statusCode == 200 {
+                return (true, "\(elapsed) ms")
+            }
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let err = json["error"] as? [String: Any],
+               let msg = err["message"] as? String {
+                return (false, "HTTP \(http.statusCode): \(msg)")
+            }
+            return (false, "HTTP \(http.statusCode)")
+        } catch let e as URLError {
+            switch e.code {
+            case .timedOut:              return (false, String(localized: "settings.model.test.error.timeout"))
+            case .cannotConnectToHost,
+                 .networkConnectionLost: return (false, String(localized: "settings.model.test.error.cannot_connect"))
+            case .notConnectedToInternet: return (false, String(localized: "settings.model.test.error.no_network"))
+            default:                     return (false, e.localizedDescription)
+            }
+        } catch {
+            return (false, error.localizedDescription)
+        }
     }
 
     var llmScanResultsLimited: (visible: [ServiceScanResult], hiddenCount: Int) {

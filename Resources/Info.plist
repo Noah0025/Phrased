@@ -22,10 +22,10 @@
     <string>Phrased needs microphone access for speech recognition.</string>
     <key>NSSpeechRecognitionUsageDescription</key>
     <string>Phrased uses speech recognition to transcribe audio in real time.</string>
-    <key>NSScreenCaptureDescription</key>
+    <key>NSScreenCaptureUsageDescription</key>
     <string>Phrased captures system audio to provide real-time transcription.</string>
     <key>NSAppleEventsUsageDescription</key>
-    <string>Phrased needs this to function properly.</string>
+    <string>Phrased reads the selected text from the frontmost app to provide context-aware suggestions.</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>NSHumanReadableCopyright</key>

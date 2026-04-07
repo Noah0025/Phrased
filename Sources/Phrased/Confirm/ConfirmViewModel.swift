@@ -18,11 +18,11 @@ class ConfirmViewModel: ObservableObject {
     private var llm: LLMProvider
     private let processor: IntentProcessor
     private let historyStore: HistoryStore
-    private var streamTask: Task<Void, Never>?
+    private(set) var streamTask: Task<Void, Never>?
     private var chunkBuffer = ""
     private var flushTimer: DispatchSourceTimer?
 
-    var settings: PhrasedSettings = .loadOrDefault()
+    var settings: PhrasedSettings = PhrasedSettings()
     var onDismiss: (() -> Void)?
 
     init(llm: LLMProvider, processor: IntentProcessor, historyStore: HistoryStore = HistoryStore()) {
@@ -59,6 +59,7 @@ class ConfirmViewModel: ObservableObject {
     }
 
     func accept(outputMode: OutputMode = .copy) {
+        guard !streamedResult.isEmpty, !isStreaming else { return }
         let text = streamedResult
         let targetApp = currentContext.frontmostApp
 
@@ -112,7 +113,7 @@ class ConfirmViewModel: ObservableObject {
             onDone: { [weak self] in
                 self?.stopChunkBuffering()
                 self?.isStreaming = false
-                if self?.settings.playCompletionSound == true {
+                if self?.settings.playCompletionSound == true, self?.streamError == nil {
                     NSSound(named: "Tink")?.play()
                 }
             },

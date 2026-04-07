@@ -13,7 +13,7 @@ class InputViewModel: ObservableObject {
     @Published var allTemplates: [PromptTemplate] = PromptTemplate.builtins
     @Published var contextAppName: String? = nil
     @Published var availableDevices: [AudioDevice] = []
-    @Published var settings: PhrasedSettings = PhrasedSettings.loadOrDefault()
+    @Published var settings: PhrasedSettings = PhrasedSettings()
 
     var onSubmit: ((String, PromptTemplate) -> Void)?
 
@@ -130,6 +130,10 @@ class InputViewModel: ObservableObject {
         let resolvedID = deviceManager.contains(id: id) ? id : "systemAudio"
         settings.audioSource = resolvedID
         do { try settings.save() } catch { print("[InputViewModel] Failed to save settings: \(error)") }
+    }
+
+    func insertNewline() {
+        inputText += "\n"
     }
 
     func submit() {

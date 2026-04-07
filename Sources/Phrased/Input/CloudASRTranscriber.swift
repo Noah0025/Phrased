@@ -56,7 +56,9 @@ class CloudASRTranscriber: ASRProvider {
     private func transcribe(fileURL: URL) async {
         defer { try? FileManager.default.removeItem(at: fileURL) }
 
-        guard let endpoint = URL(string: "\(baseURL)/v1/audio/transcriptions"),
+        let transcribePath = OpenAICompatibleProvider.chatCompletionsPath(for: baseURL)
+            .replacingOccurrences(of: "/chat/completions", with: "/audio/transcriptions")
+        guard let endpoint = URL(string: "\(baseURL)\(transcribePath)"),
               let audioData = try? Data(contentsOf: fileURL) else {
             let err = NSError(domain: "CloudASR", code: -1,
                               userInfo: [NSLocalizedDescriptionKey: NSLocalizedString("error.asr.invalid_audio_or_url", comment: "")])
@@ -90,7 +92,21 @@ class CloudASRTranscriber: ASRProvider {
         request.httpBody = body
 
         do {
-            let (data, _) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await URLSession.shared.data(for: request)
+            if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+                let msg: String
+                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let err = json["error"] as? [String: Any],
+                   let errMsg = err["message"] as? String {
+                    msg = "HTTP \(http.statusCode): \(errMsg)"
+                } else {
+                    msg = "HTTP \(http.statusCode)"
+                }
+                let err = NSError(domain: "CloudASR", code: http.statusCode,
+                                  userInfo: [NSLocalizedDescriptionKey: msg])
+                DispatchQueue.main.async { self.onError?(err) }
+                return
+            }
             let text = (try? JSONDecoder().decode(TranscriptionResponse.self, from: data))?.text ?? ""
             DispatchQueue.main.async { self.onFinal?(text) }
         } catch {

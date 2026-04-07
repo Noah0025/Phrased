@@ -33,9 +33,12 @@ enum TextInjector {
             try? await Task.sleep(nanoseconds: 1_000_000_000)
             guard pasteboard.changeCount == changeCountAfterWrite else { return }
             pasteboard.clearContents()
-            for item in savedItems {
-                item.data.forEach { type, data in pasteboard.setData(data, forType: type) }
+            let pbItems = savedItems.map { saved -> NSPasteboardItem in
+                let pbItem = NSPasteboardItem()
+                saved.types.forEach { if let d = saved.data[$0] { pbItem.setData(d, forType: $0) } }
+                return pbItem
             }
+            pasteboard.writeObjects(pbItems)
         }
     }
 

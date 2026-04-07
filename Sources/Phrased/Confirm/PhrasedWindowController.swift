@@ -142,6 +142,8 @@ class PhrasedWindowController: NSWindowController, NSWindowDelegate {
 
             switch shortcut.id {
             case "transcribe":  inputVM.toggleRecording();                return true
+            case "submit":      inputVM.submit();                         return true
+            case "newline":     inputVM.insertNewline();                  return true
             case "pin":         confirmVM.isLocked.toggle();              return true
             case "edit":        confirmVM.showFeedbackField.toggle();     return true
             case "regenerate":  confirmVM.regenerate();                   return true
@@ -254,12 +256,15 @@ class PhrasedWindowController: NSWindowController, NSWindowDelegate {
 
     private func dismissPanel() {
         inputVM.cancelRecording()
+        confirmVM.streamTask?.cancel()
         window?.orderOut(nil)
         inputVM.contextAppName = nil
         inputVM.selectedTemplate = inputVM.allTemplates.first ?? PromptTemplate.builtins[0]
         confirmVM.streamedResult = ""
+        confirmVM.streamError = nil
         confirmVM.showFeedbackField = false
         confirmVM.isLocked = false
+        confirmVM.isStreaming = false
         if let m = mouseMonitor { NSEvent.removeMonitor(m); mouseMonitor = nil }
     }
 }

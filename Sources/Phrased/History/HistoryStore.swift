@@ -88,8 +88,8 @@ class HistoryStore {
         try queue.sync {
             var entries = try loadUnlocked()
             entries.append(entry)
-            if retentionDays > 0 {
-                let cutoff = Date().addingTimeInterval(-Double(retentionDays) * 86400)
+            if _retentionDays > 0 {
+                let cutoff = Date().addingTimeInterval(-Double(_retentionDays) * 86400)
                 entries.removeAll { $0.createdAt < cutoff }
             }
             let encoder = JSONEncoder()
@@ -116,6 +116,27 @@ class HistoryStore {
             cache = entries
         }
         NotificationCenter.default.post(name: .historyStoreDidChange, object: nil)
+    }
+
+    /// Prune entries older than the current retention period and persist the result.
+    func pruneIfNeeded() throws {
+        try queue.sync {
+            guard _retentionDays > 0 else { return }
+            var entries = try loadUnlocked()
+            let cutoff = Date().addingTimeInterval(-Double(_retentionDays) * 86400)
+            let before = entries.count
+            entries.removeAll { $0.createdAt < cutoff }
+            guard entries.count < before else { return }
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            encoder.outputFormatting = .prettyPrinted
+            if entries.isEmpty {
+                try? FileManager.default.removeItem(at: storageURL)
+            } else {
+                try encoder.encode(entries).write(to: storageURL, options: .atomic)
+            }
+            cache = entries
+        }
     }
 
     func clear() throws {

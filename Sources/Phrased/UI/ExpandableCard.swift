@@ -37,7 +37,7 @@ struct ExpandableCard<Header: View, Detail: View>: View {
             }
         }
         .padding(PhrasedSpacing.sm + 2)
-        .background(Color.primary.opacity(PhrasedOpacity.subtleFill))
+        .background(Color(NSColor.controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: PhrasedRadius.sm))
         .overlay(RoundedRectangle(cornerRadius: PhrasedRadius.sm).strokeBorder(Color.primary.opacity(PhrasedOpacity.border), lineWidth: 0.5))
     }

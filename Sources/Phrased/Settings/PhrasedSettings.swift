@@ -55,6 +55,7 @@ struct PhrasedSettings: Codable, Equatable {
 
     // Output
     var defaultOutputMode: OutputMode = .inject
+    var showInMenuBar: Bool = true
     var launchAtLogin: Bool = false
     var playCompletionSound: Bool = true
     var appLanguage: AppLanguage = .zhHans
@@ -339,7 +340,9 @@ struct PhrasedSettings: Codable, Equatable {
         } catch {
             let url = defaultStorageURL()
             guard FileManager.default.fileExists(atPath: url.path) else {
-                return PhrasedSettings()
+                var s = PhrasedSettings()
+                s.migrate()
+                return s
             }
 
             let corruptedURL = url.deletingLastPathComponent().appendingPathComponent("settings.corrupted.json")

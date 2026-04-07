@@ -358,10 +358,10 @@ struct HistoryView: View {
                     let toExport: [HistoryEntry]
                     if !selection.isEmpty {
                         toExport = filtered.filter { selection.contains($0.id) }
-                    } else if searchText.isEmpty && timeRange == .all {
-                        toExport = Array(entries.reversed())
-                    } else {
+                    } else if filtersActive || !searchText.isEmpty {
                         toExport = filtered.sorted { $0.createdAt > $1.createdAt }
+                    } else {
+                        toExport = Array(entries.reversed())
                     }
                     HistoryExporter.export(entries: toExport)
                 } label: {

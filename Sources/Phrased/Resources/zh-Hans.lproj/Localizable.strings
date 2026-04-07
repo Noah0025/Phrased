@@ -25,7 +25,7 @@
 "settings.section.history" = "历史记录";
 
 /* Settings General */
-"settings.general.behavior" = "行为";
+"settings.general.show_in_menu_bar" = "在菜单栏中显示";
 "settings.general.launch_at_login" = "开机时自动启动";
 "settings.general.play_completion_sound" = "输出完成时播放提示音";
 "settings.general.language" = "语言";
@@ -59,6 +59,14 @@
 "settings.model.installed_not_running" = "已安装但未运行，启动后重新扫描：";
 "settings.model.scan_local" = "扫描本地模型";
 "settings.model.add_cloud" = "添加云端模型";
+"settings.model.presets" = "预设模板";
+"settings.audio.presets" = "预设模板";
+"settings.model.test_connection" = "测试连接";
+"settings.model.test.error.invalid_url" = "无效的地址";
+"settings.model.test.error.invalid_response" = "无效响应";
+"settings.model.test.error.timeout" = "连接超时";
+"settings.model.test.error.cannot_connect" = "无法连接到服务器";
+"settings.model.test.error.no_network" = "无网络连接";
 "settings.model.navigation_title" = "语言模型配置";
 "settings.model.category.local" = "本地模型";
 "settings.model.category.cloud" = "云端模型";
@@ -135,9 +143,9 @@
 "settings.templates.help.restore_default" = "恢复默认";
 
 /* Settings Vocabulary */
-"settings.vocabulary.description" = "提交时自动替换匹配的词。例：输入 tmr → 自动展开为 tomorrow。";
+"settings.vocabulary.description" = "提交时自动替换匹配的词。例：输入 tmr → 自动替换为 tomorrow。";
 "settings.vocabulary.trigger" = "触发词";
-"settings.vocabulary.expand_to" = "展开为";
+"settings.vocabulary.expand_to" = "替换为";
 "settings.vocabulary.navigation_title" = "文字替换";
 
 /* Settings History */

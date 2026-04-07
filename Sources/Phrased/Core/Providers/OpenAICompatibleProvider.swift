@@ -19,7 +19,7 @@ class OpenAICompatibleProvider: LLMProvider {
         onError: @escaping @MainActor (String) -> Void
     ) -> Task<Void, Never> {
         Task {
-            guard let url = URL(string: "\(baseURL)/v1/chat/completions") else {
+            guard let url = URL(string: "\(baseURL)\(Self.chatCompletionsPath(for: baseURL))") else {
                 await onError(NSLocalizedString("error.llm.invalid_url", comment: ""))
                 await onDone()
                 return
@@ -77,5 +77,15 @@ class OpenAICompatibleProvider: LLMProvider {
             }
             await onDone()
         }
+    }
+
+    /// Returns "/chat/completions" if the base URL already ends with a version segment
+    /// (e.g. /v1, /v4), otherwise "/v1/chat/completions".
+    static func chatCompletionsPath(for baseURL: String) -> String {
+        let versionPattern = #"/v\d+$"#
+        if baseURL.range(of: versionPattern, options: .regularExpression) != nil {
+            return "/chat/completions"
+        }
+        return "/v1/chat/completions"
     }
 }
