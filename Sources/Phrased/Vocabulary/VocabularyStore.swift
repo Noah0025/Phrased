@@ -24,7 +24,6 @@ class VocabularyStore {
     }
 
     static func defaultStorageURL() -> URL {
-        PhrasedSettings.migrateStorageDirectoryIfNeeded()
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
             .appendingPathComponent("Phrased", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)

@@ -209,18 +209,7 @@ struct PhrasedSettings: Codable, Equatable {
 
     // MARK: - Persistence
 
-    static func migrateStorageDirectoryIfNeeded() {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let oldDir = appSupport.appendingPathComponent("Murmur", isDirectory: true)
-        let newDir = appSupport.appendingPathComponent("Phrased", isDirectory: true)
-        if FileManager.default.fileExists(atPath: oldDir.path) &&
-           !FileManager.default.fileExists(atPath: newDir.path) {
-            try? FileManager.default.moveItem(at: oldDir, to: newDir)
-        }
-    }
-
     static func defaultStorageURL() -> URL {
-        migrateStorageDirectoryIfNeeded()
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let dir = appSupport.appendingPathComponent("Phrased", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)

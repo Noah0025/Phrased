@@ -21,7 +21,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var confirmVM = ConfirmViewModel(llm: makeLLMProvider(), processor: processor, historyStore: historyStore)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        PhrasedSettings.migrateStorageDirectoryIfNeeded()
         settings = PhrasedSettings.loadOrDefault()
         if PhrasedSettings.settingsWereReset {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
