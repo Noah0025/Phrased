@@ -1,6 +1,6 @@
 # Phrased
 
-[English](README.en.md) | 中文
+[English](README.en.md) | **中文**
 
 > 将语音或粗糙的文字输入即时转化为表达流畅、随时可用的文本——在任意应用中均可使用。
 
@@ -130,7 +130,7 @@ ollama pull llama3.2:3b    # 更快更轻量，约 2 GB
 
 ---
 
-### 路线 B——云端 API（无需本地配置，按量计费）
+### 路线 B——云端 API（无需本地配置）
 
 选择一个服务商，获取 API Key，在 **设置 → 语言模型 → 模板** 中填入即可。
 
@@ -161,7 +161,13 @@ Base URL 填写 API 根地址（如 `https://api.openai.com`），Phrased 会自
 
 ### 2. 语音识别
 
-打开 **设置 → 音频与语音**。内置 macOS 识别器开箱即用。如需云端语音识别服务，点击 **模板** 选择服务商。
+打开 **设置 → 音频与语音**，选择其中一种：
+
+- **内置**：macOS 原生识别器，Apple 芯片设备离线可用，无需任何配置。
+- **本地**：填入运行中的 Whisper 兼容服务地址（如 faster-whisper、whisper.cpp）。
+- **云端**：点击 **模板**，选择服务商（Groq、阿里云等），填入 Base URL 和 API Key。
+
+Base URL 格式与语言模型相同（如 `https://api.groq.com`），Phrased 会自动追加 `/v1/audio/transcriptions`。
 
 ### 3. 快捷键
 

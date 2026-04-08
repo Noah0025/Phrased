@@ -1,6 +1,6 @@
 # Phrased
 
-English | [中文](README.md)
+**English** | [中文](README.md)
 
 > Turn rough voice or text into polished, ready-to-use writing — in any app, instantly.
 
@@ -130,7 +130,7 @@ Open **Settings → Language Model**, click **Scan Local Models** — Phrased fi
 
 ---
 
-### Route B — Cloud API (no local setup, pay-per-use)
+### Route B — Cloud API (no local setup required)
 
 Pick a provider, get an API key, and enter it in **Settings → Language Model → Templates**.
 
@@ -141,7 +141,7 @@ Pick a provider, get an API key, and enter it in **Settings → Language Model �
 | [OpenAI](https://platform.openai.com) | ❌ | GPT-4o, industry standard |
 | [Moonshot (Kimi)](https://platform.moonshot.cn) | ❌ | Strong Chinese support, pay-per-use |
 | [Alibaba Cloud](https://bailian.console.aliyun.com) | ✅ trial credits | Qwen models, strong Chinese support, check website for details |
-| [Mistral](https://console.mistral.ai) | ✅ free models available | Good European option, rate limited |
+| [Mistral](https://console.mistral.ai) | ✅ free models | Good European option, rate limited |
 | [ZhipuAI](https://open.bigmodel.cn) | ✅ free models | GLM-4-Flash series available for free |
 
 In Phrased: **Settings → Language Model → Templates** → select provider → enter API key → done.
@@ -161,7 +161,13 @@ The base URL should be the root of the API (e.g. `https://api.openai.com`) — P
 
 ### 2. Speech recognition
 
-Open **Settings → Audio & Speech**. The built-in macOS recognizer works out of the box. For a cloud ASR service, click **Templates** and select a provider.
+Open **Settings → Audio & Speech**. Choose one:
+
+- **Built-in**: macOS native recognizer, offline on Apple silicon, no configuration needed.
+- **Local**: enter the address of a running Whisper-compatible service (e.g. faster-whisper, whisper.cpp).
+- **Cloud**: click **Templates**, select a provider (Groq, Alibaba Cloud, etc.), enter the base URL and API key.
+
+The base URL format is the same as for the language model (e.g. `https://api.groq.com`) — Phrased appends `/v1/audio/transcriptions` automatically.
 
 ### 3. Hotkey
 
