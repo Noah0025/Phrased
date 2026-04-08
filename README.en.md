@@ -4,9 +4,9 @@
 
 > Turn rough voice or text into polished, ready-to-use writing — in any app, instantly.
 
-What you say or type is rarely your clearest version — you send a message before noticing the typo, spend five minutes choosing the right words for something simple, or know exactly what you mean but can't quite get it onto the page. Existing AI input tools like Wispr Flow focus on voice-to-text, but most writing still happens through typing, and AI-assisted text polish is a gap almost no product fills.
+What you say or type is rarely your clearest version — you send a message before noticing the typo, spend five minutes choosing the right words for something simple, or know exactly what you mean but can't quite get it onto the page. Voice tools like Wispr Flow handle speech-to-text; rewriting tools like WritingTools let you select and polish existing text. Both are after-the-fact — neither intervenes at the moment of input.
 
-Phrased was built to close that gap: speak or type, and AI rewrites your input into polished, ready-to-use text injected directly at the cursor. Fully open-source, works with any local or cloud model, your data never leaves your device.
+Phrased takes a different approach: speak or type, AI rewrites your input before it goes anywhere, and the result is injected directly at the cursor. Fully open-source, works with any local or cloud model, your data never leaves your device.
 
 ---
 
