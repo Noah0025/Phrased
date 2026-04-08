@@ -154,7 +154,7 @@ No setup required — works out of the box. Fully offline on Apple silicon; Inte
 
 **Local Whisper service (higher accuracy)**
 
-Run a compatible service such as [faster-whisper](https://github.com/SYSTRAN/faster-whisper) or [whisper.cpp](https://github.com/ggerganov/whisper.cpp), then enter its address in **Settings → Audio & Speech**.
+Run a compatible service such as [faster-whisper-server](https://github.com/fedirz/faster-whisper-server) or [whisper.cpp](https://github.com/ggerganov/whisper.cpp), then open **Settings → Audio & Speech** and click **Scan Local Services** — Phrased detects and adds it automatically. If nothing is found, click **Add Manually** in the prompt to enter the address yourself.
 
 #### Route B — Cloud speech recognition
 

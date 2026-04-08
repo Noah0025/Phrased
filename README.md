@@ -154,7 +154,7 @@ ollama pull llama3.2:3b    # 更快更轻量，约 2 GB
 
 **本地 Whisper 服务（更高精度）**
 
-运行 [faster-whisper](https://github.com/SYSTRAN/faster-whisper) 或 [whisper.cpp](https://github.com/ggerganov/whisper.cpp) 等兼容服务后，在 **设置 → 音频与语音** 中填入服务地址即可。
+运行 [faster-whisper-server](https://github.com/fedirz/faster-whisper-server)、[whisper.cpp](https://github.com/ggerganov/whisper.cpp) 等兼容服务后，在 **设置 → 音频与语音** 点击 **扫描本地服务**——Phrased 自动检测并添加；若未找到，可点击弹窗中的 **手动添加** 填入服务地址。
 
 #### 路线 B——云端语音识别
 
