@@ -1,5 +1,7 @@
 # Phrased
 
+English | [中文](README.zh-CN.md)
+
 A macOS menu bar app that turns rough voice or text input into polished, ready-to-use writing — in any app, instantly.
 
 Invoke a floating input panel with a global hotkey, speak or type, pick a style, and get rewritten text injected at the cursor. Phrased works with any OpenAI-compatible language model and speech recognition service, local or cloud.
@@ -98,7 +100,7 @@ Phrased is not sandboxed and is distributed outside the Mac App Store.
 
 ---
 
-## Quick start
+## Quick Start
 
 ### Route A — Local model (free, private, runs offline)
 
@@ -217,4 +219,4 @@ Built with Swift, SwiftUI, and Swift Package Manager. No third-party dependencie
 
 ## License
 
-© 2025 Helm Project. All rights reserved.
+© 2025 Ningzhou Li. All rights reserved.
