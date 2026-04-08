@@ -4,7 +4,9 @@
 
 > Turn rough voice or text into polished, ready-to-use writing — in any app, instantly.
 
-Invoke a floating input panel with a global hotkey, speak or type, pick a style, and get AI-rewritten text injected at the cursor. Phrased works with any OpenAI-compatible language model and speech recognition service, local or cloud.
+What you say or type is rarely your clearest version — you send a message before noticing the typo, spend five minutes choosing the right words for something simple, or know exactly what you mean but can't quite get it onto the page. Existing AI input tools like Wispr Flow focus on voice-to-text, but most writing still happens through typing, and AI-assisted text polish is a gap almost no product fills.
+
+Phrased was built to close that gap: speak or type, and AI rewrites your input into polished, ready-to-use text injected directly at the cursor. Fully open-source, works with any local or cloud model, your data never leaves your device.
 
 ---
 
