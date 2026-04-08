@@ -161,7 +161,8 @@ Run a compatible service such as [faster-whisper-server](https://github.com/fedi
 | Provider | Free tier | Notes |
 |---|---|---|
 | [Groq](https://console.groq.com) | ✅ free quota | Whisper large-v3, extremely fast — recommended |
-| [Alibaba Cloud](https://bailian.console.aliyun.com) | ✅ trial credits | Strong Chinese accuracy, check website for details |
+| [Alibaba Cloud](https://bailian.console.aliyun.com) | ✅ trial credits | Paraformer, strong Chinese accuracy, check website for details |
+| [OpenAI](https://platform.openai.com) | ❌ | Whisper-1, pay-per-use |
 
 In Phrased: **Settings → Audio & Speech → Templates** → select provider → enter API key → done.
 
