@@ -135,12 +135,12 @@ Pick a provider, get an API key, and enter it in **Settings → Language Model �
 | Provider | Free tier | Notes |
 |---|---|---|
 | [DeepSeek](https://platform.deepseek.com) | ❌ | Excellent quality, very low cost, pay-per-use |
-| [Groq](https://console.groq.com) | ✅ permanent | Extremely fast inference, rate limited |
+| [Groq](https://console.groq.com) | ✅ free models | Extremely fast inference, rate limited |
 | [OpenAI](https://platform.openai.com) | ❌ | GPT-4o, industry standard |
 | [Moonshot (Kimi)](https://platform.moonshot.cn) | ❓ | Strong Chinese support, check website |
 | [Alibaba Cloud](https://bailian.console.aliyun.com) | ✅ trial credits | Qwen models, strong Chinese support, check website for details |
 | [Mistral](https://console.mistral.ai) | ✅ experiment tier | Good European option, rate limited |
-| [ZhipuAI](https://open.bigmodel.cn) | ✅ permanent | GLM-4-Flash series free forever |
+| [ZhipuAI](https://open.bigmodel.cn) | ✅ free models | GLM-4-Flash series available for free |
 
 In Phrased: **Settings → Language Model → Templates** → select provider → enter API key → done.
 
