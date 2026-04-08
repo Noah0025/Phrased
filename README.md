@@ -140,9 +140,7 @@ ollama pull llama3.2:3b    # 更快更轻量，约 2 GB
 | [Mistral](https://console.mistral.ai) | ✅ 有免费模型 | 欧洲优质选项，有速率限制 |
 | [智谱 AI](https://open.bigmodel.cn) | ✅ 有免费模型 | GLM-4-Flash 系列免费 |
 
-以上为常见服务商示例。任何兼容 OpenAI API 格式的服务均可接入，填入 Base URL 和 API Key 即可。
-
-在 Phrased 中：**设置 → 语言模型 → 模板** → 选择服务商 → 填入 API Key → 完成。
+以上为常见服务商示例。任何兼容 OpenAI API 格式的服务均可接入，填入 Base URL 和 API Key 即可。Base URL 填写 API 根地址（如 `https://api.openai.com`），Phrased 会自动追加 `/v1/chat/completions`。
 
 ---
 
@@ -166,34 +164,11 @@ ollama pull llama3.2:3b    # 更快更轻量，约 2 GB
 | [阿里云百炼](https://bailian.console.aliyun.com) | ✅ 有试用额度 | Paraformer，中文识别准确率高，额度以官网为准 |
 | [OpenAI](https://platform.openai.com) | ❌ | Whisper-1，按量计费 |
 
-在 Phrased 中：**设置 → 音频与语音 → 模板** → 选择服务商 → 填入 API Key → 完成。
+Base URL 格式与语言模型相同（如 `https://api.groq.com/openai`），Phrased 会自动追加 `/v1/audio/transcriptions`。
 
----
+### 三、快捷键
 
-## ⚙️ 配置说明
-
-### 1. 语言模型
-
-打开 **设置 → 语言模型**，选择其中一种：
-
-- **本地**：点击 **扫描本地模型**——Phrased 自动检测运行中的 Ollama、LM Studio、Jan、llama.cpp 实例。
-- **云端**：点击 **模板**，选择服务商（OpenAI、DeepSeek 等），填入 Base URL 和 API Key。
-
-Base URL 填写 API 根地址（如 `https://api.openai.com`），Phrased 会自动追加 `/v1/chat/completions`。
-
-### 2. 语音识别
-
-打开 **设置 → 音频与语音**，选择其中一种：
-
-- **内置**：macOS 原生识别器，Apple 芯片设备离线可用，无需任何配置。
-- **本地**：填入运行中的 Whisper 兼容服务地址（如 faster-whisper、whisper.cpp）。
-- **云端**：点击 **模板**，选择服务商（Groq、阿里云等），填入 Base URL 和 API Key。
-
-Base URL 格式与语言模型相同（如 `https://api.groq.com`），Phrased 会自动追加 `/v1/audio/transcriptions`。
-
-### 3. 快捷键
-
-打开 **设置 → 快捷键**。默认全局快捷键为双击 `Control`，可修改为任意修饰键组合或修饰键加按键。
+默认全局快捷键为双击 `Control`，可在 **设置 → 快捷键** 中修改为任意修饰键组合或修饰键加按键。
 
 ---
 
@@ -216,12 +191,6 @@ Phrased 内置四种模板（自动、正式、简洁、AI 提示词）。在 **
 
 ---
 
-## 🏗️ 技术栈
-
-使用 Swift、SwiftUI 和 Swift Package Manager 构建，无第三方依赖。
-
----
-
 ## ⚠️ 已知限制
 
 - **辅助功能权限在重新构建后失效**：使用临时签名身份（`--sign -`）时，权限绑定到二进制文件的哈希值。从源码重新构建后，需在系统设置中重新授予辅助功能权限。
@@ -232,3 +201,5 @@ Phrased 内置四种模板（自动、正式、简洁、AI 提示词）。在 **
 ## 📄 许可证
 
 MIT + Commons Clause — © 2025 LNZ. 可自由使用和修改，禁止商业用途。详见 [LICENSE](LICENSE)。
+
+使用 Swift、SwiftUI 和 Swift Package Manager 构建，无第三方依赖。
