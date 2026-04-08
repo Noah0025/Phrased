@@ -4,9 +4,13 @@
 
 > Turn rough voice or text into polished, ready-to-use writing — in any app, instantly.
 
-What you say or type is rarely your clearest version — you send a message before noticing the typo, spend five minutes choosing the right words for something simple, or know exactly what you mean but can't quite get it onto the page. Voice tools like Wispr Flow handle speech-to-text; rewriting tools like WritingTools let you select and polish existing text. Both are after-the-fact — neither intervenes at the moment of input.
+When we speak or type, what comes out is rarely our clearest version. You hit send before catching the typo; you spend five minutes searching for the right words; you know exactly what you mean but it just doesn't land right on the page — wrong tone, rambling structure, too casual.
 
-Phrased takes a different approach: speak or type, AI rewrites your input before it goes anywhere, and the result is injected directly at the cursor. Fully open-source, works with any local or cloud model, your data never leaves your device.
+AI voice tools like Wispr Flow and Typeless let you speak and have AI write it out, but they're expensive. Rewriting tools like WritingTools require you to write something properly first, then select and polish it. Phrased doesn't make you choose: voice or text, switch anytime, invoked with a hotkey, lightweight enough to stay out of your way.
+
+Pick a model, pick a style, let AI handle the rest — even if you only jot down a few words, it'll shape them into something complete. And when your boss asks for the 36th revision only to say the first version was best, after all your passionate venting, Phrased knows what you actually want to send: "Sure, sounds good."
+
+Fully open-source, works with any local or cloud model, Phrased collects no data.
 
 ---
 
