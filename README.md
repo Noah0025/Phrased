@@ -102,7 +102,9 @@ open Phrased.app
 
 ## 🚀 快速上手
 
-### 路线 A——本地模型（免费、私密、离线可用）
+### 一、语言模型
+
+#### 路线 A——本地模型（免费、私密、离线可用）
 
 **第一步：安装本地模型运行环境**
 
@@ -126,9 +128,7 @@ ollama pull llama3.2:3b    # 更快更轻量，约 2 GB
 
 打开 **设置 → 语言模型**，点击 **扫描本地模型**——Phrased 自动检测运行中的服务并列出可用模型，点击 **添加** 即可。
 
----
-
-### 路线 B——云端 API（无需本地配置）
+#### 路线 B——云端 API（无需本地配置）
 
 选择一个服务商，获取 API Key，在 **设置 → 语言模型 → 模板** 中填入即可。
 
@@ -143,6 +143,29 @@ ollama pull llama3.2:3b    # 更快更轻量，约 2 GB
 | [智谱 AI](https://open.bigmodel.cn) | ✅ 有免费模型 | GLM-4-Flash 系列免费 |
 
 在 Phrased 中：**设置 → 语言模型 → 模板** → 选择服务商 → 填入 API Key → 完成。
+
+---
+
+### 二、语音识别
+
+#### 路线 A——本地 / 内置（免费、离线可用）
+
+**macOS 内置识别器（推荐新手）**
+
+无需任何配置，开箱即用。Apple 芯片设备完全离线运行，Intel Mac 需联网。打开 Phrased 后直接点击麦克风按钮即可使用。
+
+**本地 Whisper 服务（更高精度）**
+
+运行 [faster-whisper](https://github.com/SYSTRAN/faster-whisper) 或 [whisper.cpp](https://github.com/ggerganov/whisper.cpp) 等兼容服务后，在 **设置 → 音频与语音** 中填入服务地址即可。
+
+#### 路线 B——云端语音识别
+
+| 服务商 | 免费额度 | 备注 |
+|---|---|---|
+| [Groq](https://console.groq.com) | ✅ 有免费额度 | Whisper large-v3，速度极快，推荐首选 |
+| [阿里云语音识别](https://bailian.console.aliyun.com) | ✅ 有试用额度 | 中文识别准确率高，额度以官网为准 |
+
+在 Phrased 中：**设置 → 音频与语音 → 模板** → 选择服务商 → 填入 API Key → 完成。
 
 ---
 

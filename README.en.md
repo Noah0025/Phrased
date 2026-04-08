@@ -102,7 +102,9 @@ Phrased requests the following permissions on first use:
 
 ## 🚀 Quick Start
 
-### Route A — Local model (free, private, runs offline)
+### 1. Language Model
+
+#### Route A — Local model (free, private, runs offline)
 
 **Step 1: Install a local model runner**
 
@@ -126,9 +128,7 @@ A 7B+ parameter model is recommended for rewriting tasks. Larger models produce 
 
 Open **Settings → Language Model**, click **Scan Local Models** — Phrased finds running services automatically and lists available models. Click **Add**.
 
----
-
-### Route B — Cloud API (no local setup required)
+#### Route B — Cloud API (no local setup required)
 
 Pick a provider, get an API key, and enter it in **Settings → Language Model → Templates**.
 
@@ -143,6 +143,29 @@ Pick a provider, get an API key, and enter it in **Settings → Language Model �
 | [ZhipuAI](https://open.bigmodel.cn) | ✅ free models | GLM-4-Flash series available for free |
 
 In Phrased: **Settings → Language Model → Templates** → select provider → enter API key → done.
+
+---
+
+### 2. Speech Recognition
+
+#### Route A — Local / Built-in (free, runs offline)
+
+**macOS built-in recognizer (recommended for new users)**
+
+No setup required — works out of the box. Fully offline on Apple silicon; Intel Macs require an internet connection. Just tap the microphone button in Phrased.
+
+**Local Whisper service (higher accuracy)**
+
+Run a compatible service such as [faster-whisper](https://github.com/SYSTRAN/faster-whisper) or [whisper.cpp](https://github.com/ggerganov/whisper.cpp), then enter its address in **Settings → Audio & Speech**.
+
+#### Route B — Cloud speech recognition
+
+| Provider | Free tier | Notes |
+|---|---|---|
+| [Groq](https://console.groq.com) | ✅ free quota | Whisper large-v3, extremely fast — recommended |
+| [Alibaba Cloud](https://bailian.console.aliyun.com) | ✅ trial credits | Strong Chinese accuracy, check website for details |
+
+In Phrased: **Settings → Audio & Speech → Templates** → select provider → enter API key → done.
 
 ---
 
