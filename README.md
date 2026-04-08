@@ -2,45 +2,45 @@
 
 English | [中文](README.zh-CN.md)
 
-A macOS menu bar app that turns rough voice or text input into polished, ready-to-use writing — in any app, instantly.
+> Turn rough voice or text into polished, ready-to-use writing — in any app, instantly.
 
-Invoke a floating input panel with a global hotkey, speak or type, pick a style, and get rewritten text injected at the cursor. Phrased works with any OpenAI-compatible language model and speech recognition service, local or cloud.
+Invoke a floating input panel with a global hotkey, speak or type, pick a style, and get AI-rewritten text injected at the cursor. Phrased works with any OpenAI-compatible language model and speech recognition service, local or cloud.
 
 ---
 
-## Features
+## ✨ Features
 
-**Input**
+**🎤 Input**
 - Global hotkey (default: double-tap `Control`) opens a floating panel over any app
 - Type directly or use voice — microphone or system audio capture
 - Captured text from the frontmost app pre-fills the input
 
-**AI rewriting**
+**🤖 AI Rewriting**
 - Four built-in styles: Auto, Formal, Concise, AI Prompt
 - Auto mode adapts tone to the target app (email → formal, messaging → casual)
 - Add custom prompt templates
 - Inline feedback loop: describe what to adjust and regenerate
 
-**Output**
+**📋 Output**
 - Injects text at the cursor via simulated ⌘V (requires Accessibility permission)
 - Falls back to clipboard copy
 - Original clipboard is restored after 1 second
 
-**Speech recognition**
+**🗣️ Speech Recognition**
 - Built-in macOS speech recognition (offline on Apple silicon, no setup required)
 - Any OpenAI-compatible ASR API (local Whisper, Groq, Alibaba Cloud, etc.)
 
-**Language model**
+**🧠 Language Model**
 - Local: Ollama, LM Studio, Jan, llama.cpp — scan and add automatically
 - Cloud: OpenAI, DeepSeek, Moonshot, Groq, Mistral, ZhipuAI, Alibaba Cloud, or any OpenAI-compatible endpoint
 - API keys stored in Keychain, never written to disk
 
-**History**
+**📚 History**
 - All inputs and outputs saved locally
 - Search, filter by style / source app / date, group by date / style / app
 - Export to TXT, JSON, or CSV
 
-**Other**
+**⚙️ Other**
 - Text substitution: define triggers that expand on submit (`tmr` → `tomorrow`)
 - Fully configurable in-app and global hotkeys
 - Localized: English and Chinese (Simplified)
@@ -48,7 +48,7 @@ Invoke a floating input panel with a global hotkey, speak or type, pick a style,
 
 ---
 
-## Requirements
+## 🖥️ Requirements
 
 - macOS 14 Sonoma or later
 - Apple silicon or Intel Mac
@@ -56,11 +56,11 @@ Invoke a floating input panel with a global hotkey, speak or type, pick a style,
 
 ---
 
-## Installation
+## 📦 Installation
 
 ### Download (recommended)
 
-Download the latest `Phrased-x.x.dmg` from the [Releases](../../releases) page, open it, and drag **Phrased.app** to your **Applications** folder.
+Download the latest `Phrased-x.x.x.dmg` from the [Releases](../../releases) page, open it, and drag **Phrased.app** to your **Applications** folder.
 
 Because Phrased is not notarized, macOS will block it on first launch. To open it:
 
@@ -85,7 +85,7 @@ Requires Xcode Command Line Tools (`xcode-select --install`).
 
 ---
 
-## Permissions
+## 🔐 Permissions
 
 Phrased requests the following permissions on first use:
 
@@ -100,7 +100,7 @@ Phrased is not sandboxed and is distributed outside the Mac App Store.
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Route A — Local model (free, private, runs offline)
 
@@ -146,7 +146,7 @@ In Phrased: **Settings → Language Model → Templates** → select provider �
 
 ---
 
-## Setup
+## ⚙️ Setup
 
 ### 1. Language model
 
@@ -167,7 +167,7 @@ Open **Settings → Hotkey**. The default global hotkey is double-tap `Control`.
 
 ---
 
-## Usage
+## 📖 Usage
 
 1. Press the global hotkey — the input panel appears near the mouse cursor
 2. Type or press the microphone button to dictate
@@ -180,13 +180,13 @@ The panel dismisses automatically when you switch apps. Use `⌘P` to pin it.
 
 ---
 
-## Prompt templates
+## 🎨 Prompt Templates
 
 Phrased ships with four built-in templates (Auto, Formal, Concise, AI Prompt). Add custom ones in **Settings → Prompt Templates**. Each template can define a fixed system instruction; leave it blank to use auto mode (Phrased adapts tone based on the frontmost app).
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 ```
 Sources/Phrased/
@@ -208,7 +208,7 @@ Built with Swift, SwiftUI, and Swift Package Manager. No third-party dependencie
 
 ---
 
-## Known limitations
+## ⚠️ Known Limitations
 
 - **Accessibility permission resets on rebuild**: codesigning with an ad-hoc identity (`--sign -`) ties the permission to the binary hash. After rebuilding from source, re-grant Accessibility in System Settings.
 - **Screen Recording permission**: same applies — required for system audio capture, re-grant after rebuild.
@@ -217,6 +217,6 @@ Built with Swift, SwiftUI, and Swift Package Manager. No third-party dependencie
 
 ---
 
-## License
+## 📄 License
 
 MIT + Commons Clause — © 2025 LNZ. Free to use and modify; commercial use prohibited. See [LICENSE](LICENSE) for details.

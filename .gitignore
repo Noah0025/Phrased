@@ -6,3 +6,5 @@ Murmur.app/
 .DS_Store
 *.swp
 *.dmg
+docs/
+Library/
