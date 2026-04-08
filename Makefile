@@ -1,8 +1,11 @@
-APP_NAME = Phrased
-BUILD_DIR = .build/release
-APP_BUNDLE = $(APP_NAME).app
+APP_NAME    = Phrased
+VERSION     = 1.0
+BUILD_DIR   = .build/release
+APP_BUNDLE  = $(APP_NAME).app
+DMG_NAME    = $(APP_NAME)-$(VERSION).dmg
+DMG_STAGING = .dmg-staging
 
-.PHONY: build run package clean
+.PHONY: build run package dmg open clean
 
 build:
 	swift build -c release 2>&1
@@ -23,9 +26,25 @@ package: build
 	@codesign --force --deep --sign - --entitlements Phrased.entitlements $(APP_BUNDLE)
 	@echo "==> Done: $(APP_BUNDLE)"
 
+dmg: package
+	@echo "==> Creating $(DMG_NAME)..."
+	@rm -rf $(DMG_STAGING) $(DMG_NAME)
+	@mkdir -p $(DMG_STAGING)
+	@cp -r $(APP_BUNDLE) $(DMG_STAGING)/
+	@ln -s /Applications $(DMG_STAGING)/Applications
+	@hdiutil create \
+		-volname "$(APP_NAME)" \
+		-srcfolder $(DMG_STAGING) \
+		-ov \
+		-format UDZO \
+		-fs HFS+ \
+		$(DMG_NAME)
+	@rm -rf $(DMG_STAGING)
+	@echo "==> Done: $(DMG_NAME)"
+
 open: package
 	open $(APP_BUNDLE)
 
 clean:
 	swift package clean
-	rm -rf $(APP_BUNDLE)
+	rm -rf $(APP_BUNDLE) $(DMG_NAME) $(DMG_STAGING)

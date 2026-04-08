@@ -58,9 +58,17 @@ Invoke a floating input panel with a global hotkey, speak or type, pick a style,
 
 ### Download (recommended)
 
-Download the latest `Phrased.app` from the [Releases](../../releases) page, move it to `/Applications`, and launch it.
+Download the latest `Phrased-x.x.dmg` from the [Releases](../../releases) page, open it, and drag **Phrased.app** to your **Applications** folder.
 
-On first launch macOS may show a security warning. Open **System Settings → Privacy & Security** and click **Open Anyway**.
+Because Phrased is not notarized, macOS will block it on first launch. To open it:
+
+**Option A — one-time terminal command (fastest):**
+```bash
+xattr -d com.apple.quarantine /Applications/Phrased.app
+```
+
+**Option B — System Settings:**
+Go to **System Settings → Privacy & Security**, scroll down, and click **Open Anyway** next to the Phrased warning.
 
 ### Build from source
 
@@ -156,6 +164,7 @@ Built with Swift, SwiftUI, and Swift Package Manager. No third-party dependencie
 
 - **Accessibility permission resets on rebuild**: codesigning with an ad-hoc identity (`--sign -`) ties the permission to the binary hash. After rebuilding from source, re-grant Accessibility in System Settings.
 - **Screen Recording permission**: same applies — required for system audio capture, re-grant after rebuild.
+- **Not notarized**: Phrased is distributed outside the Mac App Store and is not notarized. Use the `xattr` command above to clear the quarantine flag after downloading.
 - **Not on the Mac App Store**: sandboxing constraints are incompatible with the keyboard injection mechanism.
 
 ---
