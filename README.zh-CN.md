@@ -60,7 +60,7 @@
 
 ### 下载安装（推荐）
 
-从 [Releases](../../releases) 页面下载最新版 `Phrased-x.x.x.dmg`，打开后将 **Phrased.app** 拖入 **应用程序** 文件夹。
+从 [Releases](https://github.com/Noah0025/Phrased/releases) 页面下载最新版 `Phrased-x.x.x.dmg`，打开后将 **Phrased.app** 拖入 **应用程序** 文件夹。
 
 由于 Phrased 未经 Apple 公证，首次启动时 macOS 会阻止运行。解除方法：
 

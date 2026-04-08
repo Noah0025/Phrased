@@ -60,7 +60,7 @@ Invoke a floating input panel with a global hotkey, speak or type, pick a style,
 
 ### Download (recommended)
 
-Download the latest `Phrased-x.x.x.dmg` from the [Releases](../../releases) page, open it, and drag **Phrased.app** to your **Applications** folder.
+Download the latest `Phrased-x.x.x.dmg` from the [Releases](https://github.com/Noah0025/Phrased/releases) page, open it, and drag **Phrased.app** to your **Applications** folder.
 
 Because Phrased is not notarized, macOS will block it on first launch. To open it:
 
