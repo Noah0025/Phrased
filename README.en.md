@@ -226,8 +226,6 @@ Built with Swift, SwiftUI, and Swift Package Manager. No third-party dependencie
 
 - **Accessibility permission resets on rebuild**: codesigning with an ad-hoc identity (`--sign -`) ties the permission to the binary hash. After rebuilding from source, re-grant Accessibility in System Settings.
 - **Screen Recording permission**: same applies — required for system audio capture, re-grant after rebuild.
-- **Not notarized**: Phrased is distributed outside the Mac App Store and is not notarized. Use the `xattr` command above to clear the quarantine flag after downloading.
-- **Not on the Mac App Store**: sandboxing constraints are incompatible with the keyboard injection mechanism.
 
 ---
 
