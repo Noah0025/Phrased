@@ -1,78 +1,78 @@
 # Phrased
 
-English | [中文](README.zh-CN.md)
+[English](README.en.md) | 中文
 
-> Turn rough voice or text into polished, ready-to-use writing — in any app, instantly.
+> 将语音或粗糙的文字输入即时转化为表达流畅、随时可用的文本——在任意应用中均可使用。
 
-Invoke a floating input panel with a global hotkey, speak or type, pick a style, and get AI-rewritten text injected at the cursor. Phrased works with any OpenAI-compatible language model and speech recognition service, local or cloud.
-
----
-
-## ✨ Features
-
-**🎤 Input**
-- Global hotkey (default: double-tap `Control`) opens a floating panel over any app
-- Type directly or use voice — microphone or system audio capture
-- Captured text from the frontmost app pre-fills the input
-
-**🤖 AI Rewriting**
-- Four built-in styles: Auto, Formal, Concise, AI Prompt
-- Auto mode adapts tone to the target app (email → formal, messaging → casual)
-- Add custom prompt templates
-- Inline feedback loop: describe what to adjust and regenerate
-
-**📋 Output**
-- Injects text at the cursor via simulated ⌘V (requires Accessibility permission)
-- Falls back to clipboard copy
-- Original clipboard is restored after 1 second
-
-**🗣️ Speech Recognition**
-- Built-in macOS speech recognition (offline on Apple silicon, no setup required)
-- Any OpenAI-compatible ASR API (local Whisper, Groq, Alibaba Cloud, etc.)
-
-**🧠 Language Model**
-- Local: Ollama, LM Studio, Jan, llama.cpp — scan and add automatically
-- Cloud: OpenAI, DeepSeek, Moonshot, Groq, Mistral, ZhipuAI, Alibaba Cloud, or any OpenAI-compatible endpoint
-- API keys stored in Keychain, never written to disk
-
-**📚 History**
-- All inputs and outputs saved locally
-- Search, filter by style / source app / date, group by date / style / app
-- Export to TXT, JSON, or CSV
-
-**⚙️ Other**
-- Text substitution: define triggers that expand on submit (`tmr` → `tomorrow`)
-- Fully configurable in-app and global hotkeys
-- Localized: English and Chinese (Simplified)
-- Settings backup and restore (JSON export/import)
+通过全局快捷键唤出浮动输入面板，语音或文字输入，选择写作风格，AI 改写后的文本直接注入光标位置。Phrased 兼容任何 OpenAI 兼容的语言模型和语音识别服务，支持本地部署或云端 API。
 
 ---
 
-## 🖥️ Requirements
+## ✨ 功能特性
 
-- macOS 14 Sonoma or later
-- Apple silicon or Intel Mac
-- For AI features: a running local model or cloud API key
+**🎤 输入**
+- 全局快捷键（默认：双击 `Control`）在任意应用上方唤出浮动面板
+- 直接输入或语音录入——支持麦克风和系统音频
+- 自动读取当前应用中的选中文本作为上下文
+
+**🤖 AI 改写**
+- 四种内置风格：自动、正式、简洁、AI 提示词
+- 自动模式根据目标应用调整语气（邮件→正式，即时通讯→随意）
+- 支持添加自定义提示词模板
+- 内联反馈循环：描述修改意见后可重新生成
+
+**📋 输出**
+- 通过模拟 ⌘V 将文本注入光标位置（需要辅助功能权限）
+- 自动回退为剪贴板复制
+- 1 秒后自动还原原始剪贴板内容
+
+**🗣️ 语音识别**
+- 内置 macOS 语音识别（Apple 芯片设备离线可用，无需配置）
+- 支持任意 OpenAI 兼容的语音识别 API（本地 Whisper、Groq、阿里云等）
+
+**🧠 语言模型**
+- 本地：Ollama、LM Studio、Jan、llama.cpp——自动扫描并添加
+- 云端：OpenAI、DeepSeek、月之暗面、Groq、Mistral、智谱 AI、阿里云百炼，或任意 OpenAI 兼容端点
+- API Key 存储于系统钥匙串，不写入磁盘
+
+**📚 历史记录**
+- 所有输入和输出均保存在本地
+- 支持搜索、按风格 / 来源应用 / 日期筛选，按日期 / 风格 / 应用分组
+- 导出为 TXT、JSON 或 CSV
+
+**⚙️ 其他**
+- 文本替换：定义触发词，提交时自动展开（如 `tmr` → `tomorrow`）
+- 应用内快捷键和全局快捷键均可自定义
+- 支持中英文界面
+- 设置备份与恢复（JSON 导入/导出）
 
 ---
 
-## 📦 Installation
+## 🖥️ 系统要求
 
-### Download (recommended)
+- macOS 14 Sonoma 或更高版本
+- Apple 芯片或 Intel Mac
+- AI 功能需要：本地运行的模型或云端 API Key
 
-Download the latest `Phrased-x.x.x.dmg` from the [Releases](https://github.com/Noah0025/Phrased/releases) page, open it, and drag **Phrased.app** to your **Applications** folder.
+---
 
-Because Phrased is not notarized, macOS will block it on first launch. To open it:
+## 📦 安装
 
-**Option A — one-time terminal command (fastest):**
+### 下载安装（推荐）
+
+从 [Releases](https://github.com/Noah0025/Phrased/releases) 页面下载最新版 `Phrased-x.x.x.dmg`，打开后将 **Phrased.app** 拖入 **应用程序** 文件夹。
+
+由于 Phrased 未经 Apple 公证，首次启动时 macOS 会阻止运行。解除方法：
+
+**方案 A——终端命令（最快）：**
 ```bash
 xattr -d com.apple.quarantine /Applications/Phrased.app
 ```
 
-**Option B — System Settings:**
-Go to **System Settings → Privacy & Security**, scroll down, and click **Open Anyway** next to the Phrased warning.
+**方案 B——系统设置：**
+前往 **系统设置 → 隐私与安全性**，向下滚动，点击 Phrased 旁边的 **仍要打开**。
 
-### Build from source
+### 从源码构建
 
 ```bash
 git clone https://github.com/Noah0025/Phrased.git
@@ -81,142 +81,142 @@ make package
 open Phrased.app
 ```
 
-Requires Xcode Command Line Tools (`xcode-select --install`).
+需要 Xcode 命令行工具（`xcode-select --install`）。
 
 ---
 
-## 🔐 Permissions
+## 🔐 权限说明
 
-Phrased requests the following permissions on first use:
+首次使用时，Phrased 会请求以下权限：
 
-| Permission | Why |
+| 权限 | 用途 |
 |---|---|
-| **Accessibility** | Simulate ⌘V to inject text at the cursor |
-| **Microphone** | Record voice input |
-| **Screen Recording** | Capture system audio for transcription |
-| **Speech Recognition** | Use built-in macOS speech recognition |
+| **辅助功能** | 模拟 ⌘V 将文本注入光标位置 |
+| **麦克风** | 录制语音输入 |
+| **屏幕录制** | 捕获系统音频用于转写 |
+| **语音识别** | 使用 macOS 内置语音识别 |
 
-Phrased is not sandboxed and is distributed outside the Mac App Store.
+Phrased 未经沙箱限制，在 Mac App Store 之外分发。
 
 ---
 
-## 🚀 Quick Start
+## 🚀 快速上手
 
-### Route A — Local model (free, private, runs offline)
+### 路线 A——本地模型（免费、私密、离线可用）
 
-**Step 1: Install a local model runner**
+**第一步：安装本地模型运行环境**
 
-| App | Models | Install |
+| 应用 | 支持模型 | 安装方式 |
 |---|---|---|
-| [Ollama](https://ollama.com) | Llama, Qwen, Mistral, Gemma… | `brew install ollama` or download from site |
-| [LM Studio](https://lmstudio.ai) | Same library, GUI-based | Download from site |
-| [Jan](https://jan.ai) | Same library, open source | Download from site |
+| [Ollama](https://ollama.com) | Llama、Qwen、Mistral、Gemma… | `brew install ollama` 或官网下载 |
+| [LM Studio](https://lmstudio.ai) | 同上，图形界面 | 官网下载 |
+| [Jan](https://jan.ai) | 同上，开源 | 官网下载 |
 
-**Step 2: Download a model**
+**第二步：下载模型**
 
-With Ollama (recommended):
+以 Ollama 为例（推荐）：
 ```bash
-ollama pull qwen2.5:7b     # good balance of speed and quality, ~4 GB
-ollama pull llama3.2:3b    # faster, lighter, ~2 GB
+ollama pull qwen2.5:7b     # 速度与质量均衡，约 4 GB
+ollama pull llama3.2:3b    # 更快更轻量，约 2 GB
 ```
 
-A 7B+ parameter model is recommended for rewriting tasks. Larger models produce noticeably better results.
+改写任务推荐使用 7B 及以上参数量的模型，参数越大效果越明显。
 
-**Step 3: Connect Phrased**
+**第三步：连接 Phrased**
 
-Open **Settings → Language Model**, click **Scan Local Models** — Phrased finds running services automatically and lists available models. Click **Add**.
+打开 **设置 → 语言模型**，点击 **扫描本地模型**——Phrased 自动检测运行中的服务并列出可用模型，点击 **添加** 即可。
 
 ---
 
-### Route B — Cloud API (no local setup, pay-per-use)
+### 路线 B——云端 API（无需本地配置，按量计费）
 
-Pick a provider, get an API key, and enter it in **Settings → Language Model → Templates**.
+选择一个服务商，获取 API Key，在 **设置 → 语言模型 → 模板** 中填入即可。
 
-| Provider | Free tier | Notes |
+| 服务商 | 免费额度 | 备注 |
 |---|---|---|
-| [DeepSeek](https://platform.deepseek.com) | ✅ generous | Excellent quality, very low cost |
-| [Groq](https://console.groq.com) | ✅ generous | Extremely fast inference |
-| [OpenAI](https://platform.openai.com) | ❌ | GPT-4o, industry standard |
-| [Moonshot (Kimi)](https://platform.moonshot.cn) | ✅ | Strong Chinese support |
-| [Alibaba Cloud](https://bailian.console.aliyun.com) | ✅ | Qwen models, strong Chinese support |
-| [Mistral](https://console.mistral.ai) | ✅ | Good European option |
-| [ZhipuAI](https://open.bigmodel.cn) | ✅ | GLM models |
+| [DeepSeek](https://platform.deepseek.com) | ✅ 充裕 | 质量优秀，价格极低 |
+| [Groq](https://console.groq.com) | ✅ 充裕 | 推理速度极快 |
+| [OpenAI](https://platform.openai.com) | ❌ | GPT-4o，行业标准 |
+| [月之暗面 (Kimi)](https://platform.moonshot.cn) | ✅ | 中文支持强 |
+| [阿里云百炼](https://bailian.console.aliyun.com) | ✅ | Qwen 系列，中文支持强 |
+| [Mistral](https://console.mistral.ai) | ✅ | 欧洲优质选项 |
+| [智谱 AI](https://open.bigmodel.cn) | ✅ | GLM 系列 |
 
-In Phrased: **Settings → Language Model → Templates** → select provider → enter API key → done.
-
----
-
-## ⚙️ Setup
-
-### 1. Language model
-
-Open **Settings → Language Model**. Choose one:
-
-- **Local**: click **Scan Local Models** — Phrased detects running Ollama, LM Studio, Jan, and llama.cpp instances automatically. Or click **Templates** to pick a cloud provider and enter your API key.
-- **Cloud**: click **Templates**, select a provider (OpenAI, DeepSeek, etc.), enter the base URL and API key.
-
-The base URL should be the root of the API (e.g. `https://api.openai.com`) — Phrased appends `/v1/chat/completions` automatically.
-
-### 2. Speech recognition
-
-Open **Settings → Audio & Speech**. The built-in macOS recognizer works out of the box. For a cloud ASR service, click **Templates** and select a provider.
-
-### 3. Hotkey
-
-Open **Settings → Hotkey**. The default global hotkey is double-tap `Control`. You can change it to any modifier combination or modifier + key.
+在 Phrased 中：**设置 → 语言模型 → 模板** → 选择服务商 → 填入 API Key → 完成。
 
 ---
 
-## 📖 Usage
+## ⚙️ 配置说明
 
-1. Press the global hotkey — the input panel appears near the mouse cursor
-2. Type or press the microphone button to dictate
-3. Select a style (Auto / Formal / Concise / AI Prompt)
-4. Press `⌘↩` to submit
-5. Review the result; press `⌘⇧A` to re-dictate, `⌘E` to give feedback, `⌘R` to regenerate
-6. Press `⌘I` (inject) or `⌘C` (copy) to use the result
+### 1. 语言模型
 
-The panel dismisses automatically when you switch apps. Use `⌘P` to pin it.
+打开 **设置 → 语言模型**，选择其中一种：
+
+- **本地**：点击 **扫描本地模型**——Phrased 自动检测运行中的 Ollama、LM Studio、Jan、llama.cpp 实例。或点击 **模板** 选择云端服务商并填入 API Key。
+- **云端**：点击 **模板**，选择服务商（OpenAI、DeepSeek 等），填入 Base URL 和 API Key。
+
+Base URL 填写 API 根地址（如 `https://api.openai.com`），Phrased 会自动追加 `/v1/chat/completions`。
+
+### 2. 语音识别
+
+打开 **设置 → 音频与语音**。内置 macOS 识别器开箱即用。如需云端语音识别服务，点击 **模板** 选择服务商。
+
+### 3. 快捷键
+
+打开 **设置 → 快捷键**。默认全局快捷键为双击 `Control`，可修改为任意修饰键组合或修饰键加按键。
 
 ---
 
-## 🎨 Prompt Templates
+## 📖 使用方法
 
-Phrased ships with four built-in templates (Auto, Formal, Concise, AI Prompt). Add custom ones in **Settings → Prompt Templates**. Each template can define a fixed system instruction; leave it blank to use auto mode (Phrased adapts tone based on the frontmost app).
+1. 按下全局快捷键——输入面板出现在鼠标附近
+2. 输入文字，或点击麦克风按钮进行语音输入
+3. 选择风格（自动 / 正式 / 简洁 / AI 提示词）
+4. 按 `⌘↩` 提交
+5. 查看结果；按 `⌘⇧A` 重新转写，`⌘E` 提供反馈，`⌘R` 重新生成
+6. 按 `⌘I`（注入）或 `⌘C`（复制）使用结果
+
+切换应用时面板自动关闭。按 `⌘P` 可固定面板。
 
 ---
 
-## 🏗️ Architecture
+## 🎨 提示词模板
+
+Phrased 内置四种模板（自动、正式、简洁、AI 提示词）。在 **设置 → 提示词模板** 中可添加自定义模板。每个模板可定义固定的系统指令；留空则使用自动模式（Phrased 根据当前应用自动调整语气）。
+
+---
+
+## 🏗️ 架构
 
 ```
 Sources/Phrased/
 ├── App/          AppDelegate, StatusBarController, LaunchAtLoginHelper
-├── Confirm/      Floating panel — PhrasedView, ConfirmViewModel, PhrasedWindowController
-├── Context/      ContextCapture (selected text + frontmost app)
+├── Confirm/      浮动面板 — PhrasedView, ConfirmViewModel, PhrasedWindowController
+├── Context/      ContextCapture（选中文本 + 当前应用）
 ├── Core/         IntentProcessor, PromptTemplate, KeychainHelper, LocalServiceScanner
 │   └── Providers/ OpenAICompatibleProvider, LLMProvider, ASRProvider
 ├── History/      HistoryStore, HistoryWindowController, HistoryExporter
 ├── Input/        InputViewModel, AudioCapture, MicrophoneCapture, HotkeyManager,
 │                 SFSpeechTranscriber, CloudASRTranscriber, WhisperTranscriber
 ├── Output/       TextInjector, ClipboardOutput
-├── Settings/     PhrasedSettings, SettingsView, all Panes, LLMProfile, ASRProfile
+├── Settings/     PhrasedSettings, SettingsView, 各设置面板, LLMProfile, ASRProfile
 ├── UI/           DesignTokens, ExpandableCard
 └── Vocabulary/   VocabularyStore
 ```
 
-Built with Swift, SwiftUI, and Swift Package Manager. No third-party dependencies.
+使用 Swift、SwiftUI 和 Swift Package Manager 构建，无第三方依赖。
 
 ---
 
-## ⚠️ Known Limitations
+## ⚠️ 已知限制
 
-- **Accessibility permission resets on rebuild**: codesigning with an ad-hoc identity (`--sign -`) ties the permission to the binary hash. After rebuilding from source, re-grant Accessibility in System Settings.
-- **Screen Recording permission**: same applies — required for system audio capture, re-grant after rebuild.
-- **Not notarized**: Phrased is distributed outside the Mac App Store and is not notarized. Use the `xattr` command above to clear the quarantine flag after downloading.
-- **Not on the Mac App Store**: sandboxing constraints are incompatible with the keyboard injection mechanism.
+- **辅助功能权限在重新构建后失效**：使用临时签名身份（`--sign -`）时，权限绑定到二进制文件的哈希值。从源码重新构建后，需在系统设置中重新授予辅助功能权限。
+- **屏幕录制权限**：同上——系统音频捕获必需，重新构建后需重新授权。
+- **未经公证**：Phrased 在 Mac App Store 之外分发且未经 Apple 公证。下载后请使用上方 `xattr` 命令清除隔离标志。
+- **未上架 Mac App Store**：沙箱限制与键盘注入机制不兼容。
 
 ---
 
-## 📄 License
+## 📄 许可证
 
-MIT + Commons Clause — © 2025 LNZ. Free to use and modify; commercial use prohibited. See [LICENSE](LICENSE) for details.
+MIT + Commons Clause — © 2025 LNZ. 可自由使用和修改，禁止商业用途。详见 [LICENSE](LICENSE)。
