@@ -219,4 +219,4 @@ Built with Swift, SwiftUI, and Swift Package Manager. No third-party dependencie
 
 ## License
 
-© 2025 Ningzhou Li. All rights reserved.
+MIT License — © 2025 Ningzhou Li. See [LICENSE](LICENSE) for details.
