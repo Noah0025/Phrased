@@ -143,6 +143,8 @@
 "settings.hotkey.global.footer" = "支持修饰键单击或单独修饰键双击（如双击 ⌃），需包含至少一个修饰键。";
 "settings.hotkey.open_phrased" = "打开 Phrased";
 "settings.hotkey.restore_default_double_control" = "恢复默认（双击 Control）";
+"settings.hotkey.open_and_record" = "打开并开始录音";
+"settings.hotkey.restore_default_disabled" = "恢复默认（已禁用）";
 "settings.hotkey.in_app" = "应用内快捷键";
 "settings.hotkey.in_app.footer" = "支持修饰键组合或单个裸键，不支持双击。";
 "settings.hotkey.restore_default" = "恢复默认";

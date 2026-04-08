@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import Combine
+import AVFoundation
 
 @MainActor
 class InputViewModel: ObservableObject {
@@ -9,6 +10,7 @@ class InputViewModel: ObservableObject {
     @Published var isRecording: Bool = false
     @Published var isTranscribing: Bool = false
     @Published var transcribeError: String? = nil
+    @Published var audioLevel: Float = 0
     @Published var selectedTemplate: PromptTemplate = PromptTemplate.builtins[0]
     @Published var allTemplates: [PromptTemplate] = PromptTemplate.builtins
     @Published var contextAppName: String? = nil
@@ -25,9 +27,10 @@ class InputViewModel: ObservableObject {
     private let deviceManager = AudioDeviceManager()
     var vocabularyStore: VocabularyStore = VocabularyStore()
 
-    // Silence auto-stop: if no partial result arrives within this interval, stop recording.
+    // Silence auto-stop: fires after this interval of silence once speech has been detected.
     private var silenceWorkItem: DispatchWorkItem?
     private let silenceTimeout: TimeInterval = 2.5
+    private var hasReceivedPartial = false
 
     // Transcribing timeout: if onFinal hasn't fired within this interval, clear the state.
     private var transcribingTimeoutItem: DispatchWorkItem?
@@ -47,6 +50,7 @@ class InputViewModel: ObservableObject {
             Task { @MainActor [weak self] in
                 guard let self, generation == self.sessionGeneration, self.isRecording else { return }
                 guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+                self.hasReceivedPartial = true
                 self.inputText = text
                 self.rescheduleSilenceTimer()
             }
@@ -85,6 +89,8 @@ class InputViewModel: ObservableObject {
 
     private func rescheduleSilenceTimer() {
         cancelSilenceTimer()
+        // Only auto-stop on silence after speech has been detected at least once.
+        guard hasReceivedPartial else { return }
         let item = DispatchWorkItem { [weak self] in
             Task { @MainActor [weak self] in
                 guard let self, self.isRecording else { return }
@@ -165,9 +171,19 @@ class InputViewModel: ObservableObject {
         isRecording ? stopRecording() : startRecording()
     }
 
+    private static func computeRMS(_ buffer: AVAudioPCMBuffer) -> Float {
+        guard let data = buffer.floatChannelData?[0], buffer.frameLength > 0 else { return 0 }
+        let count = Int(buffer.frameLength)
+        var sum: Float = 0
+        for i in 0..<count { sum += data[i] * data[i] }
+        return min(sqrt(sum / Float(count)) * 8, 1.0)
+    }
+
     private func startRecording() {
         cancelSilenceTimer()
         pendingSubmit = false
+        hasReceivedPartial = false
+        audioLevel = 0
         isRecording = true
         isTranscribing = false
         inputText = ""
@@ -204,7 +220,12 @@ class InputViewModel: ObservableObject {
             }
             do {
                 try micCapture.start(deviceUID: uid) { [weak self] buffer in
+                    let level = Self.computeRMS(buffer)
                     self?.transcriber.appendBuffer(buffer)
+                    Task { @MainActor [weak self] in
+                        guard let self, self.isRecording else { return }
+                        self.audioLevel = self.audioLevel * 0.6 + level * 0.4
+                    }
                 }
             } catch {
                 print("[InputViewModel] Failed to start mic capture: \(error)")
@@ -220,6 +241,7 @@ class InputViewModel: ObservableObject {
         guard isRecording else { return }
         cancelSilenceTimer()
         isRecording = false
+        audioLevel = 0
         isTranscribing = true
         if settings.isSystemAudio {
             audioCapture.stop()
@@ -237,6 +259,7 @@ class InputViewModel: ObservableObject {
         cancelTranscribingTimeout()
         pendingSubmit = false
         isRecording = false
+        audioLevel = 0
         isTranscribing = false
         audioCapture.stop()
         micCapture.stop()

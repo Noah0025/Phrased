@@ -59,10 +59,15 @@ struct PhrasedView: View {
         .overlay(
             RoundedRectangle(cornerRadius: PhrasedRadius.lg)
                 .strokeBorder(
-                    inputVM.isRecording ? Color.red.opacity(PhrasedOpacity.dimmed) : Color.primary.opacity(PhrasedOpacity.lightFill),
+                    inputVM.isRecording ? Color.red.opacity(0.5) : Color.primary.opacity(PhrasedOpacity.lightFill),
                     lineWidth: 1
                 )
         )
+        .shadow(
+            color: inputVM.isRecording ? Color.red.opacity(Double(0.25 + inputVM.audioLevel * 0.4)) : .clear,
+            radius: inputVM.isRecording ? CGFloat(3 + inputVM.audioLevel * 20) : 0
+        )
+        .animation(.linear(duration: 0.06), value: inputVM.audioLevel)
         .frame(width: 500)
         .animation(PhrasedAnimation.spring, value: showResult)
         .animation(PhrasedAnimation.spring, value: confirmVM.showFeedbackField)
@@ -143,6 +148,14 @@ struct PhrasedView: View {
                     .foregroundColor(.red)
                     .lineLimit(2)
                     .frame(maxWidth: .infinity, minHeight: 22, alignment: .leading)
+                Button {
+                    inputVM.transcribeError = nil
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.secondary)
+                        .font(PhrasedFont.ui)
+                }
+                .buttonStyle(.plain)
             }
         } else if inputVM.isRecording {
             Text(inputVM.inputText)

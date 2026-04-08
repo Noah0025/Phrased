@@ -154,6 +154,35 @@ class PhrasedWindowController: NSWindowController, NSWindowDelegate {
         return false
     }
 
+    func showAndRecord(context: InputContext = .empty) {
+        show(context: context)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+            guard let self, !(self.inputVM.isRecording) else { return }
+            self.inputVM.toggleRecording()
+        }
+    }
+
+    private func positionNearCursor() {
+        guard let window else { return }
+        let mouse = NSEvent.mouseLocation
+        let visible = Self.activeScreen.visibleFrame
+        let winW = window.frame.width
+        let winH = window.frame.height
+
+        // Center on cursor horizontally, place just below the cursor
+        var x = mouse.x - winW / 2
+        var y = mouse.y - winH - 12
+
+        // If it would go below the visible area, flip above the cursor
+        if y < visible.minY { y = mouse.y + 12 }
+
+        // Clamp to visible area with a small margin
+        x = max(visible.minX + 8, min(x, visible.maxX - winW - 8))
+        y = max(visible.minY + 8, min(y, visible.maxY - winH - 8))
+
+        window.setFrameOrigin(NSPoint(x: x, y: y))
+    }
+
     private func updateWindowHeight(_ newHeight: CGFloat) {
         guard let window else { return }
         let visible = (window.screen ?? Self.activeScreen).visibleFrame
@@ -218,6 +247,7 @@ class PhrasedWindowController: NSWindowController, NSWindowDelegate {
         inputVM.cancelRecording()
         inputVM.inputText = context.selectedText ?? ""
         inputVM.editorHeight = 22
+        positionNearCursor()
         showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)
         // activate is async; defer makeKey to next run loop so activation completes first

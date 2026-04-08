@@ -50,6 +50,11 @@ struct PhrasedSettings: Codable, Equatable {
     var hotkeyKeyCode: UInt16 = UInt16.max
     var hotkeyModifiers: [String] = ["control"]
 
+    // Voice hotkey — open Phrased and start recording immediately.
+    // UInt16.max + empty modifiers = disabled.
+    var hotkeyVoiceKeyCode: UInt16 = UInt16.max
+    var hotkeyVoiceModifiers: [String] = []
+
     // In-app shortcuts
     var appShortcuts: [AppShortcut] = AppShortcut.defaults
 
@@ -168,6 +173,13 @@ struct PhrasedSettings: Codable, Equatable {
         }
         if !localProfiles.contains(where: { $0.id == selectedProfileID }) {
             selectedProfileID = localProfiles.first?.id ?? UUID()
+        }
+
+        // Migrate transcribe shortcut from ⌘⇧A (old buggy default) back to ⌘A
+        if let idx = appShortcuts.firstIndex(where: { $0.id == "transcribe" }),
+           appShortcuts[idx].keyCode == 0,
+           appShortcuts[idx].modifiers == ["command", "shift"] {
+            appShortcuts[idx].modifiers = ["command"]
         }
 
         // Sync app shortcuts with current defaults:
@@ -351,6 +363,19 @@ struct PhrasedSettings: Codable, Equatable {
             settingsWereReset = true
             return PhrasedSettings()
         }
+    }
+
+    var isVoiceHotkeyDisabled: Bool {
+        hotkeyVoiceKeyCode == UInt16.max && hotkeyVoiceModifiers.isEmpty
+    }
+
+    var hotkeyVoiceNSModifiers: NSEvent.ModifierFlags {
+        var flags: NSEvent.ModifierFlags = []
+        if hotkeyVoiceModifiers.contains("option")  { flags.insert(.option) }
+        if hotkeyVoiceModifiers.contains("command") { flags.insert(.command) }
+        if hotkeyVoiceModifiers.contains("control") { flags.insert(.control) }
+        if hotkeyVoiceModifiers.contains("shift")   { flags.insert(.shift) }
+        return flags
     }
 
     var hotkeyNSModifiers: NSEvent.ModifierFlags {

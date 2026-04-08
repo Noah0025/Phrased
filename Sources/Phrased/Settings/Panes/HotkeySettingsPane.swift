@@ -18,6 +18,17 @@ extension SettingsView {
                     showDoubleTap: true,
                     helpText: String(localized: "settings.hotkey.restore_default_double_control")
                 )
+                shortcutRow(
+                    label: String(localized: "settings.hotkey.open_and_record"),
+                    keyCode: $draft.hotkeyVoiceKeyCode,
+                    modifiers: $draft.hotkeyVoiceModifiers,
+                    defaultKeyCode: UInt16.max,
+                    defaultModifiers: [],
+                    requiresModifier: true,
+                    allowModifierOnly: true,
+                    showDoubleTap: true,
+                    helpText: String(localized: "settings.hotkey.restore_default_disabled")
+                )
             }
 
             Section(header: Text("settings.hotkey.in_app"), footer: Text("settings.hotkey.in_app.footer").font(.caption).foregroundColor(.secondary)) {

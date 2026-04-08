@@ -4,6 +4,7 @@ import AppKit
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusBarController: StatusBarController?
     private var hotkeyManager: HotkeyManager?
+    private var voiceHotkeyManager: HotkeyManager?
     private var phrasedWindowController: PhrasedWindowController?
     private var settingsWindowController: SettingsWindowController?
     private var historyWindowController: HistoryWindowController?
@@ -65,6 +66,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             modifiers: settings.hotkeyNSModifiers,
             onActivate: { [weak self] in self?.showWindow() }
         )
+        if !settings.isVoiceHotkeyDisabled {
+            voiceHotkeyManager = HotkeyManager(
+                keyCode: settings.hotkeyVoiceKeyCode,
+                modifiers: settings.hotkeyVoiceNSModifiers,
+                onActivate: { [weak self] in self?.showWindowAndRecord() }
+            )
+        }
 
         // Pre-warm local models only: kick off a single-token request so the model is
         // loaded into GPU memory before first use. Skip cloud endpoints to avoid billing.
@@ -135,6 +143,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         phrasedWindowController?.show(context: context)
     }
 
+    private func showWindowAndRecord() {
+        let context = ContextCapture.capture()
+        phrasedWindowController?.showAndRecord(context: context)
+    }
+
     private func showSettings() {
         if let controller = settingsWindowController {
             controller.updateSettings(
@@ -182,6 +195,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         historyStore.retentionDays = newSettings.historyRetentionDays
         try? historyStore.pruneIfNeeded()
         hotkeyManager?.update(keyCode: newSettings.hotkeyKeyCode, modifiers: newSettings.hotkeyNSModifiers)
+        if newSettings.isVoiceHotkeyDisabled {
+            voiceHotkeyManager = nil
+        } else if let mgr = voiceHotkeyManager {
+            mgr.update(keyCode: newSettings.hotkeyVoiceKeyCode, modifiers: newSettings.hotkeyVoiceNSModifiers)
+        } else {
+            voiceHotkeyManager = HotkeyManager(
+                keyCode: newSettings.hotkeyVoiceKeyCode,
+                modifiers: newSettings.hotkeyVoiceNSModifiers,
+                onActivate: { [weak self] in self?.showWindowAndRecord() }
+            )
+        }
         confirmVM.updateProvider(makeLLMProvider())
         inputVM.updateASRProvider(makeASRProvider())
         phrasedWindowController?.updateTemplates(newSettings.allTemplates)
