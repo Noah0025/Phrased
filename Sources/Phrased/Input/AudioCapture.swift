@@ -80,7 +80,7 @@ extension CMSampleBuffer {
               let asbd = CMAudioFormatDescriptionGetStreamBasicDescription(formatDescription) else {
             return nil
         }
-        let format = AVAudioFormat(streamDescription: asbd)!
+        guard let format = AVAudioFormat(streamDescription: asbd) else { return nil }
         let frameCount = UInt32(CMSampleBufferGetNumSamples(self))
         guard frameCount > 0,
               let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else { return nil }

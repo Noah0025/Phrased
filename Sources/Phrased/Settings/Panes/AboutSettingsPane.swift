@@ -26,18 +26,22 @@ private func fetchLatestRelease() async -> (tag: String, url: URL)? {
 }
 
 private func isNewer(_ remote: String, than local: String) -> Bool {
-    // Strip leading "v" and any pre-release suffix (e.g. "1.2.0-beta.1" → "1.2.0")
-    let clean: (String) -> [Int] = { v in
-        let base = v.trimmingCharacters(in: .init(charactersIn: "v"))
-            .split(separator: "-", maxSplits: 1).first.map(String.init) ?? v
-        return base.split(separator: ".").compactMap { Int($0) }
+    // Strip leading "v", separate base version from pre-release suffix
+    let parts: (String) -> (base: [Int], isPrerelease: Bool) = { v in
+        let stripped = v.trimmingCharacters(in: .init(charactersIn: "v"))
+        let components = stripped.split(separator: "-", maxSplits: 1)
+        let base = (components.first.map(String.init) ?? stripped)
+            .split(separator: ".").compactMap { Int($0) }
+        return (base, components.count > 1)
     }
-    let r = clean(remote), l = clean(local)
-    for i in 0..<max(r.count, l.count) {
-        let rv = i < r.count ? r[i] : 0
-        let lv = i < l.count ? l[i] : 0
+    let r = parts(remote), l = parts(local)
+    for i in 0..<max(r.base.count, l.base.count) {
+        let rv = i < r.base.count ? r.base[i] : 0
+        let lv = i < l.base.count ? l.base[i] : 0
         if rv != lv { return rv > lv }
     }
+    // Same base version: stable beats pre-release (e.g. 1.2.0 > 1.2.0-beta.1)
+    if r.isPrerelease != l.isPrerelease { return !r.isPrerelease }
     return false
 }
 
@@ -51,6 +55,7 @@ extension SettingsView {
 
 private struct AboutSettingsPane: View {
     @State private var updateState: UpdateState = .idle
+    @State private var checkID = 0
 
     private let repoURL = URL(string: "https://github.com/Noah0025/Phrased")!
     private var currentVersion: String {
@@ -86,7 +91,7 @@ private struct AboutSettingsPane: View {
         .padding(PhrasedSpacing.xxl)
         // .task is lifecycle-managed by SwiftUI: auto-cancelled on disappear,
         // not re-triggered on re-appear unless id changes.
-        .task(id: "update-check") {
+        .task(id: checkID) {
             guard updateState == .idle || updateState == .failed else { return }
             updateState = .checking
             guard let (tag, url) = await fetchLatestRelease() else {
@@ -136,7 +141,8 @@ private struct AboutSettingsPane: View {
 
         case .failed:
             Button {
-                updateState = .idle  // reset to idle so .task re-triggers on next appear
+                updateState = .idle
+                checkID += 1  // changing id re-triggers .task
             } label: {
                 Label("settings.about.update.check", systemImage: "arrow.clockwise")
                     .font(.caption)

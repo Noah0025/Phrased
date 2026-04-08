@@ -133,7 +133,8 @@ struct GeneralSettingsPane: View {
                         let url = Bundle.main.bundleURL
                         let config = NSWorkspace.OpenConfiguration()
                         config.createsNewApplicationInstance = true
-                        NSWorkspace.shared.openApplication(at: url, configuration: config) { _, _ in
+                        NSWorkspace.shared.openApplication(at: url, configuration: config) { _, error in
+                            guard error == nil else { return } // keep running if relaunch failed
                             DispatchQueue.main.async { NSApplication.shared.terminate(nil) }
                         }
                     }

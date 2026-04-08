@@ -75,7 +75,7 @@ class CloudASRTranscriber: ASRProvider {
         }
 
         var body = Data()
-        func append(_ string: String) { body.append(string.data(using: .utf8)!) }
+        func append(_ string: String) { body.append(Data(string.utf8)) }
 
         // model field
         append("--\(boundary)\r\n")

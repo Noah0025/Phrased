@@ -119,7 +119,7 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(minWidth: 500, maxWidth: .infinity, minHeight: 400, maxHeight: .infinity)
-        .onChange(of: draft) { newValue in
+        .onChange(of: draft) { _, newValue in
             hasUnsavedChanges = true
             saveTask?.cancel()
             let task = DispatchWorkItem { [newValue] in

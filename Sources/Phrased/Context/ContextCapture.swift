@@ -70,7 +70,7 @@ enum ContextCapture {
         var focusedElement: AnyObject?
         guard AXUIElementCopyAttributeValue(axApp, kAXFocusedUIElementAttribute as CFString, &focusedElement) == .success,
               let element = focusedElement else { return nil }
-        // AXUIElement is a CoreFoundation type; the AX API guarantees the type here.
+        // CoreFoundation bridged type: cast always succeeds per AX API contract
         let axElement = element as! AXUIElement
         var selectedText: AnyObject?
         let result = AXUIElementCopyAttributeValue(
