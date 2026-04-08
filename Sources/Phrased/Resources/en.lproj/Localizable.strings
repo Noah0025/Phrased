@@ -27,9 +27,13 @@
 /* Settings Permissions */
 "settings.permissions.title" = "Permissions";
 "settings.permissions.accessibility" = "Accessibility";
+"settings.permissions.accessibility.description" = "Required to inject text at the cursor via ⌘V simulation.";
 "settings.permissions.microphone" = "Microphone";
+"settings.permissions.microphone.description" = "Required for voice input recording.";
 "settings.permissions.screen_recording" = "Screen Recording";
+"settings.permissions.screen_recording.description" = "Required to capture system audio for transcription.";
 "settings.permissions.speech_recognition" = "Speech Recognition";
+"settings.permissions.speech_recognition.description" = "Required for built-in macOS offline speech recognition.";
 "settings.permissions.grant" = "Grant →";
 
 /* Settings General */
@@ -52,6 +56,11 @@
 /* Settings About */
 "settings.about.version_format" = "Version %@ (%@)";
 "settings.about.view_on_github" = "View on GitHub";
+"settings.about.update.checking" = "Checking for updates…";
+"settings.about.update.up_to_date" = "You're up to date";
+"settings.about.update.available_format" = "Version %@ is available";
+"settings.about.update.download" = "Download Update";
+"settings.about.update.check" = "Check for Updates";
 
 /* Settings Language Model */
 "settings.model.section" = "Language Model";

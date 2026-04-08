@@ -19,6 +19,7 @@ private func checkSpeech()          -> PermStatus { SFSpeechRecognizer.authoriza
 
 private struct PermissionRow: View {
     let title: LocalizedStringKey
+    let description: LocalizedStringKey
     let status: PermStatus
     let url: String
 
@@ -28,21 +29,28 @@ private struct PermissionRow: View {
                 NSWorkspace.shared.open(u)
             }
         } label: {
-            HStack(spacing: 8) {
-                Circle()
-                    .fill(status.isGranted ? Color.green : Color.secondary.opacity(0.35))
-                    .frame(width: 8, height: 8)
-                Text(title)
-                    .foregroundColor(.primary)
-                Spacer()
-                if !status.isGranted {
-                    Text("settings.permissions.grant")
-                        .font(.caption)
-                        .foregroundColor(.accentColor)
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(status.isGranted ? Color.green : Color.secondary.opacity(0.35))
+                        .frame(width: 8, height: 8)
+                    Text(title)
+                        .foregroundColor(.primary)
+                    Spacer()
+                    if !status.isGranted {
+                        Text("settings.permissions.grant")
+                            .font(.caption)
+                            .foregroundColor(.accentColor)
+                    }
                 }
+                Text(description)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .padding(.leading, 16)
             }
         }
         .buttonStyle(.plain)
+        .padding(.vertical, 2)
     }
 }
 
@@ -65,33 +73,6 @@ struct GeneralSettingsPane: View {
 
     var body: some View {
         Form {
-            // MARK: Permissions
-            Section {
-                PermissionRow(
-                    title: "settings.permissions.accessibility",
-                    status: permAccessibility,
-                    url: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
-                )
-                PermissionRow(
-                    title: "settings.permissions.microphone",
-                    status: permMicrophone,
-                    url: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"
-                )
-                PermissionRow(
-                    title: "settings.permissions.screen_recording",
-                    status: permScreenRecording,
-                    url: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
-                )
-                PermissionRow(
-                    title: "settings.permissions.speech_recognition",
-                    status: permSpeech,
-                    url: "x-apple.systempreferences:com.apple.preference.security?Privacy_SpeechRecognition"
-                )
-            } header: {
-                Text("settings.permissions.title")
-            }
-            .onAppear { refreshPermissions() }
-
             // MARK: Behavior
             Section {
                 Toggle("settings.general.launch_at_login", isOn: $draft.launchAtLogin)
@@ -133,6 +114,36 @@ struct GeneralSettingsPane: View {
                     }
                 }
                 .font(.caption)
+            }
+
+            // MARK: Permissions
+            Section {
+                PermissionRow(
+                    title: "settings.permissions.accessibility",
+                    description: "settings.permissions.accessibility.description",
+                    status: permAccessibility,
+                    url: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+                )
+                PermissionRow(
+                    title: "settings.permissions.microphone",
+                    description: "settings.permissions.microphone.description",
+                    status: permMicrophone,
+                    url: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"
+                )
+                PermissionRow(
+                    title: "settings.permissions.screen_recording",
+                    description: "settings.permissions.screen_recording.description",
+                    status: permScreenRecording,
+                    url: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
+                )
+                PermissionRow(
+                    title: "settings.permissions.speech_recognition",
+                    description: "settings.permissions.speech_recognition.description",
+                    status: permSpeech,
+                    url: "x-apple.systempreferences:com.apple.preference.security?Privacy_SpeechRecognition"
+                )
+            } header: {
+                Text("settings.permissions.title")
             }
 
             // MARK: Backup

@@ -4,13 +4,13 @@ import LocalAuthentication
 // MARK: - Navigation items
 
 enum SettingsSection: String, CaseIterable, Identifiable {
+    case general    = "general"
     case model      = "model"
     case audio      = "audio"
     case hotkey     = "hotkey"
     case templates  = "templates"
     case vocabulary = "vocabulary"
     case history    = "history"
-    case general    = "general"
     case about      = "about"
 
     var id: String { rawValue }
