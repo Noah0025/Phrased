@@ -130,15 +130,15 @@ ollama pull llama3.2:3b    # 更快更轻量，约 2 GB
 
 选择一个服务商，获取 API Key，在 **设置 → 语言模型 → 模板** 中填入即可。
 
-| 服务商 | 免费额度 | 备注 |
-|---|---|---|
-| [DeepSeek](https://platform.deepseek.com) | ❌ | 质量优秀，价格极低，按量计费 |
-| [Groq](https://console.groq.com) | ✅ 有免费模型 | 推理速度极快，有速率限制 |
-| [OpenAI](https://platform.openai.com) | ❌ | GPT-4o，行业标准 |
-| [月之暗面 (Kimi)](https://platform.moonshot.cn) | ❌ | 中文支持强，按量计费 |
-| [阿里云百炼](https://bailian.console.aliyun.com) | ✅ 有试用额度 | Qwen 系列，中文支持强，额度以官网为准 |
-| [Mistral](https://console.mistral.ai) | ✅ 有免费模型 | 欧洲优质选项，有速率限制 |
-| [智谱 AI](https://open.bigmodel.cn) | ✅ 有免费模型 | GLM-4-Flash 系列免费 |
+| 服务商 | 免费额度 | 示例模型 | 备注 |
+|---|---|---|---|
+| [DeepSeek](https://platform.deepseek.com) | ❌ | `deepseek-chat` | 质量优秀，价格极低，按量计费 |
+| [Groq](https://console.groq.com) | ✅ 有免费模型 | `llama-3.3-70b-versatile` | 推理速度极快，有速率限制 |
+| [OpenAI](https://platform.openai.com) | ❌ | `gpt-4o` | 行业标准 |
+| [月之暗面 (Kimi)](https://platform.moonshot.cn) | ❌ | `moonshot-v1-8k` | 中文支持强，按量计费 |
+| [阿里云百炼](https://bailian.console.aliyun.com) | ✅ 有试用额度 | `qwen-plus` | Qwen 系列，中文支持强，额度以官网为准 |
+| [Mistral](https://console.mistral.ai) | ✅ 有免费模型 | `mistral-small-latest` | 欧洲优质选项，有速率限制 |
+| [智谱 AI](https://open.bigmodel.cn) | ✅ 有免费模型 | `glm-4-flash` | GLM 系列，Flash 免费 |
 
 在 Phrased 中：**设置 → 语言模型 → 模板** → 选择服务商 → 填入 API Key → 完成。
 
