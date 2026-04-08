@@ -176,7 +176,7 @@ In Phrased: **Settings → Audio & Speech → Templates** → select provider �
 
 Open **Settings → Language Model**. Choose one:
 
-- **Local**: click **Scan Local Models** — Phrased detects running Ollama, LM Studio, Jan, and llama.cpp instances automatically. Or click **Templates** to pick a cloud provider and enter your API key.
+- **Local**: click **Scan Local Models** — Phrased detects running Ollama, LM Studio, Jan, and llama.cpp instances automatically.
 - **Cloud**: click **Templates**, select a provider (OpenAI, DeepSeek, etc.), enter the base URL and API key.
 
 The base URL should be the root of the API (e.g. `https://api.openai.com`) — Phrased appends `/v1/chat/completions` automatically.

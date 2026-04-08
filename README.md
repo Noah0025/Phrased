@@ -176,7 +176,7 @@ ollama pull llama3.2:3b    # 更快更轻量，约 2 GB
 
 打开 **设置 → 语言模型**，选择其中一种：
 
-- **本地**：点击 **扫描本地模型**——Phrased 自动检测运行中的 Ollama、LM Studio、Jan、llama.cpp 实例。或点击 **模板** 选择云端服务商并填入 API Key。
+- **本地**：点击 **扫描本地模型**——Phrased 自动检测运行中的 Ollama、LM Studio、Jan、llama.cpp 实例。
 - **云端**：点击 **模板**，选择服务商（OpenAI、DeepSeek 等），填入 Base URL 和 API Key。
 
 Base URL 填写 API 根地址（如 `https://api.openai.com`），Phrased 会自动追加 `/v1/chat/completions`。
