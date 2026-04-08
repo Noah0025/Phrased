@@ -1,8 +1,8 @@
 <a name="chinese"></a>
 
-# Phrased
+<h1 align="center">Phrased</h1>
 
-**中文** | [English](#english)
+<p align="center"><strong>中文</strong> | <a href="#english">English</a></p>
 
 > 将语音或粗糙的文字输入即时转化为表达流畅、随时可用的文本——在任意应用中均可使用。
 
@@ -226,9 +226,9 @@ MIT + Commons Clause — © 2025 LNZ. 可自由使用和修改，禁止商业用
 
 <a name="english"></a>
 
-# Phrased
+<h1 align="center">Phrased</h1>
 
-[中文](#chinese) | **English**
+<p align="center"><a href="#chinese">中文</a> | <strong>English</strong></p>
 
 > Turn rough voice or text into polished, ready-to-use writing — in any app, instantly.
 
