@@ -209,6 +209,19 @@ Phrased 内置四种模板（自动、正式、简洁、AI 提示词）。在 **
 
 ---
 
+## 🙏 致谢
+
+代码实现由 [Claude Code](https://github.com/anthropics/claude-code)（[@anthropics](https://github.com/anthropics)）协助完成。
+
+感谢以下项目和产品带来的灵感与支持：
+
+- [Ollama](https://ollama.com) — 让本地模型的接入变得简单
+- [Qwen3-ASR](https://github.com/QwenLM/Qwen3) / [Qwen](https://github.com/QwenLM/Qwen) — 阿里巴巴通义千问系列语音与语言模型
+- [OpenAI Whisper](https://github.com/openai/whisper) — 奠定了开源语音识别的基础
+- [Wispr Flow](https://wisprflow.ai)、[Typeless](https://typeless.app)、[WritingTools](https://github.com/theJayTea/WritingTools)、[QuQu](https://github.com/yan5xu/ququ) — 探索了同一个问题的不同解法，也让 Phrased 想得更清楚
+
+---
+
 ## ⚠️ 已知限制
 
 - **辅助功能权限在重新构建后失效**：使用临时签名身份（`--sign -`）时，权限绑定到二进制文件的哈希值。从源码重新构建后，需在系统设置中重新授予辅助功能权限。
@@ -432,6 +445,19 @@ Phrased ships with four built-in templates (Auto, Formal, Concise, AI Prompt). A
 ## 🤝 Contributing
 
 Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+---
+
+## 🙏 Acknowledgements
+
+Built with the help of [Claude Code](https://github.com/anthropics/claude-code) by [@anthropics](https://github.com/anthropics).
+
+Thanks to the following projects and products for inspiration:
+
+- [Ollama](https://ollama.com) — making local models actually easy to run
+- [Qwen3-ASR](https://github.com/QwenLM/Qwen3) / [Qwen](https://github.com/QwenLM/Qwen) — Alibaba's Qwen family of speech and language models
+- [OpenAI Whisper](https://github.com/openai/whisper) — set the foundation for open-source speech recognition
+- [Wispr Flow](https://wisprflow.ai), [Typeless](https://typeless.app), [WritingTools](https://github.com/theJayTea/WritingTools), [QuQu](https://github.com/yan5xu/ququ) — each took a different angle on the same problem, and helped sharpen what Phrased is trying to be
 
 ---
 
