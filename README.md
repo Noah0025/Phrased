@@ -4,7 +4,7 @@
 
 <p align="center"><strong>中文</strong> | <a href="#english">English</a></p>
 
-> 将语音或粗糙的文字输入即时转化为表达流畅、随时可用的文本——在任意应用中均可使用。
+> 语音或文字，一个快捷键，AI 帮你把话说清楚——在任意应用里都能用。
 
 当我们说话或打字，表达的往往不是最清晰的版本。打字太快，发现写错了消息已经发出去；想跟人说件事，措辞却要想半天；知道自己想说什么，落到文字里却总差一口气——语气不对、结构散乱、太口语化。
 
@@ -20,39 +20,39 @@
 
 **🎤 输入**
 - 全局快捷键（默认：双击 `Control`）在任意应用上方唤出浮动面板
-- 直接输入或语音录入——支持麦克风和系统音频
-- 自动读取当前应用中的选中文本作为上下文
+- 打字或语音都行——麦克风和系统音频都支持
+- 自动读取当前应用中选中的文字作为上下文
 
 **🤖 AI 改写**
 - 四种内置风格：自动、正式、简洁、AI 提示词
-- 自动模式根据目标应用调整语气（邮件→正式，即时通讯→随意）
-- 支持添加自定义提示词模板
-- 内联反馈循环：描述修改意见后可重新生成
+- 自动模式会根据你在用的应用调整语气（发邮件就正式点，发消息就随意点）
+- 可以加自定义提示词模板
+- 结果不满意？说说哪儿不对，让它重新来过
 
 **📋 输出**
-- 文本直接注入光标位置
+- 直接打到光标处，不用手动粘贴
 
 **🗣️ 语音识别**
-- 内置 macOS 语音识别，Apple 芯片离线可用，无需配置
+- 内置 macOS 语音识别，Apple 芯片离线可用，开箱即用
 - 本地：任意 OpenAI 兼容端点（llama.cpp + Whisper、faster-whisper 等）
-- 云端：Groq Whisper（速度极快）、阿里云语音识别，或任意兼容 API
-- 转写结果可编辑，提交前随时修改
+- 云端：Groq Whisper（快到离谱）、阿里云语音识别，或任意兼容 API
+- 转写内容可以直接改，不满意就编辑再提交
 
 **🧠 语言模型**
-- 本地：Ollama、LM Studio、Jan、llama.cpp——自动扫描并添加
+- 本地：Ollama、LM Studio、Jan、llama.cpp——自动扫描，一键添加
 - 云端：OpenAI、DeepSeek、月之暗面、Groq、Mistral、智谱 AI、阿里云百炼，或任意 OpenAI 兼容端点
-- API Key 存储于系统钥匙串，不写入磁盘
+- API Key 存在系统钥匙串里，不会写入磁盘
 
 **📚 历史记录**
-- 所有输入和输出均保存在本地
-- 支持搜索、按风格 / 来源应用 / 日期筛选，按日期 / 风格 / 应用分组
+- 所有输入和输出都保存在本地
+- 支持搜索，可按风格 / 来源应用 / 日期筛选，按日期 / 风格 / 应用分组
 - 导出为 TXT、JSON 或 CSV
 
 **⚙️ 其他**
-- 文本替换：定义触发词，提交时自动展开（如 `tmr` → `tomorrow`）
-- 应用内快捷键和全局快捷键均可自定义
-- 支持中英文界面
-- 设置备份与恢复（JSON 导入/导出）
+- 文本替换：设置触发词，提交时自动展开（比如 `tmr` → `tomorrow`）
+- 所有快捷键都可以自定义
+- 界面支持中英文
+- 设置可以导出备份，也可以导入恢复
 
 ---
 
@@ -245,40 +245,40 @@ Fully open-source, works with any local or cloud model, Phrased collects no data
 ## ✨ Features
 
 **🎤 Input**
-- Global hotkey (default: double-tap `Control`) opens a floating panel over any app
-- Type directly or use voice — microphone or system audio capture
-- Captured text from the frontmost app pre-fills the input
+- Global hotkey (default: double-tap `Control`) pops up a floating panel over any app
+- Type or talk — microphone and system audio both work
+- Selected text from the frontmost app is pulled in automatically
 
 **🤖 AI Rewriting**
 - Four built-in styles: Auto, Formal, Concise, AI Prompt
-- Auto mode adapts tone to the target app (email → formal, messaging → casual)
-- Add custom prompt templates
-- Inline feedback loop: describe what to adjust and regenerate
+- Auto mode reads the room — formal for email, casual for chat
+- Add your own prompt templates
+- Not happy with the result? Tell it what's off and regenerate
 
 **📋 Output**
-- Text is injected directly at the cursor
+- Goes straight to your cursor — no copy-paste needed
 
 **🗣️ Speech Recognition**
-- Built-in macOS speech recognition — offline on Apple silicon, no setup required
+- Built-in macOS speech recognition — offline on Apple silicon, zero setup
 - Local: any OpenAI-compatible endpoint (llama.cpp + Whisper, faster-whisper, etc.)
-- Cloud: Groq Whisper (extremely fast), Alibaba Cloud ASR, or any compatible API
-- Transcription is editable before you submit
+- Cloud: Groq Whisper (absurdly fast), Alibaba Cloud ASR, or any compatible API
+- Edit the transcript before submitting if it missed something
 
 **🧠 Language Model**
-- Local: Ollama, LM Studio, Jan, llama.cpp — scan and add automatically
+- Local: Ollama, LM Studio, Jan, llama.cpp — auto-scanned, one click to add
 - Cloud: OpenAI, DeepSeek, Moonshot, Groq, Mistral, ZhipuAI, Alibaba Cloud, or any OpenAI-compatible endpoint
-- API keys stored in Keychain, never written to disk
+- API keys live in Keychain, never on disk
 
 **📚 History**
-- All inputs and outputs saved locally
-- Search, filter by style / source app / date, group by date / style / app
+- Everything saved locally
+- Search, filter by style / source app / date, group however you like
 - Export to TXT, JSON, or CSV
 
 **⚙️ Other**
-- Text substitution: define triggers that expand on submit (`tmr` → `tomorrow`)
-- Fully configurable in-app and global hotkeys
-- Localized: English and Chinese (Simplified)
-- Settings backup and restore (JSON export/import)
+- Text substitution: set triggers that expand on submit (`tmr` → `tomorrow`)
+- All hotkeys are configurable
+- English and Chinese UI
+- Export and restore settings as JSON
 
 ---
 
