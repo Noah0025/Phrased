@@ -138,7 +138,7 @@ ollama pull llama3.2:3b    # 更快更轻量，约 2 GB
 | [Groq](https://console.groq.com) | ✅ 永久免费层 | 推理速度极快，有速率限制 |
 | [OpenAI](https://platform.openai.com) | ❌ | GPT-4o，行业标准 |
 | [月之暗面 (Kimi)](https://platform.moonshot.cn) | ❓ | 中文支持强，以官网为准 |
-| [阿里云百炼](https://bailian.console.aliyun.com) | ✅ 新用户 90 天 | Qwen 系列，中文支持强 |
+| [阿里云百炼](https://bailian.console.aliyun.com) | ✅ 有试用额度 | Qwen 系列，中文支持强，额度以官网为准 |
 | [Mistral](https://console.mistral.ai) | ✅ 实验层 | 欧洲优质选项，有速率限制 |
 | [智谱 AI](https://open.bigmodel.cn) | ✅ 永久免费模型 | GLM-4-Flash 系列永久免费 |
 
