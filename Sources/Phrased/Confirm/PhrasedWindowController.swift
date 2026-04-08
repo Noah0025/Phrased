@@ -7,7 +7,7 @@ import Combine
 class PhrasedWindowController: NSWindowController, NSWindowDelegate {
     private static var activeScreen: NSScreen {
         let mouseLocation = NSEvent.mouseLocation
-        return NSScreen.screens.first { NSMouseInRect(mouseLocation, $0.frame, false) } ?? NSScreen.main ?? NSScreen.screens.first ?? NSScreen()
+        return NSScreen.screens.first { NSMouseInRect(mouseLocation, $0.frame, false) } ?? NSScreen.main ?? NSScreen.screens[0]
     }
 
     private let inputVM: InputViewModel
