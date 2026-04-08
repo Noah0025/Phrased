@@ -140,7 +140,7 @@ Pick a provider, get an API key, and enter it in **Settings → Language Model �
 | [Mistral](https://console.mistral.ai) | ✅ free models | Good European option, rate limited |
 | [ZhipuAI](https://open.bigmodel.cn) | ✅ free models | GLM-4-Flash series available for free |
 
-The list above is a sample — any OpenAI-compatible API endpoint works. Enter the base URL and API key. The base URL should be the root of the API (e.g. `https://api.openai.com`) — Phrased appends `/v1/chat/completions` automatically.
+The list above is a sample — any OpenAI-compatible endpoint works. Enter the base URL (e.g. `https://api.openai.com`) and API key; Phrased appends `/v1/chat/completions` automatically.
 
 ---
 
@@ -158,13 +158,17 @@ Run a compatible service such as [faster-whisper-server](https://github.com/fedi
 
 #### Route B — Cloud speech recognition
 
+Pick a provider, get an API key, and enter it in **Settings → Audio & Speech → Templates**.
+
 | Provider | Free tier | Notes |
 |---|---|---|
 | [Groq](https://console.groq.com) | ✅ free quota | Whisper large-v3, extremely fast — recommended |
 | [Alibaba Cloud](https://bailian.console.aliyun.com) | ✅ trial credits | Paraformer, strong Chinese accuracy, check website for details |
 | [OpenAI](https://platform.openai.com) | ❌ | Whisper-1, pay-per-use |
 
-The base URL format follows the same pattern (e.g. `https://api.groq.com/openai`) — Phrased appends `/v1/audio/transcriptions` automatically.
+Base URL follows the same format (e.g. `https://api.groq.com/openai`); Phrased appends `/v1/audio/transcriptions` automatically.
+
+---
 
 ### 3. Hotkey
 

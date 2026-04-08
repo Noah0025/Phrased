@@ -140,7 +140,7 @@ ollama pull llama3.2:3b    # 更快更轻量，约 2 GB
 | [Mistral](https://console.mistral.ai) | ✅ 有免费模型 | 欧洲优质选项，有速率限制 |
 | [智谱 AI](https://open.bigmodel.cn) | ✅ 有免费模型 | GLM-4-Flash 系列免费 |
 
-以上为常见服务商示例。任何兼容 OpenAI API 格式的服务均可接入，填入 Base URL 和 API Key 即可。Base URL 填写 API 根地址（如 `https://api.openai.com`），Phrased 会自动追加 `/v1/chat/completions`。
+以上为常见服务商示例，任何兼容 OpenAI API 格式的服务均可接入。Base URL 填写 API 根地址（如 `https://api.openai.com`），Phrased 会自动追加 `/v1/chat/completions`。
 
 ---
 
@@ -158,6 +158,8 @@ ollama pull llama3.2:3b    # 更快更轻量，约 2 GB
 
 #### 路线 B——云端语音识别
 
+选择一个服务商，获取 API Key，在 **设置 → 音频与语音 → 模板** 中填入即可。
+
 | 服务商 | 免费额度 | 备注 |
 |---|---|---|
 | [Groq](https://console.groq.com) | ✅ 有免费额度 | Whisper large-v3，速度极快，推荐首选 |
@@ -165,6 +167,8 @@ ollama pull llama3.2:3b    # 更快更轻量，约 2 GB
 | [OpenAI](https://platform.openai.com) | ❌ | Whisper-1，按量计费 |
 
 Base URL 格式与语言模型相同（如 `https://api.groq.com/openai`），Phrased 会自动追加 `/v1/audio/transcriptions`。
+
+---
 
 ### 三、快捷键
 
