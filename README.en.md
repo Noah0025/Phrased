@@ -130,15 +130,15 @@ Open **Settings → Language Model**, click **Scan Local Models** — Phrased fi
 
 Pick a provider, get an API key, and enter it in **Settings → Language Model → Templates**.
 
-| Provider | Free tier | Example model | Notes |
-|---|---|---|---|
-| [DeepSeek](https://platform.deepseek.com) | ❌ | `deepseek-chat` | Excellent quality, very low cost, pay-per-use |
-| [Groq](https://console.groq.com) | ✅ free models | `llama-3.3-70b-versatile` | Extremely fast inference, rate limited |
-| [OpenAI](https://platform.openai.com) | ❌ | `gpt-4o` | Industry standard |
-| [Moonshot (Kimi)](https://platform.moonshot.cn) | ❌ | `moonshot-v1-8k` | Strong Chinese support, pay-per-use |
-| [Alibaba Cloud](https://bailian.console.aliyun.com) | ✅ trial credits | `qwen-plus` | Qwen models, strong Chinese support, check website for details |
-| [Mistral](https://console.mistral.ai) | ✅ free models | `mistral-small-latest` | Good European option, rate limited |
-| [ZhipuAI](https://open.bigmodel.cn) | ✅ free models | `glm-4-flash` | GLM series, Flash model is free |
+| Provider | Free tier | Notes |
+|---|---|---|
+| [DeepSeek](https://platform.deepseek.com) | ❌ | Excellent quality, very low cost, pay-per-use |
+| [Groq](https://console.groq.com) | ✅ free models | Extremely fast inference, rate limited |
+| [OpenAI](https://platform.openai.com) | ❌ | GPT-4o, industry standard |
+| [Moonshot (Kimi)](https://platform.moonshot.cn) | ❌ | Strong Chinese support, pay-per-use |
+| [Alibaba Cloud](https://bailian.console.aliyun.com) | ✅ trial credits | Qwen models, strong Chinese support, check website for details |
+| [Mistral](https://console.mistral.ai) | ✅ free models | Good European option, rate limited |
+| [ZhipuAI](https://open.bigmodel.cn) | ✅ free models | GLM-4-Flash series available for free |
 
 In Phrased: **Settings → Language Model → Templates** → select provider → enter API key → done.
 
