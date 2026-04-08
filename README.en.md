@@ -98,8 +98,6 @@ Phrased requests the following permissions on first use:
 | **Screen Recording** | Capture system audio for transcription |
 | **Speech Recognition** | Use built-in macOS speech recognition |
 
-Phrased is not sandboxed and is distributed outside the Mac App Store.
-
 ---
 
 ## 🚀 Quick Start

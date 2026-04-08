@@ -98,8 +98,6 @@ open Phrased.app
 | **屏幕录制** | 捕获系统音频用于转写 |
 | **语音识别** | 使用 macOS 内置语音识别 |
 
-Phrased 未经沙箱限制，在 Mac App Store 之外分发。
-
 ---
 
 ## 🚀 快速上手
