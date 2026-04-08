@@ -216,7 +216,7 @@ Phrased 内置四种模板（自动、正式、简洁、AI 提示词）。在 **
 感谢以下项目和产品带来的灵感与支持：
 
 - [Ollama](https://ollama.com) — 让本地模型的接入变得简单
-- [Qwen3-ASR](https://github.com/QwenLM/Qwen3) / [Qwen](https://github.com/QwenLM/Qwen) — 阿里巴巴通义千问系列语音与语言模型
+- [Qwen2.5-Omni](https://github.com/QwenLM/Qwen2.5-Omni) — 阿里巴巴通义千问多模态模型，支持语音与文本的端到端理解与生成
 - [OpenAI Whisper](https://github.com/openai/whisper) — 奠定了开源语音识别的基础
 - [Wispr Flow](https://wisprflow.ai)、[Typeless](https://typeless.app)、[WritingTools](https://github.com/theJayTea/WritingTools)、[QuQu](https://github.com/yan5xu/ququ) — 为本项目提供了灵感
 
@@ -455,7 +455,7 @@ Built with the help of [Claude Code](https://github.com/anthropics/claude-code) 
 Thanks to the following projects and products for inspiration:
 
 - [Ollama](https://ollama.com) — making local models actually easy to run
-- [Qwen3-ASR](https://github.com/QwenLM/Qwen3) / [Qwen](https://github.com/QwenLM/Qwen) — Alibaba's Qwen family of speech and language models
+- [Qwen2.5-Omni](https://github.com/QwenLM/Qwen2.5-Omni) — Alibaba's multimodal model with end-to-end speech and text understanding
 - [OpenAI Whisper](https://github.com/openai/whisper) — set the foundation for open-source speech recognition
 - [Wispr Flow](https://wisprflow.ai), [Typeless](https://typeless.app), [WritingTools](https://github.com/theJayTea/WritingTools), [QuQu](https://github.com/yan5xu/ququ) — for the inspiration
 
