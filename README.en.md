@@ -22,9 +22,7 @@ Invoke a floating input panel with a global hotkey, speak or type, pick a style,
 - Inline feedback loop: describe what to adjust and regenerate
 
 **📋 Output**
-- Injects text at the cursor via simulated ⌘V (requires Accessibility permission)
-- Falls back to clipboard copy
-- Original clipboard is restored after 1 second
+- Text is injected directly at the cursor
 
 **🗣️ Speech Recognition**
 - Built-in macOS speech recognition — offline on Apple silicon, no setup required
