@@ -139,7 +139,7 @@ ollama pull llama3.2:3b    # 更快更轻量，约 2 GB
 | [OpenAI](https://platform.openai.com) | ❌ | GPT-4o，行业标准 |
 | [月之暗面 (Kimi)](https://platform.moonshot.cn) | ✅ | 中文支持强 |
 | [阿里云百炼](https://bailian.console.aliyun.com) | ✅ | Qwen 系列，中文支持强 |
-| [Mistral](https://console.mistral.ai) | ✅ | 欧洲优质选项 |
+| [Mistral](https://console.mistral.ai) | ✅ 有免费模型 | 欧洲优质选项，有速率限制 |
 | [智谱 AI](https://open.bigmodel.cn) | ✅ | GLM 系列 |
 
 在 Phrased 中：**设置 → 语言模型 → 模板** → 选择服务商 → 填入 API Key → 完成。

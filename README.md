@@ -137,9 +137,9 @@ ollama pull llama3.2:3b    # 更快更轻量，约 2 GB
 | [DeepSeek](https://platform.deepseek.com) | ❌ | 质量优秀，价格极低，按量计费 |
 | [Groq](https://console.groq.com) | ✅ 有免费模型 | 推理速度极快，有速率限制 |
 | [OpenAI](https://platform.openai.com) | ❌ | GPT-4o，行业标准 |
-| [月之暗面 (Kimi)](https://platform.moonshot.cn) | ❓ | 中文支持强，以官网为准 |
+| [月之暗面 (Kimi)](https://platform.moonshot.cn) | ❌ | 中文支持强，按量计费 |
 | [阿里云百炼](https://bailian.console.aliyun.com) | ✅ 有试用额度 | Qwen 系列，中文支持强，额度以官网为准 |
-| [Mistral](https://console.mistral.ai) | ✅ 实验层 | 欧洲优质选项，有速率限制 |
+| [Mistral](https://console.mistral.ai) | ✅ 有免费模型 | 欧洲优质选项，有速率限制 |
 | [智谱 AI](https://open.bigmodel.cn) | ✅ 有免费模型 | GLM-4-Flash 系列免费 |
 
 在 Phrased 中：**设置 → 语言模型 → 模板** → 选择服务商 → 填入 API Key → 完成。
