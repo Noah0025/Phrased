@@ -219,4 +219,4 @@ Sources/Phrased/
 
 ## 许可证
 
-MIT License — © 2025 李宁舟. 详见 [LICENSE](LICENSE)。
+MIT License — © 2025 LNZ. 详见 [LICENSE](LICENSE)。
