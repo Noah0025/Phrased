@@ -143,8 +143,8 @@
 "settings.hotkey.global.footer" = "Supports a single modifier tap or a double-tap on a standalone modifier (e.g., double-tap ⌃). At least one modifier is required.";
 "settings.hotkey.open_phrased" = "Open Phrased";
 "settings.hotkey.restore_default_double_control" = "Restore Default (Double-Tap Control)";
-"settings.hotkey.open_and_record" = "Open and Start Recording";
-"settings.hotkey.restore_default_disabled" = "Restore Default (Disabled)";
+"settings.hotkey.open_and_record" = "Open Phrased and Start Voice Input";
+"settings.hotkey.restore_default_disabled" = "Restore Default (Double-Tap Command)";
 "settings.hotkey.in_app" = "In-App Hotkeys";
 "settings.hotkey.in_app.footer" = "Supports modifier combinations or a single bare key. Double-tap is not supported.";
 "settings.hotkey.restore_default" = "Restore Default";

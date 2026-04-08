@@ -23,7 +23,7 @@ extension SettingsView {
                     keyCode: $draft.hotkeyVoiceKeyCode,
                     modifiers: $draft.hotkeyVoiceModifiers,
                     defaultKeyCode: UInt16.max,
-                    defaultModifiers: [],
+                    defaultModifiers: ["command"],
                     requiresModifier: true,
                     allowModifierOnly: true,
                     showDoubleTap: true,

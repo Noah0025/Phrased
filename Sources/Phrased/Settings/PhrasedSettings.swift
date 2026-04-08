@@ -53,7 +53,7 @@ struct PhrasedSettings: Codable, Equatable {
     // Voice hotkey — open Phrased and start recording immediately.
     // UInt16.max + empty modifiers = disabled.
     var hotkeyVoiceKeyCode: UInt16 = UInt16.max
-    var hotkeyVoiceModifiers: [String] = []
+    var hotkeyVoiceModifiers: [String] = ["command"]
 
     // In-app shortcuts
     var appShortcuts: [AppShortcut] = AppShortcut.defaults
