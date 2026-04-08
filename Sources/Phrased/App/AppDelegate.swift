@@ -90,6 +90,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         LaunchAtLoginHelper.set(enabled: settings.launchAtLogin)
         // 同步 confirmVM settings（用于提示音）
         confirmVM.settings = settings
+
+        // First launch: open Settings so the user can see permissions and configure a model
+        let isFirstLaunch = !UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
+        if isFirstLaunch {
+            UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                self?.showSettings()
+            }
+        }
     }
 
     // MARK: - Menu actions (called by StatusBarController menu items)
