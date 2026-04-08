@@ -219,4 +219,4 @@ Built with Swift, SwiftUI, and Swift Package Manager. No third-party dependencie
 
 ## License
 
-MIT License — © 2025 LNZ. See [LICENSE](LICENSE) for details.
+MIT + Commons Clause — © 2025 LNZ. Free to use and modify; commercial use prohibited. See [LICENSE](LICENSE) for details.

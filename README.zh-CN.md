@@ -219,4 +219,4 @@ Sources/Phrased/
 
 ## 许可证
 
-MIT License — © 2025 LNZ. 详见 [LICENSE](LICENSE)。
+MIT + Commons Clause — © 2025 LNZ. 可自由使用和修改，禁止商业用途。详见 [LICENSE](LICENSE)。
