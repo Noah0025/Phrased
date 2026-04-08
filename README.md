@@ -140,6 +140,8 @@ ollama pull llama3.2:3b    # 更快更轻量，约 2 GB
 | [Mistral](https://console.mistral.ai) | ✅ 有免费模型 | 欧洲优质选项，有速率限制 |
 | [智谱 AI](https://open.bigmodel.cn) | ✅ 有免费模型 | GLM-4-Flash 系列免费 |
 
+以上为常见服务商示例。任何兼容 OpenAI API 格式的服务均可接入，填入 Base URL 和 API Key 即可。
+
 在 Phrased 中：**设置 → 语言模型 → 模板** → 选择服务商 → 填入 API Key → 完成。
 
 ---

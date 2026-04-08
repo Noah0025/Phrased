@@ -140,6 +140,8 @@ Pick a provider, get an API key, and enter it in **Settings → Language Model �
 | [Mistral](https://console.mistral.ai) | ✅ free models | Good European option, rate limited |
 | [ZhipuAI](https://open.bigmodel.cn) | ✅ free models | GLM-4-Flash series available for free |
 
+The list above is a sample — any OpenAI-compatible API endpoint works. Just enter the base URL and API key.
+
 In Phrased: **Settings → Language Model → Templates** → select provider → enter API key → done.
 
 ---
