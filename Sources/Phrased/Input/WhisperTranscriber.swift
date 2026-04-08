@@ -7,6 +7,7 @@ class WhisperTranscriber: ASRProvider {
     var onError: ((Error) -> Void)?
 
     private let model: String
+    private let audioFileQueue = DispatchQueue(label: "phrased.asr.audiofile")
     private var audioFile: AVAudioFile?
     private var tempURL: URL?
     private var transcribeTask: Task<Void, Never>?
@@ -63,9 +64,13 @@ class WhisperTranscriber: ASRProvider {
             ]
             process.standardOutput = Pipe()
             process.standardError = Pipe()
-            try? process.run()
             await withCheckedContinuation { (c: CheckedContinuation<Void, Never>) in
                 process.terminationHandler = { _ in c.resume() }
+                do {
+                    try process.run()
+                } catch {
+                    c.resume()
+                }
             }
             try? FileManager.default.removeItem(at: url)
             let txtURL = url.deletingPathExtension().appendingPathExtension("txt")
@@ -77,14 +82,19 @@ class WhisperTranscriber: ASRProvider {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
             .appendingPathExtension("wav")
-        tempURL = url
-        audioFile = nil
+        audioFileQueue.sync {
+            tempURL = url
+            audioFile = nil
+        }
     }
 
     func stopSession() {
-        let url = tempURL
-        audioFile = nil  // closes the file
-        tempURL = nil
+        let url = audioFileQueue.sync { () -> URL? in
+            let url = tempURL
+            audioFile = nil  // closes the file
+            tempURL = nil
+            return url
+        }
 
         guard let fileURL = url else {
             DispatchQueue.main.async { self.onFinal?("") }
@@ -92,19 +102,25 @@ class WhisperTranscriber: ASRProvider {
         }
 
         transcribeTask?.cancel()
-        transcribeTask = Task {
-            await transcribe(fileURL: fileURL)
+        transcribeTask = Task { [weak self] in
+            guard let self else {
+                try? FileManager.default.removeItem(at: fileURL)
+                return
+            }
+            await self.transcribe(fileURL: fileURL)
         }
     }
 
     func appendBuffer(_ buffer: AVAudioPCMBuffer) {
-        guard tempURL != nil else { return }
-        do {
-            if audioFile == nil, let url = tempURL {
-                audioFile = try AVAudioFile(forWriting: url, settings: buffer.format.settings)
-            }
-            try audioFile?.write(from: buffer)
-        } catch {}
+        audioFileQueue.sync {
+            guard tempURL != nil else { return }
+            do {
+                if audioFile == nil, let url = tempURL {
+                    audioFile = try AVAudioFile(forWriting: url, settings: buffer.format.settings)
+                }
+                try audioFile?.write(from: buffer)
+            } catch {}
+        }
     }
 
     private func transcribe(fileURL: URL) async {

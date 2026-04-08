@@ -513,7 +513,11 @@ struct HistoryView: View {
         Button(LocalizedStringKey("history.menu.copy_output")) { copy(entry.output) }
         Divider()
         Button(LocalizedStringKey("settings.button.delete"), role: .destructive) {
-            try? store.delete(ids: [entry.id])
+            do {
+                try store.delete(ids: [entry.id])
+            } catch {
+                NSAlert(error: error).runModal()
+            }
             selection.remove(entry.id)
             reload()
         }
@@ -524,9 +528,17 @@ struct HistoryView: View {
     private func deleteSelected() {
         let ids = selection.isEmpty ? Set(entries.map(\.id)) : selection
         if ids.count == entries.count {
-            try? store.clear()
+            do {
+                try store.clear()
+            } catch {
+                NSAlert(error: error).runModal()
+            }
         } else {
-            try? store.delete(ids: ids)
+            do {
+                try store.delete(ids: ids)
+            } catch {
+                NSAlert(error: error).runModal()
+            }
         }
         selection = []
         reload()
@@ -538,6 +550,10 @@ struct HistoryView: View {
     }
 
     private func reload() {
-        entries = (try? store.load()) ?? []
+        do { entries = try store.load() }
+        catch {
+            entries = []
+            NSAlert(error: error).runModal()
+        }
     }
 }

@@ -231,8 +231,9 @@ struct PhrasedSettings: Codable, Equatable {
 
     func save(to url: URL = PhrasedSettings.defaultStorageURL()) throws {
         var sanitized = self
-        sanitized.persistProfileAPIKeysToKeychain()
-        sanitized.clearProfileAPIKeys()
+        if sanitized.persistProfileAPIKeysToKeychain() {
+            sanitized.clearProfileAPIKeys()
+        }
         let data = try JSONEncoder().encode(sanitized)
         try data.write(to: url, options: .atomic)
     }
@@ -305,13 +306,19 @@ struct PhrasedSettings: Codable, Equatable {
         historyMaxEntries != nil
     }
 
-    private func persistProfileAPIKeysToKeychain() {
+    private func persistProfileAPIKeysToKeychain() -> Bool {
+        var allOK = true
         for profile in localProfiles {
-            profile.saveKeyToKeychain()
+            if !profile.saveKeyToKeychain() {
+                allOK = false
+            }
         }
         for profile in asrProfiles {
-            profile.saveKeyToKeychain()
+            if !profile.saveKeyToKeychain() {
+                allOK = false
+            }
         }
+        return allOK
     }
 
     private mutating func clearProfileAPIKeys() {

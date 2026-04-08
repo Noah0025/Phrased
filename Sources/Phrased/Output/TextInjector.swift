@@ -2,7 +2,8 @@ import AppKit
 
 enum TextInjector {
     /// Save clipboard → write text → activate target app → simulate ⌘V → restore clipboard after 1s.
-    static func inject(_ text: String, into targetApp: NSRunningApplication?) async {
+    @discardableResult
+    static func inject(_ text: String, into targetApp: NSRunningApplication?) async -> Bool {
         let pasteboard = NSPasteboard.general
 
         // 1. Snapshot current clipboard
@@ -26,7 +27,9 @@ enum TextInjector {
         }
 
         // 4. Simulate ⌘V
-        simulatePaste()
+        guard simulatePaste() else {
+            return false
+        }
 
         // 5. Restore clipboard after 1 second
         Task {
@@ -40,15 +43,20 @@ enum TextInjector {
             }
             pasteboard.writeObjects(pbItems)
         }
+        return true
     }
 
-    private static func simulatePaste() {
-        let src = CGEventSource(stateID: .hidSystemState)
-        let vDown = CGEvent(keyboardEventSource: src, virtualKey: 0x09, keyDown: true)
-        vDown?.flags = .maskCommand
-        vDown?.post(tap: .cgAnnotatedSessionEventTap)
-        let vUp = CGEvent(keyboardEventSource: src, virtualKey: 0x09, keyDown: false)
-        vUp?.flags = .maskCommand
-        vUp?.post(tap: .cgAnnotatedSessionEventTap)
+    private static func simulatePaste() -> Bool {
+        guard AXIsProcessTrusted() else { return false }
+        guard let src = CGEventSource(stateID: .hidSystemState),
+              let vDown = CGEvent(keyboardEventSource: src, virtualKey: 0x09, keyDown: true),
+              let vUp = CGEvent(keyboardEventSource: src, virtualKey: 0x09, keyDown: false) else {
+            return false
+        }
+        vDown.flags = .maskCommand
+        vDown.post(tap: .cgAnnotatedSessionEventTap)
+        vUp.flags = .maskCommand
+        vUp.post(tap: .cgAnnotatedSessionEventTap)
+        return true
     }
 }

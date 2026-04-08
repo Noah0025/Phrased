@@ -56,11 +56,13 @@ struct LLMProfile: Codable, Identifiable, Equatable {
 
     var keychainKey: String { "llm-\(id.uuidString)" }
 
-    func saveKeyToKeychain() {
+    @discardableResult
+    func saveKeyToKeychain() -> Bool {
         if apiKey.isEmpty {
             KeychainHelper.delete(key: keychainKey)
+            return true
         } else {
-            KeychainHelper.save(key: keychainKey, data: apiKey)
+            return KeychainHelper.save(key: keychainKey, data: apiKey)
         }
     }
 

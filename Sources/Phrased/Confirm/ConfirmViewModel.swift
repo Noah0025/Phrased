@@ -74,12 +74,19 @@ class ConfirmViewModel: ObservableObject {
 
         if outputMode == .inject {
             Task { @MainActor in
-                await TextInjector.inject(text, into: targetApp)
+                let ok = await TextInjector.inject(text, into: targetApp)
+                if !ok { ClipboardOutput.copy(text) }
+                self.didCopy = true
+                if !self.isLocked {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+                        self?.onDismiss?()
+                    }
+                }
             }
-        } else {
-            ClipboardOutput.copy(text)
+            return
         }
 
+        ClipboardOutput.copy(text)
         didCopy = true
         if !isLocked {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in

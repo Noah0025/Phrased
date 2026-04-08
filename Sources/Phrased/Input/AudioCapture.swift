@@ -37,7 +37,12 @@ class AudioCapture: NSObject {
         guard !lock.withLock({ _isStopped }) else { return }
         do {
             let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
-            guard let display = content.displays.first else { return }
+            guard let display = content.displays.first else {
+                let err = NSError(domain: "AudioCapture", code: -1,
+                                  userInfo: [NSLocalizedDescriptionKey: "No display available for system audio capture."])
+                onError?(err)
+                return
+            }
 
             let filter = SCContentFilter(display: display, excludingApplications: [], exceptingWindows: [])
 

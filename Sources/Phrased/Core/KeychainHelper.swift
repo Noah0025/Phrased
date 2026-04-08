@@ -4,8 +4,9 @@ import Security
 enum KeychainHelper {
     private static let service = "com.phrased.app"
 
-    static func save(key: String, data: String) {
-        guard let data = data.data(using: .utf8) else { return }
+    @discardableResult
+    static func save(key: String, data: String) -> Bool {
+        guard let data = data.data(using: .utf8) else { return false }
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -13,7 +14,8 @@ enum KeychainHelper {
             kSecValueData as String: data
         ]
         SecItemDelete(query as CFDictionary)
-        SecItemAdd(query as CFDictionary, nil)
+        let status = SecItemAdd(query as CFDictionary, nil)
+        return status == errSecSuccess
     }
 
     static func load(key: String) -> String? {
