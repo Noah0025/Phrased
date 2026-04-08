@@ -27,8 +27,10 @@
 - 1 秒后自动还原原始剪贴板内容
 
 **🗣️ 语音识别**
-- 内置 macOS 语音识别（Apple 芯片设备离线可用，无需配置）
-- 支持任意 OpenAI 兼容的语音识别 API（本地 Whisper、Groq、阿里云等）
+- 内置 macOS 语音识别，Apple 芯片离线可用，无需配置
+- 本地：任意 OpenAI 兼容端点（llama.cpp + Whisper、faster-whisper 等）
+- 云端：Groq Whisper（速度极快）、阿里云语音识别，或任意兼容 API
+- 转写结果可编辑，提交前随时修改
 
 **🧠 语言模型**
 - 本地：Ollama、LM Studio、Jan、llama.cpp——自动扫描并添加

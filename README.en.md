@@ -27,8 +27,10 @@ Invoke a floating input panel with a global hotkey, speak or type, pick a style,
 - Original clipboard is restored after 1 second
 
 **🗣️ Speech Recognition**
-- Built-in macOS speech recognition (offline on Apple silicon, no setup required)
-- Any OpenAI-compatible ASR API (local Whisper, Groq, Alibaba Cloud, etc.)
+- Built-in macOS speech recognition — offline on Apple silicon, no setup required
+- Local: any OpenAI-compatible endpoint (llama.cpp + Whisper, faster-whisper, etc.)
+- Cloud: Groq Whisper (extremely fast), Alibaba Cloud ASR, or any compatible API
+- Transcription is editable before you submit
 
 **🧠 Language Model**
 - Local: Ollama, LM Studio, Jan, llama.cpp — scan and add automatically
