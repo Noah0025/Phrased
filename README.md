@@ -98,6 +98,52 @@ Phrased is not sandboxed and is distributed outside the Mac App Store.
 
 ---
 
+## Quick start
+
+### Route A — Local model (free, private, runs offline)
+
+**Step 1: Install a local model runner**
+
+| App | Models | Install |
+|---|---|---|
+| [Ollama](https://ollama.com) | Llama, Qwen, Mistral, Gemma… | `brew install ollama` or download from site |
+| [LM Studio](https://lmstudio.ai) | Same library, GUI-based | Download from site |
+| [Jan](https://jan.ai) | Same library, open source | Download from site |
+
+**Step 2: Download a model**
+
+With Ollama (recommended):
+```bash
+ollama pull qwen2.5:7b     # good balance of speed and quality, ~4 GB
+ollama pull llama3.2:3b    # faster, lighter, ~2 GB
+```
+
+A 7B+ parameter model is recommended for rewriting tasks. Larger models produce noticeably better results.
+
+**Step 3: Connect Phrased**
+
+Open **Settings → Language Model**, click **Scan Local Models** — Phrased finds running services automatically and lists available models. Click **Add**.
+
+---
+
+### Route B — Cloud API (no local setup, pay-per-use)
+
+Pick a provider, get an API key, and enter it in **Settings → Language Model → Templates**.
+
+| Provider | Free tier | Notes |
+|---|---|---|
+| [DeepSeek](https://platform.deepseek.com) | ✅ generous | Excellent quality, very low cost |
+| [Groq](https://console.groq.com) | ✅ generous | Extremely fast inference |
+| [OpenAI](https://platform.openai.com) | ❌ | GPT-4o, industry standard |
+| [Moonshot (Kimi)](https://platform.moonshot.cn) | ✅ | Strong Chinese support |
+| [Alibaba Cloud](https://bailian.console.aliyun.com) | ✅ | Qwen models, strong Chinese support |
+| [Mistral](https://console.mistral.ai) | ✅ | Good European option |
+| [ZhipuAI](https://open.bigmodel.cn) | ✅ | GLM models |
+
+In Phrased: **Settings → Language Model → Templates** → select provider → enter API key → done.
+
+---
+
 ## Setup
 
 ### 1. Language model
