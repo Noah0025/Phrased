@@ -35,6 +35,7 @@
 "settings.permissions.speech_recognition" = "Speech Recognition";
 "settings.permissions.speech_recognition.description" = "Required for built-in macOS offline speech recognition.";
 "settings.permissions.grant" = "Grant →";
+"settings.permissions.allow" = "Allow";
 
 /* Settings General */
 "settings.general.show_in_menu_bar" = "Show in menu bar";

@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Update check
 
-private enum UpdateState {
+private enum UpdateState: Equatable {
     case idle
     case checking
     case upToDate
@@ -26,10 +26,11 @@ private func fetchLatestRelease() async -> (tag: String, url: URL)? {
 }
 
 private func isNewer(_ remote: String, than local: String) -> Bool {
+    // Strip leading "v" and any pre-release suffix (e.g. "1.2.0-beta.1" → "1.2.0")
     let clean: (String) -> [Int] = { v in
-        v.trimmingCharacters(in: .init(charactersIn: "v"))
-            .split(separator: ".")
-            .compactMap { Int($0) }
+        let base = v.trimmingCharacters(in: .init(charactersIn: "v"))
+            .split(separator: "-", maxSplits: 1).first.map(String.init) ?? v
+        return base.split(separator: ".").compactMap { Int($0) }
     }
     let r = clean(remote), l = clean(local)
     for i in 0..<max(r.count, l.count) {
@@ -75,7 +76,6 @@ private struct AboutSettingsPane: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
 
-            // MARK: Update status
             updateStatusView
 
             Button("settings.about.view_on_github") {
@@ -84,7 +84,19 @@ private struct AboutSettingsPane: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(PhrasedSpacing.xxl)
-        .onAppear { checkForUpdates() }
+        // .task is lifecycle-managed by SwiftUI: auto-cancelled on disappear,
+        // not re-triggered on re-appear unless id changes.
+        .task(id: "update-check") {
+            guard updateState == .idle || updateState == .failed else { return }
+            updateState = .checking
+            guard let (tag, url) = await fetchLatestRelease() else {
+                updateState = .failed
+                return
+            }
+            updateState = isNewer(tag, than: currentVersion)
+                ? .available(version: tag, url: url)
+                : .upToDate
+        }
     }
 
     @ViewBuilder
@@ -124,28 +136,13 @@ private struct AboutSettingsPane: View {
 
         case .failed:
             Button {
-                checkForUpdates()
+                updateState = .idle  // reset to idle so .task re-triggers on next appear
             } label: {
                 Label("settings.about.update.check", systemImage: "arrow.clockwise")
                     .font(.caption)
             }
             .buttonStyle(.plain)
             .foregroundColor(.secondary)
-        }
-    }
-
-    private func checkForUpdates() {
-        updateState = .checking
-        Task {
-            guard let (tag, url) = await fetchLatestRelease() else {
-                await MainActor.run { updateState = .failed }
-                return
-            }
-            await MainActor.run {
-                updateState = isNewer(tag, than: currentVersion)
-                    ? .available(version: tag, url: url)
-                    : .upToDate
-            }
         }
     }
 }

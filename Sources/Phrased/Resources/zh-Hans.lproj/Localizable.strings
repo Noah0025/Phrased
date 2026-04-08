@@ -35,6 +35,7 @@
 "settings.permissions.speech_recognition" = "语音识别";
 "settings.permissions.speech_recognition.description" = "用于启用 macOS 内置离线语音识别。";
 "settings.permissions.grant" = "前往授权 →";
+"settings.permissions.allow" = "允许";
 
 /* Settings General */
 "settings.general.show_in_menu_bar" = "在菜单栏中显示";

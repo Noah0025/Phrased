@@ -5,15 +5,33 @@ import ApplicationServices
 
 // MARK: - Permission status
 
-private enum PermStatus {
-    case granted, denied
+private enum PermStatus: Equatable {
+    case granted
+    case undetermined  // not yet asked → trigger system dialog
+    case denied        // user denied → open System Settings
+
     var isGranted: Bool { self == .granted }
 }
 
+// Accessibility and Screen Recording are binary (no notDetermined API)
 private func checkAccessibility()   -> PermStatus { AXIsProcessTrusted() ? .granted : .denied }
-private func checkMicrophone()      -> PermStatus { AVCaptureDevice.authorizationStatus(for: .audio) == .authorized ? .granted : .denied }
 private func checkScreenRecording() -> PermStatus { CGPreflightScreenCaptureAccess() ? .granted : .denied }
-private func checkSpeech()          -> PermStatus { SFSpeechRecognizer.authorizationStatus() == .authorized ? .granted : .denied }
+
+private func checkMicrophone() -> PermStatus {
+    switch AVCaptureDevice.authorizationStatus(for: .audio) {
+    case .authorized:    return .granted
+    case .notDetermined: return .undetermined
+    default:             return .denied
+    }
+}
+
+private func checkSpeech() -> PermStatus {
+    switch SFSpeechRecognizer.authorizationStatus() {
+    case .authorized:    return .granted
+    case .notDetermined: return .undetermined
+    default:             return .denied
+    }
+}
 
 // MARK: - Permission row
 
@@ -21,24 +39,22 @@ private struct PermissionRow: View {
     let title: LocalizedStringKey
     let description: LocalizedStringKey
     let status: PermStatus
-    let url: String
+    let action: () -> Void
 
     var body: some View {
-        Button {
-            if !status.isGranted, let u = URL(string: url) {
-                NSWorkspace.shared.open(u)
-            }
-        } label: {
+        Button(action: action) {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 8) {
                     Circle()
-                        .fill(status.isGranted ? Color.green : Color.secondary.opacity(0.35))
+                        .fill(dotColor)
                         .frame(width: 8, height: 8)
                     Text(title)
                         .foregroundColor(.primary)
                     Spacer()
                     if !status.isGranted {
-                        Text("settings.permissions.grant")
+                        Text(status == .undetermined
+                             ? "settings.permissions.allow"
+                             : "settings.permissions.grant")
                             .font(.caption)
                             .foregroundColor(.accentColor)
                     }
@@ -52,9 +68,17 @@ private struct PermissionRow: View {
         .buttonStyle(.plain)
         .padding(.vertical, 2)
     }
+
+    private var dotColor: Color {
+        switch status {
+        case .granted:      return .green
+        case .undetermined: return .yellow
+        case .denied:       return Color.secondary.opacity(0.35)
+        }
+    }
 }
 
-// MARK: - General pane (standalone View for @State support)
+// MARK: - General pane
 
 extension SettingsView {
     var generalPane: some View {
@@ -76,7 +100,7 @@ struct GeneralSettingsPane: View {
             // MARK: Behavior
             Section {
                 Toggle("settings.general.launch_at_login", isOn: $draft.launchAtLogin)
-                    .onChange(of: draft.launchAtLogin) { enabled in
+                    .onChange(of: draft.launchAtLogin) { _, enabled in
                         LaunchAtLoginHelper.set(enabled: enabled)
                     }
                 Toggle("settings.general.show_in_menu_bar", isOn: $draft.showInMenuBar)
@@ -90,7 +114,7 @@ struct GeneralSettingsPane: View {
                     Text("settings.general.language.chinese").tag(AppLanguage.zhHans)
                     Text("settings.general.language.english").tag(AppLanguage.english)
                 }
-                .onChange(of: draft.appLanguage) { lang in
+                .onChange(of: draft.appLanguage) { _, lang in
                     switch lang {
                     case .system:  UserDefaults.standard.removeObject(forKey: "AppleLanguages")
                     case .zhHans:  UserDefaults.standard.set(["zh-Hans"], forKey: "AppleLanguages")
@@ -105,12 +129,13 @@ struct GeneralSettingsPane: View {
                         .foregroundColor(.secondary)
                     Spacer()
                     Button("settings.general.language.restart_button") {
+                        onSave(draft) // flush pending settings before restart
                         let url = Bundle.main.bundleURL
-                        let task = Process()
-                        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-                        task.arguments = [url.path]
-                        try? task.run()
-                        NSApplication.shared.terminate(nil)
+                        let config = NSWorkspace.OpenConfiguration()
+                        config.createsNewApplicationInstance = true
+                        NSWorkspace.shared.openApplication(at: url, configuration: config) { _, _ in
+                            DispatchQueue.main.async { NSApplication.shared.terminate(nil) }
+                        }
                     }
                 }
                 .font(.caption)
@@ -122,25 +147,41 @@ struct GeneralSettingsPane: View {
                     title: "settings.permissions.accessibility",
                     description: "settings.permissions.accessibility.description",
                     status: permAccessibility,
-                    url: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+                    action: openSystemSettings("x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
                 )
                 PermissionRow(
                     title: "settings.permissions.microphone",
                     description: "settings.permissions.microphone.description",
                     status: permMicrophone,
-                    url: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"
+                    action: {
+                        if permMicrophone == .undetermined {
+                            AVCaptureDevice.requestAccess(for: .audio) { _ in
+                                DispatchQueue.main.async { refreshPermissions() }
+                            }
+                        } else {
+                            openSystemSettings("x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")()
+                        }
+                    }
                 )
                 PermissionRow(
                     title: "settings.permissions.screen_recording",
                     description: "settings.permissions.screen_recording.description",
                     status: permScreenRecording,
-                    url: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
+                    action: openSystemSettings("x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
                 )
                 PermissionRow(
                     title: "settings.permissions.speech_recognition",
                     description: "settings.permissions.speech_recognition.description",
                     status: permSpeech,
-                    url: "x-apple.systempreferences:com.apple.preference.security?Privacy_SpeechRecognition"
+                    action: {
+                        if permSpeech == .undetermined {
+                            SFSpeechRecognizer.requestAuthorization { _ in
+                                DispatchQueue.main.async { refreshPermissions() }
+                            }
+                        } else {
+                            openSystemSettings("x-apple.systempreferences:com.apple.preference.security?Privacy_SpeechRecognition")()
+                        }
+                    }
                 )
             } header: {
                 Text("settings.permissions.title")
@@ -169,6 +210,9 @@ struct GeneralSettingsPane: View {
         }
         .formStyle(.grouped)
         .onAppear { refreshPermissions() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            refreshPermissions()
+        }
     }
 
     private func refreshPermissions() {
@@ -176,5 +220,9 @@ struct GeneralSettingsPane: View {
         permMicrophone      = checkMicrophone()
         permScreenRecording = checkScreenRecording()
         permSpeech          = checkSpeech()
+    }
+
+    private func openSystemSettings(_ urlString: String) -> () -> Void {
+        { if let u = URL(string: urlString) { NSWorkspace.shared.open(u) } }
     }
 }
