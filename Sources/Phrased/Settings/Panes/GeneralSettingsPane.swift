@@ -1,8 +1,98 @@
 import SwiftUI
+import AVFoundation
+import Speech
+import ApplicationServices
+
+// MARK: - Permission status
+
+private enum PermStatus {
+    case granted, denied
+    var isGranted: Bool { self == .granted }
+}
+
+private func checkAccessibility()   -> PermStatus { AXIsProcessTrusted() ? .granted : .denied }
+private func checkMicrophone()      -> PermStatus { AVCaptureDevice.authorizationStatus(for: .audio) == .authorized ? .granted : .denied }
+private func checkScreenRecording() -> PermStatus { CGPreflightScreenCaptureAccess() ? .granted : .denied }
+private func checkSpeech()          -> PermStatus { SFSpeechRecognizer.authorizationStatus() == .authorized ? .granted : .denied }
+
+// MARK: - Permission row
+
+private struct PermissionRow: View {
+    let title: LocalizedStringKey
+    let status: PermStatus
+    let url: String
+
+    var body: some View {
+        Button {
+            if !status.isGranted, let u = URL(string: url) {
+                NSWorkspace.shared.open(u)
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(status.isGranted ? Color.green : Color.secondary.opacity(0.35))
+                    .frame(width: 8, height: 8)
+                Text(title)
+                    .foregroundColor(.primary)
+                Spacer()
+                if !status.isGranted {
+                    Text("settings.permissions.grant")
+                        .font(.caption)
+                        .foregroundColor(.accentColor)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - General pane (standalone View for @State support)
 
 extension SettingsView {
     var generalPane: some View {
+        GeneralSettingsPane(draft: $draft, onSave: onSave)
+    }
+}
+
+struct GeneralSettingsPane: View {
+    @Binding var draft: PhrasedSettings
+    let onSave: (PhrasedSettings) -> Void
+
+    @State private var permAccessibility   = checkAccessibility()
+    @State private var permMicrophone      = checkMicrophone()
+    @State private var permScreenRecording = checkScreenRecording()
+    @State private var permSpeech          = checkSpeech()
+
+    var body: some View {
         Form {
+            // MARK: Permissions
+            Section {
+                PermissionRow(
+                    title: "settings.permissions.accessibility",
+                    status: permAccessibility,
+                    url: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
+                )
+                PermissionRow(
+                    title: "settings.permissions.microphone",
+                    status: permMicrophone,
+                    url: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"
+                )
+                PermissionRow(
+                    title: "settings.permissions.screen_recording",
+                    status: permScreenRecording,
+                    url: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
+                )
+                PermissionRow(
+                    title: "settings.permissions.speech_recognition",
+                    status: permSpeech,
+                    url: "x-apple.systempreferences:com.apple.preference.security?Privacy_SpeechRecognition"
+                )
+            } header: {
+                Text("settings.permissions.title")
+            }
+            .onAppear { refreshPermissions() }
+
+            // MARK: Behavior
             Section {
                 Toggle("settings.general.launch_at_login", isOn: $draft.launchAtLogin)
                     .onChange(of: draft.launchAtLogin) { enabled in
@@ -12,6 +102,7 @@ extension SettingsView {
                 Toggle("settings.general.play_completion_sound", isOn: $draft.playCompletionSound)
             }
 
+            // MARK: Language
             Section {
                 Picker("settings.general.language", selection: $draft.appLanguage) {
                     Text("settings.general.language.system").tag(AppLanguage.system)
@@ -20,9 +111,9 @@ extension SettingsView {
                 }
                 .onChange(of: draft.appLanguage) { lang in
                     switch lang {
-                    case .system:   UserDefaults.standard.removeObject(forKey: "AppleLanguages")
-                    case .zhHans:   UserDefaults.standard.set(["zh-Hans"], forKey: "AppleLanguages")
-                    case .english:  UserDefaults.standard.set(["en"], forKey: "AppleLanguages")
+                    case .system:  UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+                    case .zhHans:  UserDefaults.standard.set(["zh-Hans"], forKey: "AppleLanguages")
+                    case .english: UserDefaults.standard.set(["en"], forKey: "AppleLanguages")
                     }
                 }
             } header: {
@@ -44,6 +135,7 @@ extension SettingsView {
                 .font(.caption)
             }
 
+            // MARK: Backup
             Section {
                 HStack {
                     Button("settings.backup.export") { SettingsBackup.exportSettings(draft) }
@@ -65,5 +157,13 @@ extension SettingsView {
             }
         }
         .formStyle(.grouped)
+        .onAppear { refreshPermissions() }
+    }
+
+    private func refreshPermissions() {
+        permAccessibility   = checkAccessibility()
+        permMicrophone      = checkMicrophone()
+        permScreenRecording = checkScreenRecording()
+        permSpeech          = checkSpeech()
     }
 }

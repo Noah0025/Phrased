@@ -24,6 +24,14 @@
 "settings.section.text_substitution" = "Text Substitution";
 "settings.section.history" = "History";
 
+/* Settings Permissions */
+"settings.permissions.title" = "Permissions";
+"settings.permissions.accessibility" = "Accessibility";
+"settings.permissions.microphone" = "Microphone";
+"settings.permissions.screen_recording" = "Screen Recording";
+"settings.permissions.speech_recognition" = "Speech Recognition";
+"settings.permissions.grant" = "Grant →";
+
 /* Settings General */
 "settings.general.show_in_menu_bar" = "Show in menu bar";
 "settings.general.launch_at_login" = "Launch at login";

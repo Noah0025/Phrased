@@ -24,6 +24,14 @@
 "settings.section.text_substitution" = "文字替换";
 "settings.section.history" = "历史记录";
 
+/* Settings Permissions */
+"settings.permissions.title" = "权限";
+"settings.permissions.accessibility" = "辅助功能";
+"settings.permissions.microphone" = "麦克风";
+"settings.permissions.screen_recording" = "屏幕录制";
+"settings.permissions.speech_recognition" = "语音识别";
+"settings.permissions.grant" = "前往授权 →";
+
 /* Settings General */
 "settings.general.show_in_menu_bar" = "在菜单栏中显示";
 "settings.general.launch_at_login" = "开机时自动启动";
