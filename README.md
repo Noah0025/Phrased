@@ -10,7 +10,7 @@
 
 现有的 AI 语音工具（如 Wispr Flow、Typeless）主打你说话、AI 来写，但价格不菲；改写工具（如 WritingTools）则需要你先认认真真写一段，再框选润色。Phrased 不想让你二选一：语音或文字，随时切换，一个快捷键唤出，轻量到不占你的注意力。
 
-选好模型，挑好风格，剩下的交给 AI——哪怕你只是随手几个字，它也能拼出一段完整的表达。哪怕老板让你改了三十六遍稿子后说还是第一版好，你洋洋洒洒激情输入之后，AI 也能懂你真正想说的是：好的，老板。
+选好模型，挑好风格，剩下的交给 AI——哪怕你只是随手几个字，它也能拼出一段完整的表达。哪怕老板让你改了三十六遍稿子后说还是第一版好，你洋洋洒洒激情输入之后，AI 也能懂你真正想说的是：好的，老板。😉
 
 完全开源，支持任意本地或云端模型，Phrased 不收集任何数据。
 
@@ -236,7 +236,7 @@ When we speak or type, what comes out is rarely our clearest version. You hit se
 
 AI voice tools like Wispr Flow and Typeless let you speak and have AI write it out, but they're expensive. Rewriting tools like WritingTools require you to write something properly first, then select and polish it. Phrased doesn't make you choose: voice or text, switch anytime, invoked with a hotkey, lightweight enough to stay out of your way.
 
-Pick a model, pick a style, let AI handle the rest — even if you only jot down a few words, it'll shape them into something complete. And when your boss asks for the 36th revision only to say the first version was best, after all your passionate venting, Phrased knows what you actually want to send: "Sure, sounds good."
+Pick a model, pick a style, let AI handle the rest — even if you only jot down a few words, it'll shape them into something complete. And when your boss asks for the 36th revision only to say the first version was best, after all your passionate venting, Phrased knows what you actually want to send: "Sure, sounds good." 😉
 
 Fully open-source, works with any local or cloud model, Phrased collects no data.
 
