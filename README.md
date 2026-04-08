@@ -216,23 +216,7 @@ Phrased 内置四种模板（自动、正式、简洁、AI 提示词）。在 **
 
 ---
 
-## 🏗️ 架构
-
-```
-Sources/Phrased/
-├── App/          AppDelegate, StatusBarController, LaunchAtLoginHelper
-├── Confirm/      浮动面板 — PhrasedView, ConfirmViewModel, PhrasedWindowController
-├── Context/      ContextCapture（选中文本 + 当前应用）
-├── Core/         IntentProcessor, PromptTemplate, KeychainHelper, LocalServiceScanner
-│   └── Providers/ OpenAICompatibleProvider, LLMProvider, ASRProvider
-├── History/      HistoryStore, HistoryWindowController, HistoryExporter
-├── Input/        InputViewModel, AudioCapture, MicrophoneCapture, HotkeyManager,
-│                 SFSpeechTranscriber, CloudASRTranscriber, WhisperTranscriber
-├── Output/       TextInjector, ClipboardOutput
-├── Settings/     PhrasedSettings, SettingsView, 各设置面板, LLMProfile, ASRProfile
-├── UI/           DesignTokens, ExpandableCard
-└── Vocabulary/   VocabularyStore
-```
+## 🏗️ 技术栈
 
 使用 Swift、SwiftUI 和 Swift Package Manager 构建，无第三方依赖。
 

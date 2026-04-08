@@ -216,23 +216,7 @@ Phrased ships with four built-in templates (Auto, Formal, Concise, AI Prompt). A
 
 ---
 
-## 🏗️ Architecture
-
-```
-Sources/Phrased/
-├── App/          AppDelegate, StatusBarController, LaunchAtLoginHelper
-├── Confirm/      Floating panel — PhrasedView, ConfirmViewModel, PhrasedWindowController
-├── Context/      ContextCapture (selected text + frontmost app)
-├── Core/         IntentProcessor, PromptTemplate, KeychainHelper, LocalServiceScanner
-│   └── Providers/ OpenAICompatibleProvider, LLMProvider, ASRProvider
-├── History/      HistoryStore, HistoryWindowController, HistoryExporter
-├── Input/        InputViewModel, AudioCapture, MicrophoneCapture, HotkeyManager,
-│                 SFSpeechTranscriber, CloudASRTranscriber, WhisperTranscriber
-├── Output/       TextInjector, ClipboardOutput
-├── Settings/     PhrasedSettings, SettingsView, all Panes, LLMProfile, ASRProfile
-├── UI/           DesignTokens, ExpandableCard
-└── Vocabulary/   VocabularyStore
-```
+## 🏗️ Tech Stack
 
 Built with Swift, SwiftUI, and Swift Package Manager. No third-party dependencies.
 
