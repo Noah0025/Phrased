@@ -4,7 +4,7 @@
 
 > Turn rough voice or text into polished, ready-to-use writing — in any app, instantly.
 
-Most voice input tools are either expensive and cloud-locked, limited to raw transcription without AI polish, or lack support for local models. Phrased is a fully open-source alternative: invoke a floating panel with a global hotkey, speak or type, and get AI-rewritten text injected at the cursor. Works with any OpenAI-compatible language model and speech recognition service, local or cloud. Your data stays on your device.
+Invoke a floating input panel with a global hotkey, speak or type, pick a style, and get AI-rewritten text injected at the cursor. Phrased works with any OpenAI-compatible language model and speech recognition service, local or cloud.
 
 ---
 
@@ -192,12 +192,6 @@ The panel dismisses automatically when you switch apps. Use `⌘P` to pin it.
 ## 🎨 Prompt Templates
 
 Phrased ships with four built-in templates (Auto, Formal, Concise, AI Prompt). Add custom ones in **Settings → Prompt Templates**. Each template can define a fixed system instruction; leave it blank to use auto mode (Phrased adapts tone based on the frontmost app).
-
----
-
-## 🤝 Contributing
-
-Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ---
 
