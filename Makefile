@@ -1,5 +1,5 @@
 APP_NAME    = Phrased
-VERSION     = 1.0
+VERSION     = 1.0.0
 BUILD_DIR   = .build/release
 APP_BUNDLE  = $(APP_NAME).app
 DMG_NAME    = $(APP_NAME)-$(VERSION).dmg
