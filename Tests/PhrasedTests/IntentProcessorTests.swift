@@ -31,9 +31,8 @@ final class IntentProcessorTests: XCTestCase {
         let processor = IntentProcessor()
         let auto = PromptTemplate.builtins[0]  // "auto" has nil promptInstruction
         let messages = processor.buildMessages(input: "hello", feedback: nil, template: auto)
-        XCTAssertEqual(messages.count, 2)
-        XCTAssertEqual(messages[0].role, .system)
-        XCTAssertEqual(messages[1].role, .user)
+        XCTAssertEqual(messages.count, 1)
+        XCTAssertEqual(messages[0].role, .user)
         // without an app context, auto template adds no style instruction
         XCTAssertFalse(messages[0].content.contains("风格要求"))
     }

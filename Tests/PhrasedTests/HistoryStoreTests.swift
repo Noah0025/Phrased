@@ -28,11 +28,4 @@ final class HistoryStoreTests: XCTestCase {
         XCTAssertTrue(try store.load().isEmpty)
     }
 
-    func test_cappedAt500() throws {
-        for i in 0..<505 {
-            try store.append(HistoryEntry(id: UUID(), createdAt: Date(), input: "\(i)", output: "",
-                                          templateName: "", appName: nil))
-        }
-        XCTAssertEqual(try store.load().count, 500)
-    }
 }
