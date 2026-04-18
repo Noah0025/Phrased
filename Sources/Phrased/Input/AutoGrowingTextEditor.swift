@@ -94,7 +94,12 @@ struct AutoGrowingTextEditor: NSViewRepresentable {
             let clampedSel = NSRange(location: min(sel.location, maxLoc), length: 0)
             tv.setSelectedRange(clampedSel)
         }
-        // Synchronous recalc so height expands before SwiftUI renders the frame
+        // If the view just entered the hierarchy, setFrameSize may not have run yet
+        // (containerSize still infinite). Force it to the actual frame width so that
+        // recalcHeight computes the correct multi-line height on the first pass.
+        if let tc = tv.textContainer, tc.containerSize.width > 10_000, tv.frame.width > 0 {
+            tc.containerSize = NSSize(width: tv.frame.width, height: CGFloat.greatestFiniteMagnitude)
+        }
         recalcHeight(tv)
     }
 
