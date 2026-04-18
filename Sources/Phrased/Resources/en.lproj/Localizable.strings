@@ -263,7 +263,7 @@
 "prompt.template.formal" = "Formal";
 "prompt.template.concise" = "Concise";
 "prompt.template.ai_prompt" = "AI Prompt";
-"prompt.instruction.auto" = "The user is working in %@. Adjust the tone to suit the app's typical context (e.g., more formal for email, casual for messaging, neutral for notes).";
+"prompt.instruction.auto" = "You are a text rewriting assistant. Rewrite the user's input to be clearer and more natural. Output only the rewritten text — no explanations, no answers, no additions. The user is working in %@; adjust tone to suit (formal for email, casual for chat, neutral for notes).";
 "prompt.instruction.formal" = "Use a formal tone and precise wording, suitable for business or official contexts.";
 "prompt.instruction.concise" = "Keep it concise, remove redundancy, and preserve the core meaning.";
 "prompt.instruction.ai_prompt" = "Rewrite this as a prompt suitable for sending to an AI: make the intent explicit, keep the structure clear, include the necessary context, remove colloquial phrasing, and split it into Background / Task / Requirements when helpful.";
@@ -303,3 +303,4 @@
 "accessibility.expanded" = "Expanded";
 
 "error.mic_permission_denied" = "Microphone access denied. Please enable it in System Settings → Privacy & Security → Microphone.";
+"prompt.instruction.auto.base" = "You are a text rewriting assistant. Rewrite the user's input to be clearer and more natural. Output only the rewritten text — no explanations, no answers, no additions.";

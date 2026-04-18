@@ -22,6 +22,8 @@ class IntentProcessor {
         } else if let appName = context.frontmostAppName, !appName.isEmpty {
             let format = NSLocalizedString("prompt.instruction.auto", comment: "")
             systemContent = String(format: format, appName)
+        } else {
+            systemContent = NSLocalizedString("prompt.instruction.auto.base", comment: "")
         }
 
         // User message: structured context + input, language-neutral tags
