@@ -50,9 +50,10 @@ class PhrasedWindowController: NSWindowController, NSWindowDelegate {
             self?.handleAppShortcut(event) ?? false
         }
 
-        // Subscribe to the three properties that drive window height changes.
-        // Double-async ensures SwiftUI has finished layout before we measure.
-        let resize: () -> Void = { [weak self, weak hosting] in
+        // Measure window height after SwiftUI finishes layout.
+        // delayedResize: waits 80ms so AutoGrowingTextEditor has time to measure itself.
+        // immediateResize: one run-loop deferral, enough for simple property-driven changes.
+        let immediateResize: () -> Void = { [weak self, weak hosting] in
             DispatchQueue.main.async {
                 guard let self, let hosting else { return }
                 let ideal = hosting.sizeThatFits(in: NSSize(width: 500, height: 10000))
@@ -60,19 +61,28 @@ class PhrasedWindowController: NSWindowController, NSWindowDelegate {
                 self.updateWindowHeight(ideal.height)
             }
         }
+        let delayedResize: () -> Void = { [weak self, weak hosting] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+                guard let self, let hosting else { return }
+                let ideal = hosting.sizeThatFits(in: NSSize(width: 500, height: 10000))
+                guard ideal.height > 0 else { return }
+                self.updateWindowHeight(ideal.height)
+            }
+        }
+        // editorHeight and inputText update fast during typing/ASR — immediate is fine
         inputVM.$editorHeight
-            .receive(on: DispatchQueue.main).sink { _ in resize() }.store(in: &cancellables)
+            .receive(on: DispatchQueue.main).sink { _ in immediateResize() }.store(in: &cancellables)
         inputVM.$inputText
-            .receive(on: DispatchQueue.main).sink { _ in resize() }.store(in: &cancellables)
+            .receive(on: DispatchQueue.main).sink { _ in immediateResize() }.store(in: &cancellables)
+        // State transitions re-create the AutoGrowingTextEditor — needs delayed measurement
+        inputVM.$isRecording
+            .receive(on: DispatchQueue.main).sink { _ in delayedResize() }.store(in: &cancellables)
         inputVM.$isTranscribing
-            .receive(on: DispatchQueue.main)
-            .filter { !$0 }
-            .sink { _ in DispatchQueue.main.async { resize() } }
-            .store(in: &cancellables)
+            .receive(on: DispatchQueue.main).sink { _ in delayedResize() }.store(in: &cancellables)
         confirmVM.$streamedResult
-            .receive(on: DispatchQueue.main).sink { _ in resize() }.store(in: &cancellables)
+            .receive(on: DispatchQueue.main).sink { _ in immediateResize() }.store(in: &cancellables)
         confirmVM.$showFeedbackField
-            .receive(on: DispatchQueue.main).sink { _ in resize() }.store(in: &cancellables)
+            .receive(on: DispatchQueue.main).sink { _ in delayedResize() }.store(in: &cancellables)
 
         // After transcription finishes, AutoGrowingTextEditor re-enters the view hierarchy
         // but NSTextView isn't automatically made first responder. Re-focus it so that
