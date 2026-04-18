@@ -43,6 +43,30 @@ private class _SelectableTextView: NSTextView {
     }
 }
 
+private final class HistoryWindow: NSWindow {
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        guard flags == .command,
+              let key = event.charactersIgnoringModifiers?.lowercased() else {
+            return super.performKeyEquivalent(with: event)
+        }
+        guard let textView = firstResponder as? NSTextView else {
+            return super.performKeyEquivalent(with: event)
+        }
+        switch key {
+        case "a":
+            textView.selectAll(nil); return true
+        case "c":
+            guard textView.selectedRange().length > 0 else {
+                return super.performKeyEquivalent(with: event)
+            }
+            textView.copy(nil); return true
+        default:
+            return super.performKeyEquivalent(with: event)
+        }
+    }
+}
+
 private struct SelectableText: NSViewRepresentable {
     let text: String
     var font: NSFont = PhrasedFont.nsUI
@@ -91,7 +115,7 @@ class HistoryWindowController: NSWindowController {
             y: screen.midY - size.height / 2
         )
         let hosting = NSHostingController(rootView: HistoryView(store: store, initialGroupMode: groupMode))
-        let window = NSWindow(
+        let window = HistoryWindow(
             contentRect: NSRect(origin: origin, size: size),
             styleMask: [.titled, .closable, .resizable, .miniaturizable],
             backing: .buffered, defer: false
