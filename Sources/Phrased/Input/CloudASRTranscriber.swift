@@ -107,16 +107,18 @@ class CloudASRTranscriber: ASRProvider {
 
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
-            if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+            guard let http = response as? HTTPURLResponse,
+                  (200..<300).contains(http.statusCode) else {
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
                 let msg: String
                 if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                    let err = json["error"] as? [String: Any],
                    let errMsg = err["message"] as? String {
-                    msg = "HTTP \(http.statusCode): \(errMsg)"
+                    msg = "HTTP \(statusCode): \(errMsg)"
                 } else {
-                    msg = "HTTP \(http.statusCode)"
+                    msg = "HTTP \(statusCode)"
                 }
-                let err = NSError(domain: "CloudASR", code: http.statusCode,
+                let err = NSError(domain: "CloudASR", code: statusCode,
                                   userInfo: [NSLocalizedDescriptionKey: msg])
                 DispatchQueue.main.async { self.onError?(err) }
                 return
