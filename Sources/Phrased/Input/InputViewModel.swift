@@ -61,7 +61,8 @@ class InputViewModel: ObservableObject {
                 self.cancelSilenceTimer()
                 self.cancelTranscribingTimeout()
                 self.isTranscribing = false
-                self.inputText = text
+                let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty { self.inputText = trimmed }
                 if self.pendingSubmit {
                     self.pendingSubmit = false
                     if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -89,8 +90,6 @@ class InputViewModel: ObservableObject {
 
     private func rescheduleSilenceTimer() {
         cancelSilenceTimer()
-        // Only auto-stop on silence after speech has been detected at least once.
-        guard hasReceivedPartial else { return }
         let item = DispatchWorkItem { [weak self] in
             Task { @MainActor [weak self] in
                 guard let self, self.isRecording else { return }
@@ -244,6 +243,7 @@ class InputViewModel: ObservableObject {
                     Task { @MainActor [weak self] in
                         guard let self, self.isRecording else { return }
                         self.audioLevel = self.audioLevel * 0.6 + level * 0.4
+                        if level > 0.02 { self.rescheduleSilenceTimer() }
                     }
                 }
             } catch {
