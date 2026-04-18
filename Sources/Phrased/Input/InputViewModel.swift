@@ -31,6 +31,7 @@ class InputViewModel: ObservableObject {
     private var silenceWorkItem: DispatchWorkItem?
     private let silenceTimeout: TimeInterval = 2.5
     private var hasReceivedPartial = false
+    private var recordingBaseText: String = ""  // text in box before recording started
 
     // Transcribing timeout: if onFinal hasn't fired within this interval, clear the state.
     private var transcribingTimeoutItem: DispatchWorkItem?
@@ -51,7 +52,8 @@ class InputViewModel: ObservableObject {
                 guard let self, generation == self.sessionGeneration, self.isRecording else { return }
                 guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
                 self.hasReceivedPartial = true
-                self.inputText = text
+                let base = self.recordingBaseText
+                self.inputText = base.isEmpty ? text : base + " " + text
                 self.rescheduleSilenceTimer()
             }
         }
@@ -62,12 +64,15 @@ class InputViewModel: ObservableObject {
                 self.cancelTranscribingTimeout()
                 self.isTranscribing = false
                 let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !trimmed.isEmpty { self.inputText = trimmed }
+                if !trimmed.isEmpty {
+                    let base = self.recordingBaseText
+                    self.inputText = base.isEmpty ? trimmed : base + " " + trimmed
+                }
+                self.recordingBaseText = ""
                 if self.pendingSubmit {
                     self.pendingSubmit = false
-                    if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        self.onSubmit?(text, self.selectedTemplate)
-                    }
+                    let final = self.inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !final.isEmpty { self.onSubmit?(final, self.selectedTemplate) }
                 }
             }
         }
@@ -204,7 +209,7 @@ class InputViewModel: ObservableObject {
         audioLevel = 0
         isRecording = true
         isTranscribing = false
-        inputText = ""
+        recordingBaseText = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         sessionGeneration &+= 1
         bindCallbacks(for: sessionGeneration)
         let generation = sessionGeneration
