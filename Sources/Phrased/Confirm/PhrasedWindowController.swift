@@ -62,6 +62,8 @@ class PhrasedWindowController: NSWindowController, NSWindowDelegate {
         }
         inputVM.$editorHeight
             .receive(on: DispatchQueue.main).sink { _ in resize() }.store(in: &cancellables)
+        inputVM.$inputText
+            .receive(on: DispatchQueue.main).sink { _ in resize() }.store(in: &cancellables)
         confirmVM.$streamedResult
             .receive(on: DispatchQueue.main).sink { _ in resize() }.store(in: &cancellables)
         confirmVM.$showFeedbackField
