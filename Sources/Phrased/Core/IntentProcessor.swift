@@ -1,6 +1,14 @@
 import Foundation
 
 class IntentProcessor {
+    private func xmlEscape(_ string: String) -> String {
+        string
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
+    }
+
     func buildMessages(
         input: String,
         feedback: String?,
@@ -19,14 +27,14 @@ class IntentProcessor {
         // User message: structured context + input, language-neutral tags
         var userContent = ""
         if let selected = context.selectedText, !selected.isEmpty {
-            userContent += "<context>\(selected)</context>\n\n"
+            userContent += "<context>\(xmlEscape(selected))</context>\n\n"
         }
         if let appName = context.frontmostAppName, !appName.isEmpty {
-            userContent += "<app>\(appName)</app>\n\n"
+            userContent += "<app>\(xmlEscape(appName))</app>\n\n"
         }
         userContent += input
         if let feedback, !feedback.isEmpty {
-            userContent += "\n\n<feedback>\(feedback)</feedback>"
+            userContent += "\n\n<feedback>\(xmlEscape(feedback))</feedback>"
         }
 
         var messages: [LLMMessage] = []
