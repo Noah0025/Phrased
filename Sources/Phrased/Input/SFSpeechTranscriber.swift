@@ -11,6 +11,7 @@ class SFSpeechTranscriber: ASRProvider {
     }()
     private var request: SFSpeechAudioBufferRecognitionRequest?
     private var task: SFSpeechRecognitionTask?
+    private var didDeliverFinal = false
 
     func warmUp() {
         SFSpeechRecognizer.requestAuthorization { _ in }
@@ -19,6 +20,7 @@ class SFSpeechTranscriber: ASRProvider {
     func startSession() {
         task?.cancel()
         task = nil
+        didDeliverFinal = false
 
         let req = SFSpeechAudioBufferRecognitionRequest()
         req.shouldReportPartialResults = true
@@ -35,10 +37,13 @@ class SFSpeechTranscriber: ASRProvider {
                         self.onPartial?(text)
                     }
                     if result.isFinal {
+                        self.didDeliverFinal = true
                         self.onFinal?(text)
                     }
                 }
             } else if let error {
+                // Suppress post-final errors (SFSpeech fires cleanup errors after isFinal)
+                guard !self.didDeliverFinal else { return }
                 DispatchQueue.main.async { self.onError?(error) }
             }
         }

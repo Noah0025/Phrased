@@ -64,6 +64,11 @@ class PhrasedWindowController: NSWindowController, NSWindowDelegate {
             .receive(on: DispatchQueue.main).sink { _ in resize() }.store(in: &cancellables)
         inputVM.$inputText
             .receive(on: DispatchQueue.main).sink { _ in resize() }.store(in: &cancellables)
+        inputVM.$isTranscribing
+            .receive(on: DispatchQueue.main)
+            .filter { !$0 }
+            .sink { _ in DispatchQueue.main.async { resize() } }
+            .store(in: &cancellables)
         confirmVM.$streamedResult
             .receive(on: DispatchQueue.main).sink { _ in resize() }.store(in: &cancellables)
         confirmVM.$showFeedbackField
