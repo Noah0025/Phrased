@@ -264,9 +264,9 @@
 "prompt.template.concise" = "Concise";
 "prompt.template.ai_prompt" = "AI Prompt";
 "prompt.instruction.auto" = "You are a text rewriting assistant. Rewrite the user's input to be clearer and more natural. Output only the rewritten text — no explanations, no answers, no additions. The user is working in %@; adjust tone to suit (formal for email, casual for chat, neutral for notes).";
-"prompt.instruction.formal" = "Use a formal tone and precise wording, suitable for business or official contexts.";
-"prompt.instruction.concise" = "Keep it concise, remove redundancy, and preserve the core meaning.";
-"prompt.instruction.ai_prompt" = "Rewrite this as a prompt suitable for sending to an AI: make the intent explicit, keep the structure clear, include the necessary context, remove colloquial phrasing, and split it into Background / Task / Requirements when helpful.";
+"prompt.instruction.formal" = "Rewrite the user's input using a formal tone and precise wording, suitable for business or official contexts. Output only the rewritten text — no explanations, no answers.";
+"prompt.instruction.concise" = "Rewrite the user's input: keep it concise, remove redundancy, and preserve the core meaning. Output only the rewritten text — no explanations, no answers.";
+"prompt.instruction.ai_prompt" = "Rewrite the user's input as a prompt suitable for sending to an AI: make the intent explicit, keep the structure clear, include the necessary context, remove colloquial phrasing, and split into Background / Task / Requirements when helpful. Output only the rewritten prompt.";
 
 /* Shortcuts */
 "shortcut.default.transcribe" = "Start/Stop Speech Recognition";
