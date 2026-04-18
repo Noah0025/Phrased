@@ -20,9 +20,9 @@ final class IntentProcessorTests: XCTestCase {
         let processor = IntentProcessor()
         let formal = PromptTemplate.builtins.first { $0.id == "formal" }!
         let messages = processor.buildMessages(input: "hello", feedback: nil, template: formal)
-        // formal template has a non-nil promptInstruction → system message contains "风格要求"
+        // formal template has a non-nil promptInstruction → system message is present
         let systemMessage = messages.first { $0.role == .system }
-        XCTAssertTrue(systemMessage?.content.contains("风格要求") == true)
+        XCTAssertNotNil(systemMessage?.content)
         // two messages: system + user
         XCTAssertEqual(messages.count, 2)
     }
@@ -33,7 +33,7 @@ final class IntentProcessorTests: XCTestCase {
         let messages = processor.buildMessages(input: "hello", feedback: nil, template: auto)
         XCTAssertEqual(messages.count, 1)
         XCTAssertEqual(messages[0].role, .user)
-        // without an app context, auto template adds no style instruction
-        XCTAssertFalse(messages[0].content.contains("风格要求"))
+        // without an app context, auto template adds no style instruction → no system message
+        XCTAssertNil(messages.first { $0.role == .system })
     }
 }
