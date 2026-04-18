@@ -27,13 +27,13 @@ final class IntentProcessorTests: XCTestCase {
         XCTAssertEqual(messages.count, 2)
     }
 
-    func test_buildMessages_autoTemplate_noStyleInstruction() {
+    func test_buildMessages_autoTemplate_hasBaseInstruction() {
         let processor = IntentProcessor()
         let auto = PromptTemplate.builtins[0]  // "auto" has nil promptInstruction
         let messages = processor.buildMessages(input: "hello", feedback: nil, template: auto)
-        XCTAssertEqual(messages.count, 1)
-        XCTAssertEqual(messages[0].role, .user)
-        // without an app context, auto template adds no style instruction → no system message
-        XCTAssertNil(messages.first { $0.role == .system })
+        // auto template always injects base rewrite-only system message, even without app context
+        XCTAssertEqual(messages.count, 2)
+        XCTAssertNotNil(messages.first { $0.role == .system })
+        XCTAssertEqual(messages.last?.role, .user)
     }
 }

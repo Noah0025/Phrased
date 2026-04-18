@@ -71,7 +71,8 @@ class InputViewModel: ObservableObject {
                 self.recordingBaseText = ""
                 if self.pendingSubmit {
                     self.pendingSubmit = false
-                    let final = self.inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let raw = self.inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let final = self.vocabularyStore.apply(to: raw)
                     if !final.isEmpty { self.onSubmit?(final, self.selectedTemplate) }
                 }
             }
@@ -118,7 +119,8 @@ class InputViewModel: ObservableObject {
                 self.isTranscribing = false
                 if self.pendingSubmit {
                     self.pendingSubmit = false
-                    let text = self.inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let raw = self.inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let text = self.vocabularyStore.apply(to: raw)
                     if !text.isEmpty { self.onSubmit?(text, self.selectedTemplate) }
                 }
             }
@@ -285,6 +287,7 @@ class InputViewModel: ObservableObject {
         isRecording = false
         audioLevel = 0
         isTranscribing = false
+        recordingBaseText = ""
         audioCapture.stop()
         micCapture.stop()
         transcriber.stopSession()

@@ -174,7 +174,7 @@ class PhrasedWindowController: NSWindowController, NSWindowDelegate {
     func showAndRecord(context: InputContext = .empty) {
         show(context: context)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
-            guard let self, !(self.inputVM.isRecording) else { return }
+            guard let self, self.window?.isVisible == true, !(self.inputVM.isRecording) else { return }
             self.inputVM.toggleRecording()
         }
     }

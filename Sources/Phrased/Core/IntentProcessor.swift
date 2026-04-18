@@ -34,7 +34,7 @@ class IntentProcessor {
         if let appName = context.frontmostAppName, !appName.isEmpty {
             userContent += "<app>\(xmlEscape(appName))</app>\n\n"
         }
-        userContent += input
+        userContent += xmlEscape(input)
         if let feedback, !feedback.isEmpty {
             userContent += "\n\n<feedback>\(xmlEscape(feedback))</feedback>"
         }
