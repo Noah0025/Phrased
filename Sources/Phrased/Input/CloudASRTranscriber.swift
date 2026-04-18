@@ -122,7 +122,10 @@ class CloudASRTranscriber: ASRProvider {
                 return
             }
             let text = (try? JSONDecoder().decode(TranscriptionResponse.self, from: data))?.text ?? ""
+            guard !Task.isCancelled else { return }
             DispatchQueue.main.async { self.onFinal?(text) }
+        } catch is CancellationError {
+            return
         } catch {
             DispatchQueue.main.async { self.onError?(error) }
         }
