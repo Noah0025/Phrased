@@ -180,6 +180,25 @@ class InputViewModel: ObservableObject {
     }
 
     private func startRecording() {
+        let micAuthStatus = AVCaptureDevice.authorizationStatus(for: .audio)
+        if micAuthStatus == .notDetermined {
+            AVCaptureDevice.requestAccess(for: .audio) { [weak self] granted in
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    if granted {
+                        self.startRecording()
+                    } else {
+                        self.transcribeError = NSLocalizedString("error.mic_permission_denied", comment: "")
+                    }
+                }
+            }
+            return
+        }
+        if micAuthStatus == .denied || micAuthStatus == .restricted {
+            transcribeError = NSLocalizedString("error.mic_permission_denied", comment: "")
+            return
+        }
+
         cancelSilenceTimer()
         pendingSubmit = false
         hasReceivedPartial = false

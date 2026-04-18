@@ -301,3 +301,5 @@
 "accessibility.clear_search" = "Clear search";
 "accessibility.collapsed" = "Collapsed";
 "accessibility.expanded" = "Expanded";
+
+"error.mic_permission_denied" = "Microphone access denied. Please enable it in System Settings → Privacy & Security → Microphone.";

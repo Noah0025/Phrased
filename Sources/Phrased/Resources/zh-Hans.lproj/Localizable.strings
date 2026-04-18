@@ -301,3 +301,5 @@
 "accessibility.clear_search" = "清除搜索";
 "accessibility.collapsed" = "已收起";
 "accessibility.expanded" = "已展开";
+
+"error.mic_permission_denied" = "麦克风权限被拒绝。请在系统设置 → 隐私与安全性 → 麦克风中开启。";
