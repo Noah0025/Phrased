@@ -89,9 +89,13 @@ struct AutoGrowingTextEditor: NSViewRepresentable {
         if tv.string != text && tv.markedRange().length == 0 {
             let sel = tv.selectedRange()
             tv.string = text
-            tv.setSelectedRange(sel)
+            // Clamp selection to valid range after text replacement
+            let maxLoc = (tv.string as NSString).length
+            let clampedSel = NSRange(location: min(sel.location, maxLoc), length: 0)
+            tv.setSelectedRange(clampedSel)
         }
-        DispatchQueue.main.async { self.recalcHeight(tv) }
+        // Synchronous recalc so height expands before SwiftUI renders the frame
+        recalcHeight(tv)
     }
 
     func recalcHeight(_ tv: NSTextView) {
